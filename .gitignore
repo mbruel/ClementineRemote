@@ -1,0 +1,8 @@
+.qmake.stash
+*.o
+Makefile
+src/ClementineRemote
+moc_*.cpp
+ui_*.h
+moc_predefs.h
+qrc_resources.cpp
