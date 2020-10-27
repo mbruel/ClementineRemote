@@ -1,7 +1,8 @@
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/icon.png" alt="ClementineRemote">
 
 # ClementineRemote
-Remote for Clementine Music Player developped in C++/QT5/QML to be available on any OS. Its main goal is to add the Files View missing in the Android Remote.
+Remote for Clementine Music Player developped in C++/QT5/QML to be available on any OS. 
+Its main goal is to add the Files View missing in the Android Remote.
 
 ![](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_v0.1.png)
 
