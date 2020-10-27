@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>LoginPage.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>main.qml</file>
+        <file>ToolBarButton.qml</file>
+        <file>MainApp.qml</file>
+        <file>SimpleMainArea.qml</file>
+        <file>Playlist.qml</file>
+        <file>ImageButton.qml</file>
+    </qresource>
+</RCC>

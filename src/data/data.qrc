@@ -1,0 +1,36 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icon.png</file>
+        <file>icon_large_grey.png</file>
+        <file>icon_large.png</file>
+        <file>icons/search.png</file>
+        <file>icons/qtlogo.png</file>
+        <file>icons/media-skip-forward.png</file>
+        <file>icons/media-skip-backward.png</file>
+        <file>icons/media-playback-stop.png</file>
+        <file>icons/media-playback-start.png</file>
+        <file>icons/playlist.png</file>
+        <file>icons/library.png</file>
+        <file>icons/file.png</file>
+        <file>icons/internet.png</file>
+        <file>icons/back.png</file>
+        <file>icons/next.png</file>
+        <file>icons/logout.png</file>
+        <file>icons/nav_quit.png</file>
+        <file>icons/nav_downloads.png</file>
+        <file>icons/ab_shuffle_off.png</file>
+        <file>icons/ab_shuffle_albums.png</file>
+        <file>icons/ab_shuffle_album.png</file>
+        <file>icons/ab_repeat_album.png</file>
+        <file>icons/ab_shuffle.png</file>
+        <file>icons/ab_repeat_track.png</file>
+        <file>icons/ab_repeat_playlist.png</file>
+        <file>icons/ab_repeat_off.png</file>
+        <file>icons/nav_menu.png</file>
+        <file>icons/nav_settings.png</file>
+        <file>icons/nav_donate.png</file>
+        <file>icons/sound.png</file>
+        <file>icons/media-playback-pause.png</file>
+        <file>icons/moreOptions.png</file>
+    </qresource>
+</RCC>
