@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ClementineRemote
+Exec=ClementineRemote %F
+Icon=ClementineRemote
+Comment=Edit this default file
+Terminal=true
+Categories=Network;
+X-AppImage-Version=
