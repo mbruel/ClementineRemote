@@ -1,6 +1,8 @@
 .qmake.stash
 *.o
 Makefile
+src/ClementineRemote.pro.user
+src/protobuf/remotecontrolmessages.pb*
 src/ClementineRemote
 moc_*.cpp
 ui_*.h
