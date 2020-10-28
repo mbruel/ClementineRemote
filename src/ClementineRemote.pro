@@ -8,20 +8,10 @@ CONFIG(debug, debug|release) :{
     DEFINES += __DEBUG__
 }
 
-#For Windows
-win32 {
-   CONFIG(debug, release|debug) {
-       win32:LIBS += -llibprotobuf-debug
-   } else {
-       win32:LIBS += -llibprotobuf
-   }
-}
-
 #For linux
 linux {
     LIBS += -lprotobuf
 }
-
 
 macx{
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/macx/ -lprotobuf
@@ -30,6 +20,13 @@ macx{
     DEPENDPATH += $$PWD/../protobuf-3.13.0/src
 
     PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/macx/libprotobuf.a
+}
+
+win32{
+    LIBS += -L$$PWD/../protobuf-3.13.0/lib/win64/ -lprotobuf
+
+    INCLUDEPATH += $$PWD/../protobuf-3.13.0/src
+    DEPENDPATH += $$PWD/../protobuf-3.13.0/src
 }
 
 # The following define makes your compiler emit warnings if you use
@@ -78,5 +75,4 @@ HEADERS += \
 
 DISTFILES += \
     protobuf/remotecontrolmessages.proto
-
 
