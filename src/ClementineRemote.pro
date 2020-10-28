@@ -16,11 +16,21 @@ win32 {
        win32:LIBS += -llibprotobuf
    }
 }
+
 #For linux
 linux {
     LIBS += -lprotobuf
 }
 
+
+macx{
+    LIBS += -L$$PWD/../protobuf-3.13.0/lib/macx/ -lprotobuf
+
+    INCLUDEPATH += $$PWD/../protobuf-3.13.0/src
+    DEPENDPATH += $$PWD/../protobuf-3.13.0/src
+
+    PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/macx/libprotobuf.a
+}
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -68,4 +78,5 @@ HEADERS += \
 
 DISTFILES += \
     protobuf/remotecontrolmessages.proto
+
 
