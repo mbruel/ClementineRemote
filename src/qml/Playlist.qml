@@ -50,6 +50,9 @@ Rectangle {
         id: songDelegate
 
         Rectangle {
+            id: rootDelegate
+            property bool isSelected: ListView.isCurrentItem
+
             width: ListView.view.width
             height: 50
 
@@ -67,25 +70,105 @@ Rectangle {
                 }
             }
 
+            onIsSelectedChanged: {
+                if (isSelected)
+                {
+                    if (txtTitle.truncated)
+                    {
+                        txtTitle.elide = Text.ElideNone;
+                        titleAnimation.start();
+                    }
+                    if (txtArtistAlbum.truncated)
+                    {
+                        txtArtistAlbum.elide = Text.ElideNone;
+                        artistAnimation.start();
+                    }
+                }
+                else
+                {
+                    if (titleAnimation.running)
+                    {
+                        titleAnimation.stop();
+                        txtTitle.elide = Text.ElideRight;
+                        txtTitle.x = 0;
+                    }
+
+                    if (artistAnimation.running)
+                    {
+                        artistAnimation.stop();
+                        txtArtistAlbum.elide = Text.ElideRight;
+                        txtArtistAlbum.x = 0;
+                    }
+                }
+            }
+
             Text{
-                id: title_
-                text: title
-                anchors.left: parent.left
+                id: txtTitle
+                text: (track !== -1 ? String(track).padStart(2, '0')+" - " : "") + title
+//                anchors.left: parent.left
+                elide: Text.ElideRight
+                width: parent.width - txtLength.width
+
+                NumberAnimation {
+                    id: titleAnimation
+                    target: txtTitle
+                    property: "x"
+                    from: 20
+                    to: -rootDelegate.width
+                    duration: 3000
+                    loops: Animation.Infinite
+                }
+
+                onTruncatedChanged: {
+                    print("onTruncatedChanged for: "+txtTitle.text)
+                    if (truncated && rootDelegate.isSelected)
+                    {
+                        txtTitle.elide = Text.ElideNone;
+                        titleAnimation.start();
+                    }
+                }
             }
             Text{
-                id: length_
+                id: txtLength
                 text: pretty_length
                 horizontalAlignment: Text.AlignRight
                 anchors.right: parent.right
             }
             Text{
-                id: artist_
-                text: artist
+                id: txtArtistAlbum
+                width: parent.width
+                elide: Text.ElideRight
+                text: {
+                    if (artist !== "" || album !== "")
+                        return artist + " / " + album;
+                    else
+                        return "";
+                }
                 color: "blue"
                 anchors{
-                    top: title_.bottom
+                    top: txtTitle.bottom
                     //                    topMargin: 2
-                    left: title_.left
+//                    left: txtTitle.left
+                }
+                x: 0
+
+                NumberAnimation {
+                    id: artistAnimation
+                    target: txtArtistAlbum
+                    property: "x"
+                    from: 20
+                    to: -rootDelegate.width
+                    duration: 3000
+                    loops: Animation.Infinite
+                }
+
+                onTruncatedChanged: {
+                    print("onTruncatedChanged for: "+txtArtistAlbum.text)
+                    if (truncated && rootDelegate.isSelected)
+                    {
+                        txtArtistAlbum.elide = Text.ElideNone;
+                        artistAnimation.start();
+                    }
                 }
             }
 
@@ -107,8 +190,6 @@ Rectangle {
                     editMode = true
                     print("onPressAndHold #" + index + ": " + title)
                 }
-
-
             }
         }
     }
@@ -189,11 +270,11 @@ Rectangle {
 //                    text: "x"
 //                    verticalAlignment: Text.AlignVCenter
 
-                    width: 20
-                    height: 20
+                    width: 30
+                    height: parent.height - 4
                     anchors {
                         right: parent.right
-                        rightMargin: 5
+                        rightMargin: 2
                         verticalCenter: parent.verticalCenter
                     }
 
