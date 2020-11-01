@@ -43,9 +43,7 @@ int PlayListModel::rowCount(const QModelIndex &parent) const
     // other (valid) parents, rowCount() should return 0 so that it does not become a tree model.
     if (parent.isValid() || !_remote)
         return 0;
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(_remote->secureSongs());
-#endif
+
     return _remote->numberOfPlaylistSongs();
 }
 
@@ -54,9 +52,6 @@ QVariant PlayListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || !_remote)
         return QVariant();
 
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(_remote->secureSongs());
-#endif
     const RemoteSong &song = _remote->playlistSong(index.row());
     switch (role) {
     case SongRole::title:

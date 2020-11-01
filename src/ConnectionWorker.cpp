@@ -32,6 +32,8 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     _reading_protobuf(false), _expected_length(0), _buffer(),
     _host(), _port(0), _auth_code(-1)
 {
+    setObjectName("ConnectionWorker");
+
     connect(_remote, &ClementineRemote::connectToServer,      this, &ConnectionWorker::onConnectToServer,      Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::disconnectFromServer, this, &ConnectionWorker::onDisconnectFromServer, Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::changeToSong,         this, &ConnectionWorker::onChangeToSong,         Qt::QueuedConnection);
@@ -48,9 +50,6 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(&_timeout, &QTimer::timeout, this, &ConnectionWorker::onSocketTimeout);
 
     connect(this, &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket, Qt::QueuedConnection);
-
-    _buffer.setData(QByteArray());
-    _buffer.open(QIODevice::ReadWrite);
 }
 
 ConnectionWorker::~ConnectionWorker()
@@ -358,17 +357,21 @@ void ConnectionWorker::onReadyRead()
         }
 
         // Read some of the message
-        _buffer.write(_socket->read(_expected_length - _buffer.size()));
+        _buffer.append(_socket->read(_expected_length - _buffer.size()));
 
         // Did we get everything?
         if (_buffer.size() == _expected_length) {
             // Parse the message
-            _remote->parseMessage(_buffer.data());
+            _remote->parseMessage(
+            #ifdef __USE_CONNECTION_THREAD__
+                        std::move(_buffer)
+            #else
+                        _buffer
+            #endif
+                        );
 
             // Clear the buffer
-            _buffer.close();
-            _buffer.setData(QByteArray());
-            _buffer.open(QIODevice::ReadWrite);
+            _buffer.clear();
             _reading_protobuf = false;
         }
     }

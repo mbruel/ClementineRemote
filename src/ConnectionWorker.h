@@ -24,7 +24,7 @@
 #include "protobuf/remotecontrolmessages.pb.h"
 
 #include <QTcpSocket>
-#include <QBuffer>
+#include <QByteArray>
 #include <QTimer>
 class ClementineRemote;
 class RemotePlaylist;
@@ -48,8 +48,8 @@ private:
     QTimer      _timeout;
     QString     _disconnectReason;
     bool        _reading_protobuf;
-    quint32     _expected_length;
-    QBuffer     _buffer;
+    qint32      _expected_length;
+    QByteArray  _buffer;
 
 
     // server details

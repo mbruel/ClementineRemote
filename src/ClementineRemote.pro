@@ -43,7 +43,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # remove Connection Thread as Sockets are Async
 # and thus the Models are modified in the GUI Thread (no synch issues)
 # cf https://forum.qt.io/topic/120468/qabstractlistmodel-populated-in-a-worker-thread-not-the-gui-one
-DEFINES  -= __USE_CONNECTION_THREAD__
+DEFINES  += __USE_CONNECTION_THREAD__
 
 SOURCES += \
         ClementineRemote.cpp \

@@ -150,9 +150,7 @@ Rectangle {
             previousPathButton.visible = false;
             nextPathButton.visible = false;
             relativePath.width = root.width - 2*(headerButtonSize + headerSpacing + headerSpacing)
-
         }
-
     }
 
     Connections{

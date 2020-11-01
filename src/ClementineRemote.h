@@ -29,7 +29,7 @@
 #include <QSettings>
 #ifdef __USE_CONNECTION_THREAD__
 #include <QThread>
-#include <QMutex>
+#include <QReadWriteLock>
 #endif
 class ConnectionWorker;
 class RemotePlaylist;
@@ -75,7 +75,8 @@ private:
     RemoteSong              _activeSong;        //!< song played (or about to) on the server (pb::remote::CURRENT_METAINFO)
     qint32                  _activeSongIndex;   //!< active song index in _songs
 #ifdef __USE_CONNECTION_THREAD__
-    QMutex                  _secureSongs;
+    QReadWriteLock          _secureSongs;
+    pb::remote::Message     _songsData;
 #endif
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
@@ -94,7 +95,8 @@ private:
     QString                 _remoteFilesPath;
     QList<RemoteFile>       _remoteFiles;
 #ifdef __USE_CONNECTION_THREAD__
-    QMutex                  _secureRemoteFiles;
+    QReadWriteLock          _secureRemoteFiles;
+    pb::remote::Message     _remoteFilesData;
 #endif
 
 private:
@@ -158,9 +160,6 @@ public:
     inline const RemoteSong & currentSong() const;
     inline Q_INVOKABLE int currentSongIndex() const;
     void updateCurrentSongIdx(qint32 currentSongID);
-#ifdef __USE_CONNECTION_THREAD__
-    inline QMutex *secureSongs();
-#endif
 
     inline int numberOfPlaylistSongs() const;
     inline const RemoteSong &playlistSong(int index) const;
@@ -173,18 +172,18 @@ public:
     inline int numberOfRemoteFiles() const;
     inline const RemoteFile &remoteFile(int index) const;
     inline RemoteFile &remoteFile(int index);
-#ifdef __USE_CONNECTION_THREAD__
-    inline QMutex *secureRemoteFiles();
-#endif
 
 
     qint32 currentPlaylistID() const;
     qint32 activePlaylistID() const;
 
+#ifdef __USE_CONNECTION_THREAD__
+    void parseMessage(QByteArray&& data);
+#else
     void parseMessage(const QByteArray& data);
+#endif
 
 private:
-    void rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs);
     void dumpCurrentPlaylist();
 
 
@@ -192,9 +191,8 @@ private:
     void updateCurrentPlaylist();
     void dumpPlaylists();
 
+    void rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs);
     void rcvListOfRemoteFiles(const pb::remote::ResponseFiles &files);
-
-
 
 
 
@@ -253,6 +251,14 @@ signals:
     void preClearRemoteFiles(int lastIdx);
     void postClearRemoteFiles();
 
+#ifdef __USE_CONNECTION_THREAD__
+    void songsUpdatedByWorker();
+    void remoteFilesUpdatedByWorker();
+
+private slots:
+    void onSongsUpdatedByWorker();
+    void onRemoteFilesUpdatedByWorker();
+#endif
 
     //static methods
 public:
@@ -331,9 +337,7 @@ int ClementineRemote::currentSongIndex() const
     return _activeSongIndex;
 #endif
 }
-#ifdef __USE_CONNECTION_THREAD__
-QMutex *ClementineRemote::secureSongs(){ return &_secureSongs; }
-#endif
+
 int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
 const RemoteSong &ClementineRemote::playlistSong(int index) const { return _songs.at(index); }
 RemoteSong &ClementineRemote::playlistSong(int index) { return _songs[index]; }
@@ -347,9 +351,7 @@ qint32 ClementineRemote::currentTrackLength() const{ return _activeSong.length; 
 int ClementineRemote::numberOfRemoteFiles() const { return _remoteFiles.size(); }
 const RemoteFile &ClementineRemote::remoteFile(int index) const { return _remoteFiles.at(index); }
 RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]; }
-#ifdef __USE_CONNECTION_THREAD__
-QMutex *ClementineRemote::secureRemoteFiles() {return &_secureRemoteFiles; }
-#endif
+
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString &ClementineRemote::appName() { return sAppName; }
 const QString &ClementineRemote::appVersion() { return sVersion; }

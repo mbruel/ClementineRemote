@@ -40,9 +40,7 @@ int RemoteFileModel::rowCount(const QModelIndex &parent) const
     // other (valid) parents, rowCount() should return 0 so that it does not become a tree model.
     if (parent.isValid() || !_remote)
         return 0;
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(_remote->secureRemoteFiles());
-#endif
+
     return _remote->numberOfRemoteFiles();
 }
 
@@ -51,13 +49,6 @@ QVariant RemoteFileModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || !_remote)
         return QVariant();
 
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(_remote->secureRemoteFiles());
-
-    // https://stackoverflow.com/questions/9485339/design-pattern-qt-model-view-and-multiple-threads
-    if(_remote->numberOfRemoteFiles() <= index.row())
-        return QVariant();
-#endif
     const RemoteFile &file = _remote->remoteFile(index.row());
     switch (role) {
     case RemoteFileRole::filename:
