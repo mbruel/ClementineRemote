@@ -40,6 +40,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+# remove Connection Thread as Sockets are Async
+# and thus the Models are modified in the GUI Thread (no synch issues)
+# cf https://forum.qt.io/topic/120468/qabstractlistmodel-populated-in-a-worker-thread-not-the-gui-one
 DEFINES  -= __USE_CONNECTION_THREAD__
 
 SOURCES += \
