@@ -91,8 +91,6 @@ Item {
     }
 
 
-
-
     function changeMainMenu(selectedMenu){
         console.log("New idx: "+selectedMenu)
         for (var i = 0; i < toolBar.children.length; ++i)
@@ -102,8 +100,16 @@ Item {
         }
 
         if (selectedMenu === 0)
-        {
             mainArea.sourceComponent = playlistPage;
+        else if (selectedMenu === 1)
+        {
+            if (cppRemote.clementineFilesSupport())
+            {
+                cppRemote.getServerFiles(cppRemote.remoteFilesPath_QML());
+                mainArea.sourceComponent = filesPage;
+            }
+            else
+                mainArea.sourceComponent =  filesNotSupported            
         }
         else
         {
@@ -614,6 +620,40 @@ Item {
 
         Playlist {
             anchors.fill  : parent
+        }
+    }
+
+    Component {
+        id: filesNotSupported
+
+        Rectangle {
+            anchors{
+                verticalCenter: parent.verticalCenter;
+                fill: parent.fill
+            }
+
+            Text {
+                anchors{
+                    verticalCenter: parent.verticalCenter;
+                    left: parent.left
+                    leftMargin: 10
+                }
+                text: qsTr("<b>Files are not supported</b> server side.") +
+                      "<br/>" + qsTr("The server is running: ")+ cppRemote.clemVersion() +
+                      "<br/>" + qsTr("it should at least be v") + "<b>" + cppRemote.clementineFilesSupportMinVersion() +  "</b>"
+
+                width: parent.width - 10
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
+    Component {
+        id: filesPage
+
+        ServerFiles {
+            anchors.fill  : parent
+            headerButtonSize: headerButtonSize
         }
     }
 

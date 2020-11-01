@@ -43,8 +43,11 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::shuffle,              this, &ConnectionWorker::onShuffle,              Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::repeat,               this, &ConnectionWorker::onRepeat,               Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::changePlaylist,       this, &ConnectionWorker::onChangePlaylist,       Qt::QueuedConnection);
+    connect(_remote, &ClementineRemote::getServerFiles,       this, &ConnectionWorker::onGetServerFiles,       Qt::QueuedConnection);
 
     connect(&_timeout, &QTimer::timeout, this, &ConnectionWorker::onSocketTimeout);
+
+    connect(this, &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket, Qt::QueuedConnection);
 
     _buffer.setData(QByteArray());
     _buffer.open(QIODevice::ReadWrite);
@@ -52,14 +55,20 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
 
 ConnectionWorker::~ConnectionWorker()
 {
+    onKillSocket();
+}
+
+void ConnectionWorker::onKillSocket(){
     if (_socket)
     {
+        qDebug() << "[MB_TRACE][ConnectionWorker::onKillSocket]";
         disconnect(_socket, &QAbstractSocket::disconnected, this, &ConnectionWorker::onDisconnected);
         disconnect(_socket, &QIODevice::readyRead,          this, &ConnectionWorker::onReadyRead);
         _socket->disconnectFromHost();
         if (_socket->state() != QAbstractSocket::UnconnectedState)
             _socket->waitForDisconnected();
         delete _socket;
+        _socket = nullptr;
     }
 }
 
@@ -201,6 +210,25 @@ void ConnectionWorker::onChangePlaylist(qint32 pIdx)
     pb::remote::Message msg;
     msg.set_type(pb::remote::REQUEST_PLAYLIST_SONGS);
     msg.mutable_request_playlist_songs()->set_id(_remote->playlist(pIdx)->id);
+
+    sendDataToServer(msg);
+}
+
+void ConnectionWorker::onGetServerFiles(QString currentPath, QString subFolder)
+{
+    if (currentPath.isEmpty())
+        currentPath = "./";
+    if (!subFolder.isEmpty())
+    {
+        if (!currentPath.endsWith("/"))
+            currentPath += "/";
+        currentPath += subFolder;
+    }
+    qDebug() << "[ConnectionWorker::onGetServerFiles] remote path: " << currentPath;
+
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::REQUEST_FILES);
+    msg.mutable_request_files()->set_relativepath(currentPath.toStdString());
 
     sendDataToServer(msg);
 }

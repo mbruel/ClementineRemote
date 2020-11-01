@@ -8,5 +8,6 @@
         <file>SimpleMainArea.qml</file>
         <file>Playlist.qml</file>
         <file>ImageButton.qml</file>
+        <file>ServerFiles.qml</file>
     </qresource>
 </RCC>

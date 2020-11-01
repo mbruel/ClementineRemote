@@ -44,6 +44,7 @@ int PlayListModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid() || !_remote)
         return 0;
 
+    QMutexLocker lock(_remote->secureSongs());
     return _remote->numberOfPlaylistSongs();
 }
 
@@ -52,6 +53,7 @@ QVariant PlayListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || !_remote)
         return QVariant();
 
+    QMutexLocker lock(_remote->secureSongs());
     const RemoteSong &song = _remote->playlistSong(index.row());
     switch (role) {
     case SongRole::title:
@@ -154,10 +156,10 @@ void PlayListModel::setRemote(ClementineRemote *remote)
     _remote = remote;
 
     if (_remote) {
-        connect(_remote, &ClementineRemote::preSongAppended, this, [=]() {
-            const int index = _remote->numberOfPlaylistSongs();
-            beginInsertRows(QModelIndex(), index, index);
-        });
+//        connect(_remote, &ClementineRemote::preSongAppended, this, [=]() {
+//            const int index = _remote->numberOfPlaylistSongs();
+//            beginInsertRows(QModelIndex(), index, index);
+//        });
         connect(_remote, &ClementineRemote::preAddSongs, this, [=](int lastSongIdx) {
             beginInsertRows(QModelIndex(), 0, lastSongIdx);
         });
@@ -165,9 +167,9 @@ void PlayListModel::setRemote(ClementineRemote *remote)
             endInsertRows();
         });
 
-        connect(_remote, &ClementineRemote::preSongRemoved, this, [=](int index) {
-            beginRemoveRows(QModelIndex(), index, index);
-        });
+//        connect(_remote, &ClementineRemote::preSongRemoved, this, [=](int index) {
+//            beginRemoveRows(QModelIndex(), index, index);
+//        });
         connect(_remote, &ClementineRemote::preClearSongs, this, [=](int lastSongIdx) {
             beginRemoveRows(QModelIndex(), 0, lastSongIdx);
         });
@@ -182,6 +184,7 @@ void PlayListModel::setRemote(ClementineRemote *remote)
 
 PlayListProxyModel::PlayListProxyModel(QObject *parent): QSortFilterProxyModel(parent)
 {}
+
 
 bool PlayListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {

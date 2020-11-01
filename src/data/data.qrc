@@ -32,5 +32,13 @@
         <file>icons/sound.png</file>
         <file>icons/media-playback-pause.png</file>
         <file>icons/moreOptions.png</file>
+        <file>icons/up.png</file>
+        <file>icons/home.png</file>
+        <file>icons/go-up.png</file>
+        <file>icons/go-previous.png</file>
+        <file>icons/go-next.png</file>
+        <file>icons/go-home.png</file>
+        <file>icons/music.png</file>
+        <file>icons/folder.png</file>
     </qresource>
 </RCC>

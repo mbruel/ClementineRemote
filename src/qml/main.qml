@@ -59,6 +59,7 @@ Window {
 
     onClosing: {
         console.log("Close event");
+        cppRemote.release();
 //        close.accepted = false
 //        mainArea.sourceComponent = loginPage;
     }

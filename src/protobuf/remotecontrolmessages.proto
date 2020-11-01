@@ -47,7 +47,7 @@ enum MsgType {
   RATE_SONG = 19;
   GLOBAL_SEARCH = 100;
   // access Files from remote control
-  GET_FILES = 200;
+  REQUEST_FILES = 200;
   APPEND_FILES = 201;
 
   // Messages send by both
@@ -83,7 +83,7 @@ enum MsgType {
   TRANSCODING_FILES = 55;
   GLOBAL_SEARCH_STATUS = 56;
   // access Files from remote control
-  FILES_LIST = 202;
+  LIST_FILES = 202;
 
 }
 
@@ -91,9 +91,18 @@ message RequestFiles {
   optional string relativePath = 1;
 }
 
-message Files {
+message FileMetadata {
+    optional string filename  = 1;
+    optional bool   isDir = 2;
+}
+
+// used by both Client (APPEND_FILES) and server (LIST_FILES)
+message ResponseFiles {
   optional string relativePath = 1;
-  repeated string file = 2;
+  repeated FileMetadata files  = 2;
+
+  optional string error = 3;
+  optional string musicExtentions = 4;
 }
 
 // Valid Engine states
@@ -400,7 +409,8 @@ message Message {
   optional RequestDownloadSongs request_download_songs = 31;
   optional RequestRateSong request_rate_song = 35;
   optional RequestGlobalSearch request_global_search = 37;
-  
+  optional RequestFiles request_files = 50;
+
   optional Repeat repeat = 13;
   optional Shuffle shuffle = 14;
   
@@ -420,4 +430,5 @@ message Message {
   optional ResponseGlobalSearch response_global_search = 38;
   optional ResponseTranscoderStatus response_transcoder_status = 39;
   optional ResponseGlobalSearchStatus response_global_search_status = 40;
+  optional ResponseFiles response_files = 51;
 }

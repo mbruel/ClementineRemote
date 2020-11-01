@@ -67,11 +67,14 @@ public:
 signals:
     void connectToServer(const QString &host, ushort port, int auth_code);
     void disconnectFromServer();
+    void killSocket();
 
 
 private slots:
     void onConnectToServer(const QString &host, ushort port, int auth_code);
     void onDisconnectFromServer();
+    void onKillSocket();
+
 
     void onChangeToSong(int proxyRow);
     void onSetTrackPostion(qint32 newPos);
@@ -84,6 +87,8 @@ private slots:
     void onRepeat(ushort mode);
 
     void onChangePlaylist(qint32 pIdx);
+
+    void onGetServerFiles(QString currentPath, QString subFolder);
 
 
 

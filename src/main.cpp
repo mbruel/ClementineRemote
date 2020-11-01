@@ -4,6 +4,7 @@
 
 #include "ClementineRemote.h"
 #include "PlayListModel.h"
+#include "RemoteFileModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,8 +29,11 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<ClementineRemote>("PlayList", 1, 0, "ClementineRemote",
         QStringLiteral("ClementineRemote should not be created in QML"));
 
-    ClementineRemote *remote = ClementineRemote::getInstance();
-    engine.rootContext()->setContextProperty("cppRemote", remote);
+    qmlRegisterType<RemoteFileModel>("RemoteFile", 1, 0, "RemoteFileModel");
+
+
+    QPointer<ClementineRemote> remote = QPointer<ClementineRemote>(ClementineRemote::getInstance());
+    engine.rootContext()->setContextProperty("cppRemote", remote.data());
 
     // really important, otherwise QML takes the ownership
     // which means the model get deleted when any View is...

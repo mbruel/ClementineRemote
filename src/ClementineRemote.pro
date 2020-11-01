@@ -47,7 +47,9 @@ SOURCES += \
         ClementineRemote.cpp \
         ConnectionWorker.cpp \
         PlayListModel.cpp \
+        RemoteFileModel.cpp \
         main.cpp \
+        player/RemoteFile.cpp \
         player/RemotePlaylist.cpp \
         player/RemoteSong.cpp \
         protobuf/remotecontrolmessages.pb.cc
@@ -71,7 +73,9 @@ HEADERS += \
     ClementineRemote.h \
     ConnectionWorker.h \
     PlayListModel.h \
+    RemoteFileModel.h \
     Singleton.h \
+    player/RemoteFile.h \
     player/RemotePlaylist.h \
     player/RemoteSong.h \
     protobuf/remotecontrolmessages.pb.h
