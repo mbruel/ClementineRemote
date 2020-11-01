@@ -538,6 +538,12 @@ Item {
         updatePlayerState();
         updateRepeat(cppRemote.repeatMode());
         updateShuffle(cppRemote.shuffleMode());
+
+        if (volumeSlider.width < volPct.width)
+        {
+            volPct.visible = false;
+            volumeSlider.width = parent.width - (headerButtonSize + commandsRow.spacing + toolBarMargin) * 4;
+        }
     }
 
     function updateShuffle(mode){
