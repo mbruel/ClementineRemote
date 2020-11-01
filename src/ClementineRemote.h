@@ -177,11 +177,7 @@ public:
     qint32 currentPlaylistID() const;
     qint32 activePlaylistID() const;
 
-#ifdef __USE_CONNECTION_THREAD__
-    void parseMessage(QByteArray&& data);
-#else
     void parseMessage(const QByteArray& data);
-#endif
 
 private:
     void dumpCurrentPlaylist();

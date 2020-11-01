@@ -362,13 +362,7 @@ void ConnectionWorker::onReadyRead()
         // Did we get everything?
         if (_buffer.size() == _expected_length) {
             // Parse the message
-            _remote->parseMessage(
-            #ifdef __USE_CONNECTION_THREAD__
-                        std::move(_buffer)
-            #else
-                        _buffer
-            #endif
-                        );
+            _remote->parseMessage(_buffer);
 
             // Clear the buffer
             _buffer.clear();

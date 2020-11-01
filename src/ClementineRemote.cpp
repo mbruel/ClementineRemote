@@ -338,11 +338,8 @@ void ClementineRemote::checkClementineVersion()
         qCritical() << "Couldn't parse Clementine version...";
 }
 
-#ifdef __USE_CONNECTION_THREAD__
-void ClementineRemote::parseMessage(QByteArray&& data)
-#else
+
 void ClementineRemote::parseMessage(const QByteArray &data)
-#endif
 {
     pb::remote::Message msg;
     if (!msg.ParseFromArray(data.constData(), data.size())) {
