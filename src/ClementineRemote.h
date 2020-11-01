@@ -110,6 +110,8 @@ public:
     inline int modelRowFromProxyRow(int proxyRow) const;
 #endif
 
+    Q_INVOKABLE inline bool hideServerFilesPreviousNextNavButtons() const;
+
     Q_INVOKABLE void close();
 
     inline const QString &remoteFilesPath() const;
@@ -400,6 +402,8 @@ int ClementineRemote::modelRowFromProxyRow(int proxyRow) const
     return -1;
 }
 #endif
+
+bool ClementineRemote::hideServerFilesPreviousNextNavButtons() const { return true; }
 
 const QString &ClementineRemote::remoteFilesPath() const { return _remoteFilesPath; }
 QString ClementineRemote::remoteFilesPath_QML() const{ return _remoteFilesPath; }
