@@ -26,10 +26,11 @@
 #include "PlayListModel.h"
 #include "player/RemoteSong.h"
 #include "player/RemoteFile.h"
-#include <QThread>
 #include <QSettings>
+#ifdef __USE_CONNECTION_THREAD__
+#include <QThread>
 #include <QMutex>
-
+#endif
 class ConnectionWorker;
 class RemotePlaylist;
 
@@ -50,7 +51,9 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
     static constexpr const char *sClemVersionRegExpStr = "^Clementine (\\d+)\\.(\\d+).*";
 
 private:
+#ifdef __USE_CONNECTION_THREAD__
     QThread                 _thread;            //!< all the network communication is done in a Thread to let the GUI reactive
+#endif
     ConnectionWorker       *_connection;        //!< all network communication active object
 
     QSettings               _settings;          //!< save last server details
@@ -71,7 +74,9 @@ private:
     QList<RemoteSong>       _songs;             //!< list of Song of the Playlist displayed on the Remote
     RemoteSong              _activeSong;        //!< song played (or about to) on the server (pb::remote::CURRENT_METAINFO)
     qint32                  _activeSongIndex;   //!< active song index in _songs
+#ifdef __USE_CONNECTION_THREAD__
     QMutex                  _secureSongs;
+#endif
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
 
@@ -88,7 +93,9 @@ private:
     bool                    _clemFilesSupport;
     QString                 _remoteFilesPath;
     QList<RemoteFile>       _remoteFiles;
+#ifdef __USE_CONNECTION_THREAD__
     QMutex                  _secureRemoteFiles;
+#endif
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -103,7 +110,7 @@ public:
     inline int modelRowFromProxyRow(int proxyRow) const;
 #endif
 
-    Q_INVOKABLE void release();
+    Q_INVOKABLE void close();
 
     inline const QString &remoteFilesPath() const;
     inline Q_INVOKABLE QString remoteFilesPath_QML() const; //!< can't use refs in QML...
@@ -147,9 +154,11 @@ public:
 
 
     inline const RemoteSong & currentSong() const;
-    inline Q_INVOKABLE uint currentSongIndex() const;
+    inline Q_INVOKABLE int currentSongIndex() const;
     void updateCurrentSongIdx(qint32 currentSongID);
+#ifdef __USE_CONNECTION_THREAD__
     inline QMutex *secureSongs();
+#endif
 
     inline int numberOfPlaylistSongs() const;
     inline const RemoteSong &playlistSong(int index) const;
@@ -162,7 +171,9 @@ public:
     inline int numberOfRemoteFiles() const;
     inline const RemoteFile &remoteFile(int index) const;
     inline RemoteFile &remoteFile(int index);
+#ifdef __USE_CONNECTION_THREAD__
     inline QMutex *secureRemoteFiles();
+#endif
 
 
     qint32 currentPlaylistID() const;
@@ -310,7 +321,7 @@ void ClementineRemote::setPlay()
 const RemoteSong & ClementineRemote::currentSong() const { return _activeSong; }
 
 //uint ClementineRemote::currentSongIndex() const { return _activeSongIndex; }
-uint ClementineRemote::currentSongIndex() const
+int ClementineRemote::currentSongIndex() const
 {
 #ifdef __USE_PLAYLIST_PROXY_MODEL__
     return _playlistProxyModel->mapFromSource(_playlistModel->index(_activeSongIndex)).row();
@@ -318,9 +329,9 @@ uint ClementineRemote::currentSongIndex() const
     return _activeSongIndex;
 #endif
 }
-
+#ifdef __USE_CONNECTION_THREAD__
 QMutex *ClementineRemote::secureSongs(){ return &_secureSongs; }
-
+#endif
 int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
 const RemoteSong &ClementineRemote::playlistSong(int index) const { return _songs.at(index); }
 RemoteSong &ClementineRemote::playlistSong(int index) { return _songs[index]; }
@@ -334,9 +345,9 @@ qint32 ClementineRemote::currentTrackLength() const{ return _activeSong.length; 
 int ClementineRemote::numberOfRemoteFiles() const { return _remoteFiles.size(); }
 const RemoteFile &ClementineRemote::remoteFile(int index) const { return _remoteFiles.at(index); }
 RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]; }
-
+#ifdef __USE_CONNECTION_THREAD__
 QMutex *ClementineRemote::secureRemoteFiles() {return &_secureRemoteFiles; }
-
+#endif
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString &ClementineRemote::appName() { return sAppName; }
 const QString &ClementineRemote::appVersion() { return sVersion; }

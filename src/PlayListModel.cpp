@@ -43,8 +43,9 @@ int PlayListModel::rowCount(const QModelIndex &parent) const
     // other (valid) parents, rowCount() should return 0 so that it does not become a tree model.
     if (parent.isValid() || !_remote)
         return 0;
-
+#ifdef __USE_CONNECTION_THREAD__
     QMutexLocker lock(_remote->secureSongs());
+#endif
     return _remote->numberOfPlaylistSongs();
 }
 
@@ -53,7 +54,9 @@ QVariant PlayListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || !_remote)
         return QVariant();
 
+#ifdef __USE_CONNECTION_THREAD__
     QMutexLocker lock(_remote->secureSongs());
+#endif
     const RemoteSong &song = _remote->playlistSong(index.row());
     switch (role) {
     case SongRole::title:
@@ -73,64 +76,64 @@ QVariant PlayListModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-bool PlayListModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    if (!_remote)
-        return false;
+//bool PlayListModel::setData(const QModelIndex &index, const QVariant &value, int role)
+//{
+//    if (!_remote)
+//        return false;
 
-    bool update = false;
-    RemoteSong &song = _remote->playlistSong(index.row());
-    switch (role) {
-    case SongRole::title:
-        if (song.title != value.toString())
-        {
-            song.title = value.toString();
-            update = true;
-        }
-        break;
-    case SongRole::track:
-        if (song.track != value.toInt())
-        {
-            song.track = value.toInt();
-            update = true;
-        }
-        break;
-    case SongRole::artist:
-        if (song.artist != value.toString())
-        {
-            song.artist = value.toString();
-            update = true;
-        }
-        break;
-    case SongRole::album:
-        if (song.album != value.toString())
-        {
-            song.album = value.toString();
-            update = true;
-        }
-        break;
-    case SongRole::length:
-        if (song.length != value.toInt())
-        {
-            song.length = value.toInt();
-            update = true;
-        }
-        break;
-    case SongRole::pretty_length:
-        if (song.pretty_length != value.toString())
-        {
-            song.pretty_length = value.toString();
-            update = true;
-        }
-        break;
-    }
+//    bool update = false;
+//    RemoteSong &song = _remote->playlistSong(index.row());
+//    switch (role) {
+//    case SongRole::title:
+//        if (song.title != value.toString())
+//        {
+//            song.title = value.toString();
+//            update = true;
+//        }
+//        break;
+//    case SongRole::track:
+//        if (song.track != value.toInt())
+//        {
+//            song.track = value.toInt();
+//            update = true;
+//        }
+//        break;
+//    case SongRole::artist:
+//        if (song.artist != value.toString())
+//        {
+//            song.artist = value.toString();
+//            update = true;
+//        }
+//        break;
+//    case SongRole::album:
+//        if (song.album != value.toString())
+//        {
+//            song.album = value.toString();
+//            update = true;
+//        }
+//        break;
+//    case SongRole::length:
+//        if (song.length != value.toInt())
+//        {
+//            song.length = value.toInt();
+//            update = true;
+//        }
+//        break;
+//    case SongRole::pretty_length:
+//        if (song.pretty_length != value.toString())
+//        {
+//            song.pretty_length = value.toString();
+//            update = true;
+//        }
+//        break;
+//    }
 
-    if (update) {
-        emit dataChanged(index, index, QVector<int>() << role);
-        return true;
-    }
-    return false;
-}
+//    if (update) {
+//        emit dataChanged(index, index, QVector<int>() << role);
+//        return true;
+//    }
+//    return false;
+//}
 
 Qt::ItemFlags PlayListModel::flags(const QModelIndex &index) const
 {

@@ -48,7 +48,9 @@ const QMap<pb::remote::ShuffleMode, ushort> ClementineRemote::sQmlShuffleCodes =
 
 ClementineRemote::ClementineRemote(QObject *parent):
     QObject(parent), Singleton<ClementineRemote>(),
+#ifdef __USE_CONNECTION_THREAD__
     _thread(),
+#endif
     _connection(new ConnectionWorker(this)),
     #if defined( Q_OS_WIN )
     _settings("clemRemote.ini", QSettings::Format::IniFormat),
@@ -58,7 +60,10 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _clemVersion(), _clemState(pb::remote::Idle), _previousClemState(pb::remote::Idle),
     _volume(0), _shuffleMode(pb::remote::Shuffle_Off), _repeatMode(pb::remote::Repeat_Off),
     _playlists(), _dispPlaylist(nullptr), _dispPlaylistId(0), _dispPlaylistIndex(0),
-    _songs(), _activeSong(), _activeSongIndex(0), _secureSongs(),
+    _songs(), _activeSong(), _activeSongIndex(0),
+#ifdef __USE_CONNECTION_THREAD__
+    _secureSongs(),
+#endif
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
     _playlistModel(new PlayListModel),
@@ -67,30 +72,37 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _clemFilesSupport(false),
     _remoteFilesPath(_settings.value("remotePath", "./").toString()),
-    _remoteFiles(), _secureRemoteFiles()
+    _remoteFiles()
+#ifdef __USE_CONNECTION_THREAD__
+    , _secureRemoteFiles()
+#endif
 {
     _playlistModel->setRemote(this);
 #ifdef __USE_PLAYLIST_PROXY_MODEL__
     _playlistProxyModel->setSourceModel(_playlistModel);
 #endif
+#ifdef __USE_CONNECTION_THREAD__
     _connection->moveToThread(&_thread);
     _thread.start();
+#endif
 }
 
 ClementineRemote::~ClementineRemote()
 {
     qDebug() << "[MB_TRACE] destruction ClementineRemote";
-    release();
+    close();
 }
 
-void ClementineRemote::release()
+void ClementineRemote::close()
 {
-    qDebug() << "[MB_TRACE] release ClementineRemote";
+    qDebug() << "[MB_TRACE] close ClementineRemote";
     _settings.setValue("remotePath", _remoteFilesPath);
     _settings.sync();
+#ifdef __USE_CONNECTION_THREAD__
     emit _connection->killSocket();
     _thread.quit();
     _thread.wait();
+#endif
 
     qDeleteAll(_playlists);
     _playlists.clear();
@@ -162,14 +174,15 @@ void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs 
         _activePlaylistId = _dispPlaylistId;
     updateCurrentPlaylist();
 
+#ifdef __USE_CONNECTION_THREAD__
     // HACK to resolve ListView issue (displaying empty Rows after the number of elements)
     // cf https://forum.qt.io/topic/120302/listview-with-qsortfilterproxymodel-displays-empty-lines-resulting-to-the-error-unable-to-assign-undefined-to-qstring
     qint32 proxyRows = _playlistProxyModel->rowCount();
     Q_UNUSED(proxyRows)
 //    qDebug() << "proxy row count before removal: " << proxyRows;
 
-
     QMutexLocker lock(&_secureSongs);
+#endif
     if (_songs.size())
     {
         emit preClearSongs(_songs.size() - 1);
@@ -252,15 +265,15 @@ void ClementineRemote::dumpPlaylists()
 }
 
 
-#include <QMutexLocker>
 void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseFiles &files)
 {
     if (files.error().size())
         qDebug() << "[MsgType::LIST_FILES] ERROR: " << files.error().c_str();
     else
     {
-
+#ifdef __USE_CONNECTION_THREAD__
         QMutexLocker lock(&_secureRemoteFiles);
+#endif
         if (_remoteFiles.size())
         {
             emit preClearRemoteFiles(_remoteFiles.size() - 1);
