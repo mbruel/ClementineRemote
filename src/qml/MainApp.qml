@@ -598,7 +598,7 @@ Item {
         //TODO get the Slider orientation from C++ QSettings
         // have a Setting page where this can be changed ;)
         useVolumeButtonWithVerticalSlider(true);
-//        useVolumeButtonWithVerticalSlider(false);
+        useVolumeButtonWithVerticalSlider(false);
     }    
 
     function updateShuffle(mode){
