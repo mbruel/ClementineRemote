@@ -67,6 +67,7 @@ Window {
     Loader {
         id: mainArea
         anchors.fill: parent
+        focus: true
     }
 
 //    Component.onCompleted:  mainArea.sourceComponent = mainApp;

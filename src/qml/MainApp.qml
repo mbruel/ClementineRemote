@@ -578,8 +578,8 @@ Item {
         else
         {
             volButton.visible       = false;
-            volButton.anchors.right = volButton.left;
             volPct.anchors.right    = playerBar.right;
+            volButton.anchors.right = volPct.left;
 
             volumeSlider.anchors.left  = undefined;
             volumeSlider.anchors.right = volPct.left;

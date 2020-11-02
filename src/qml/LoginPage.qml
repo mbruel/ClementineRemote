@@ -24,9 +24,6 @@ import QtQuick.Controls 2.15
 
 
 Page {
-//    width: 600
-//    height: 400
-
     property alias errMsg: errMsg;
     title: cppRemote.appTitle()
 
@@ -37,6 +34,10 @@ Page {
         fill: parent.fil;
         margins: 0;
     }
+
+    focus: true
+    Keys.onReturnPressed: connect()
+    Keys.onEnterPressed:  connect()
 
 
     background: Rectangle{
@@ -58,6 +59,7 @@ Page {
 
         opacity: 1
     }
+
 
     Column {
         id : bottomRect
@@ -134,8 +136,9 @@ Page {
             anchors.horizontalCenter: parent.horizontalCenter
             text: " " // to have the empty line
         }
-    }
 
+
+    }
 
     function connect() {
         var ip = ipField.text;
