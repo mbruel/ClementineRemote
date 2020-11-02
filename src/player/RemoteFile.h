@@ -29,14 +29,18 @@ typedef struct RemoteFile
     QString filename;
     bool isDir;
     bool closed;
+    bool selected;
 
 
 public:
-    RemoteFile() = default;
+    RemoteFile(const std::string &name_, bool isDir_):
+        filename(name_.c_str()), isDir(isDir_), selected(false){}
+
+    RemoteFile():
+        filename(), isDir(false), selected(false){}
+
     RemoteFile(const RemoteFile &) = default;
     RemoteFile(RemoteFile &&) = default;
-
-    RemoteFile(const std::string &name_, bool isDir_);
 
     RemoteFile& operator=(const RemoteFile &) = default;
     RemoteFile& operator=(RemoteFile &&) = default;

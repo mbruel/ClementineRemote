@@ -26,6 +26,7 @@
 const QHash<int, QByteArray> RemoteFileModel::sRoleNames = {
     {RemoteFileRole::filename,   "filename"},
     {RemoteFileRole::isDir,      "isDir"},
+    {RemoteFileRole::selected,   "selected"},
 };
 
 
@@ -33,6 +34,20 @@ RemoteFileModel::RemoteFileModel(QObject *parent):
     QAbstractListModel(parent),
     _remote(nullptr)
 {}
+
+void RemoteFileModel::selectAllFiles(bool select)
+{
+    for (int i = 0; i < rowCount() ; ++i)
+    {
+        if (!data(index(i), RemoteFileRole::isDir).toBool())
+            setData(index(i), select, RemoteFileRole::selected);
+    }
+}
+
+void RemoteFileModel::select(int row, bool select)
+{
+    setData(index(row), select, RemoteFileRole::selected);
+}
 
 int RemoteFileModel::rowCount(const QModelIndex &parent) const
 {
@@ -55,41 +70,50 @@ QVariant RemoteFileModel::data(const QModelIndex &index, int role) const
         return file.filename;
     case RemoteFileRole::isDir:
         return file.isDir;
+    case RemoteFileRole::selected:
+        return file.selected;
     }
 
     return QVariant();
 }
 
-//bool RemoteFileModel::setData(const QModelIndex &index, const QVariant &value, int role)
-//{
-//    if (!_remote)
-//        return false;
+bool RemoteFileModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!_remote)
+        return false;
 
-//    bool update = false;
-//    RemoteFile &file = _remote->remoteFile(index.row());
-//    switch (role) {
-//    case RemoteFileRole::filename:
-//        if (file.filename != value.toString())
-//        {
-//            file.filename = value.toString();
-//            update = true;
-//        }
-//        break;
-//    case RemoteFileRole::isDir:
-//        if (file.isDir != value.toInt())
-//        {
-//            file.isDir = value.toBool();
-//            update = true;
-//        }
-//        break;
-//    }
+    bool update = false;
+    RemoteFile &file = _remote->remoteFile(index.row());
+    switch (role) {
+    case RemoteFileRole::filename:
+        if (file.filename != value.toString())
+        {
+            file.filename = value.toString();
+            update = true;
+        }
+        break;
+    case RemoteFileRole::isDir:
+        if (file.isDir != value.toBool())
+        {
+            file.isDir = value.toBool();
+            update = true;
+        }
+        break;
+    case RemoteFileRole::selected:
+        if (file.selected != value.toBool())
+        {
+            file.selected = value.toBool();
+            update = true;
+        }
+        break;
+    }
 
-//    if (update) {
-//        emit dataChanged(index, index, QVector<int>() << role);
-//        return true;
-//    }
-//    return false;
-//}
+    if (update) {
+        emit dataChanged(index, index, {role});
+        return true;
+    }
+    return false;
+}
 
 
 Qt::ItemFlags RemoteFileModel::flags(const QModelIndex &index) const
