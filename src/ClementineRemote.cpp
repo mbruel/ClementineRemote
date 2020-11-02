@@ -29,7 +29,7 @@
 #include <QDataStream>
 
 const QString ClementineRemote::sAppName = "ClementineRemote";
-const QString ClementineRemote::sVersion = "0.1";
+const QString ClementineRemote::sVersion = "0.2";
 const QString ClementineRemote::sAppTitle = tr("Clementine Remote");
 const QPair<ushort, ushort> ClementineRemote::sClemFilesSupportMinVersion = {1, 4};
 
