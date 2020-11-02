@@ -451,7 +451,8 @@ Item {
             id: volumeSlider
             value: cppRemote.volume()/100
 
-            width: parent.width - volPct.width - (headerButtonSize + commandsRow.spacing + toolBarMargin) * 4
+            property int resizableWidth : parent.width - volPct.width - (headerButtonSize + commandsRow.spacing + toolBarMargin) * 4
+            width: resizableWidth
 
             anchors{
                 right: volPct.left
@@ -501,6 +502,31 @@ Item {
                 }
             }
 
+
+            transform: [
+                Rotation {
+                    id: rotationSliderVol
+                    origin { x: 0; y: 0; z: 0}
+                    angle: 0
+                }
+            ]
+        }
+
+        ImageButton {
+            id: volButton
+
+            anchors{
+                right: volPct.left
+                bottom: parent.bottom
+                bottomMargin: toolBarMargin
+//                rightMargin: toolBarMargin
+            }
+
+            visible: false
+
+            size: headerButtonSize
+            source: "icons/sound.png";
+            onClicked: {volumeSlider.visible = !volumeSlider.visible;}
         }
 
         Text{
@@ -533,18 +559,47 @@ Item {
     }
 
 
+    function useVolumeButtonWithVerticalSlider(useVolButton)
+    {
+        if (useVolButton)
+        {
+            // make volButton visible and invert its position with volPct
+            volButton.visible       = true;
+            volButton.anchors.right = playerBar.right;
+            volPct.anchors.right    = volButton.left;
+
+            // rotate volumeSlider and set it above volButton
+            volumeSlider.anchors.right = undefined;
+            volumeSlider.anchors.left  = volButton.left;
+            rotationSliderVol.angle    = -90;
+            volumeSlider.width         = 200;
+            volumeSlider.visible       = false;
+        }
+        else
+        {
+            volButton.visible       = false;
+            volButton.anchors.right = volButton.left;
+            volPct.anchors.right    = playerBar.right;
+
+            volumeSlider.anchors.left  = undefined;
+            volumeSlider.anchors.right = volPct.left;
+            rotationSliderVol.angle    = 0;
+            volumeSlider.width         = Qt.binding(function() { return volumeSlider.resizableWidth; })
+            volumeSlider.visible       = true;
+        }
+    }
+
     Component.onCompleted: {
         changeMainMenu(toolBarIndex);
         updatePlayerState();
         updateRepeat(cppRemote.repeatMode());
         updateShuffle(cppRemote.shuffleMode());
 
-        if (volumeSlider.width < volPct.width)
-        {
-            volPct.visible = false;
-            volumeSlider.width = parent.width - (headerButtonSize + commandsRow.spacing + toolBarMargin) * 4;
-        }
-    }
+        //TODO get the Slider orientation from C++ QSettings
+        // have a Setting page where this can be changed ;)
+        useVolumeButtonWithVerticalSlider(true);
+//        useVolumeButtonWithVerticalSlider(false);
+    }    
 
     function updateShuffle(mode){
         switch(mode)
@@ -603,8 +658,8 @@ Item {
             trackSlider.value  = pos / trackLength
         }
 
-        function onVolume(vol){
-            volPct = cppRemote.volumePct()
+        function onUpdateVolume(vol){
+            volPct.text = cppRemote.volumePct()
             volumeSlider.value = vol / 100;
         }
 
