@@ -4,8 +4,8 @@
 Remote for Clementine Music Player developped in C++/QT5/QML to be available on any OS. <br/>
 Its main goal is to add the Files View missing in the Android Remote.
 
-<img align="left"  width="400" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/icon.png" alt="ClementineRemote on Debian"/>
-<img align="right" width="400" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_iOS.png" alt="ClementineRemote on iPhone SE"/>
+
+<img width="400" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_v0.1.png" alt="ClementineRemote on Debian"/> <img width="400" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_iOS.png" alt="ClementineRemote on iPhone SE"/>
 
 ### How to build
 #### Dependencies:
