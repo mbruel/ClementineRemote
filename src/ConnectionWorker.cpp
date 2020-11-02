@@ -46,6 +46,8 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::repeat,               this, &ConnectionWorker::onRepeat,               Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::changePlaylist,       this, &ConnectionWorker::onChangePlaylist,       Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::getServerFiles,       this, &ConnectionWorker::onGetServerFiles,       Qt::QueuedConnection);
+    connect(_remote, &ClementineRemote::sendFilesToAppend,    this, &ConnectionWorker::onSendFilesToAppend,    Qt::QueuedConnection);
+
 
     connect(&_timeout, &QTimer::timeout, this, &ConnectionWorker::onSocketTimeout);
 
@@ -114,7 +116,7 @@ void ConnectionWorker::onPreviousSong()
 {
     qDebug() << "[ConnectionWorker::onPreviousSong]";
     int currentIndex = static_cast<int>(_remote->currentSongIndex()) - 1;
-    if (currentIndex > 0 )
+    if (currentIndex >= 0 )
         onChangeToSong(currentIndex);
 }
 
@@ -227,9 +229,14 @@ void ConnectionWorker::onGetServerFiles(QString currentPath, QString subFolder)
 
     pb::remote::Message msg;
     msg.set_type(pb::remote::REQUEST_FILES);
-    msg.mutable_request_files()->set_relativepath(currentPath.toStdString());
+    msg.mutable_request_list_files()->set_relative_path(currentPath.toStdString());
 
     sendDataToServer(msg);
+}
+
+void ConnectionWorker::onSendFilesToAppend()
+{
+    _remote->doSendFilesToAppend();
 }
 
 void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)

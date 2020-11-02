@@ -71,8 +71,8 @@ public:
 
 QString RemoteSong::str() const
 {
-    return QString("#%1 %2 (title: %3, length: %4 (%5), size: %6)").arg(
-                id).arg(filename).arg(title).arg(pretty_length).arg(length).arg(file_size);
+    return QString("#%1 %2 (title: %3, length: %4 (%5), size: %6, index: %7)").arg(
+                id).arg(filename).arg(title).arg(pretty_length).arg(length).arg(file_size).arg(index);
 }
 
 #endif // REMOTESONG_H

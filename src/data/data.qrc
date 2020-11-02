@@ -43,5 +43,8 @@
         <file>icons/selection.png</file>
         <file>icons/select_all.png</file>
         <file>icons/click.png</file>
+        <file>icons/addToPlayList.png</file>
+        <file>icons/addToList.png</file>
+        <file>icons/newDoc.png</file>
     </qresource>
 </RCC>

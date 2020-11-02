@@ -204,7 +204,9 @@ Rectangle {
         title: "TODO"
 
         Label {
+            width: parent.width
             text: "this feature is not implemented yet..."
+            wrapMode: Text.WordWrap
         }
     }
 

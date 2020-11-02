@@ -19,6 +19,7 @@
 //
 //========================================================================
 import QtQuick 2.0
+import QtQuick.Controls 2.15
 
 import RemoteFile 1.0
 
@@ -26,13 +27,12 @@ Rectangle {
     id: root
     radius: 10
 
-    property bool  selectionMode: false
-    property int headerButtonSize   : 30
-    property int headerSpacing      : 5
-
-    property int lineHeigth: 25
-
-    property color colorSelected: "lightblue"
+    property bool  selectionMode       : false
+    property int   newPlaylistNameWidth: 100
+    property int   headerButtonSize    : 30
+    property int   headerSpacing       : 5
+    property int   lineHeigth          : 25
+    property color colorSelected       : "lightblue"
 
 
     Rectangle{
@@ -104,13 +104,9 @@ Rectangle {
         }
     }
 
-    function resetSelectionMode(){
-        selectionMode = false;
-        filesView.selectAllFiles(false);
-    }
-
     ListView {
         id: filesView
+        focus: true
 
         model: RemoteFileModel {
             remote: cppRemote
@@ -129,6 +125,8 @@ Rectangle {
         function selectAllFiles(selectAll)
         {
             model.selectAllFiles(selectAll);
+            if (!selectAll)
+                filesView.currentIndex = -1;
         }
 
         function selectCurrentFile(select){
@@ -150,39 +148,97 @@ Rectangle {
         color: "white"
         border.color: "black"
 
-        Row{
-            width: parent.width
-            spacing: headerSpacing
+
+
+        ImageButton {
+            id:   selectModeButton
+            size: headerButtonSize
             anchors {
-//                leftMargin: 20;
+                left: parent.left
+                leftMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: selectionMode ? "icons/selection.png" :  "icons/click.png";
+            onClicked: {
+                selectionMode = !selectionMode
+                if (selectionMode)
+                    filesView.selectCurrentFile(true);
+                else
+                    filesView.selectAllFiles(false);
+//                print("[ServerFiles] change selection mode: " + selectionMode)
+            }
+        }
+
+        ImageButton {
+            id:   selectAllButton
+            size: headerButtonSize
+            anchors {
+                left: selectModeButton.right
+                leftMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/select_all.png";
+            onClicked: {
+                selectionMode = !cppRemote.allFilesSelected();
+                filesView.selectAllFiles(selectionMode);;
+//                print("[ServerFiles] selectAll: " + selectionMode);
+            }
+        }
+
+
+        ImageButton {
+            id:   appendButton
+            size: headerButtonSize
+            anchors {
+                right: newPlaylistNameField.left
+                rightMargin: 2*headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/addToPlayList.png";
+            onClicked: sendSelectedFiles("");
+        }
+
+
+        TextField {
+            id: newPlaylistNameField
+            placeholderText: qsTr("new playlist")
+            horizontalAlignment: TextInput.AlignHCenter
+            height: parent.height - 4
+            width: newPlaylistNameWidth
+
+            anchors {
+                right: newPlaylistButton.left
+                rightMargin: headerSpacing / 2
                 verticalCenter: parent.verticalCenter
             }
 
-            ImageButton {
-                id:   selectModeButton
-                size: headerButtonSize
-                source: selectionMode ? "icons/selection.png" :  "icons/click.png";
-                onClicked: {
-                    selectionMode = !selectionMode
-                    if (selectionMode)
-                        filesView.selectCurrentFile(true);
-                    else
-                        filesView.selectAllFiles(false);
-                    print("[ServerFiles] change selection mode: " + selectionMode)
-                }
-            }
+            color: "black"
+            background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
+        }
 
-            ImageButton {
-                id:   selectAllButton
-                size: headerButtonSize
-                source: "icons/select_all.png";
-                onClicked: {
-                    selectionMode = !selectionMode;
-                    filesView.selectAllFiles(selectionMode);;
-                    print("[ServerFiles] selectAll: " + selectionMode);
+
+        ImageButton {
+            id:   newPlaylistButton
+            size: headerButtonSize
+            anchors {
+                right: parent.right
+                rightMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/newDoc.png";
+            onClicked: {
+                if (newPlaylistNameField.text === "")
+                {
+                    infoDialog.title = "No playlist name";
+                    infoDialog.text  = "Please enter a name for the new playlist\
+ if you wish to create one...";
+                    infoDialog.open();
                 }
+                else
+                    sendSelectedFiles(newPlaylistNameField.text);
             }
         }
+
     }
 
     Component.onCompleted: {
@@ -192,6 +248,7 @@ Rectangle {
             nextPathButton.visible = false;
             relativePath.width = root.width - 2*(headerButtonSize + headerSpacing + headerSpacing)
         }
+        filesView.currentIndex = -1; // no default selection
     }
 
     Connections{
@@ -257,7 +314,11 @@ Rectangle {
                         cppRemote.getServerFiles(relativePath.text, filename);
                     }
                     else
-                        print("TODO: double click on Remote File!");
+                    {
+                        selected = true;
+                        sendSelectedFiles("");
+                        selected = false;
+                    }
                 }
 
                 onPressAndHold: {
@@ -268,5 +329,42 @@ Rectangle {
                 }
             }
         }
+    }
+
+    Dialog {
+        id: infoDialog
+        property alias text: infoLbl.text
+
+        width: root.width * 2/3
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+
+        title: "TODO"
+
+        Label {
+            id: infoLbl
+            width: parent.width
+            text: "to be set..."
+            wrapMode: Text.WordWrap
+        }
+    }
+
+    function resetSelectionMode(){
+        selectionMode = false;
+        filesView.selectAllFiles(false);
+    }
+
+    function sendSelectedFiles(newPlaylist){
+        let nbSelectedFiles = cppRemote.sendSelectedFiles(newPlaylist);
+        if (nbSelectedFiles === 0)
+        {
+//            print("no selected files to send...");
+            infoDialog.title = "No selected file";
+            infoDialog.text  = "Please select at least one file...";
+            infoDialog.open();
+        }
+//        else
+//            print("sendSelectedFiles " + nbSelectedFiles);
+        resetSelectionMode();
     }
 }

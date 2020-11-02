@@ -29,7 +29,7 @@
 #include <QSettings>
 #ifdef __USE_CONNECTION_THREAD__
 #include <QThread>
-#include <QReadWriteLock>
+#include <QMutex>
 #endif
 class ConnectionWorker;
 class RemotePlaylist;
@@ -75,7 +75,7 @@ private:
     RemoteSong              _activeSong;        //!< song played (or about to) on the server (pb::remote::CURRENT_METAINFO)
     qint32                  _activeSongIndex;   //!< active song index in _songs
 #ifdef __USE_CONNECTION_THREAD__
-    QReadWriteLock          _secureSongs;
+    QMutex                  _secureSongs;
     pb::remote::Message     _songsData;
 #endif
 
@@ -95,9 +95,12 @@ private:
     QString                 _remoteFilesPath;
     QList<RemoteFile>       _remoteFiles;
 #ifdef __USE_CONNECTION_THREAD__
-    QReadWriteLock          _secureRemoteFiles;
+    QMutex                  _secureRemoteFilesData;
     pb::remote::Message     _remoteFilesData;
 #endif
+
+    QMutex                  _secureFilesToAppend;
+    pb::remote::Message     _filesToAppend;
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -112,9 +115,13 @@ public:
     inline int modelRowFromProxyRow(int proxyRow) const;
 #endif
 
-    Q_INVOKABLE inline bool hideServerFilesPreviousNextNavButtons() const;
+    inline Q_INVOKABLE bool hideServerFilesPreviousNextNavButtons() const;
 
     Q_INVOKABLE void close();
+
+    Q_INVOKABLE int sendSelectedFiles(const QString &newPlaylistName = "");
+    Q_INVOKABLE bool allFilesSelected() const;
+    void doSendFilesToAppend();
 
     inline const QString &remoteFilesPath() const;
     inline Q_INVOKABLE QString remoteFilesPath_QML() const; //!< can't use refs in QML...
@@ -159,7 +166,7 @@ public:
 
     inline const RemoteSong & currentSong() const;
     inline Q_INVOKABLE int currentSongIndex() const;
-    void updateCurrentSongIdx(qint32 currentSongID);
+    void updateCurrentSongIdx(qint32 currentSongIndex);
 
     inline int numberOfPlaylistSongs() const;
     inline const RemoteSong &playlistSong(int index) const;
@@ -179,6 +186,7 @@ public:
 
     void parseMessage(const QByteArray& data);
 
+
 private:
     void dumpCurrentPlaylist();
 
@@ -188,7 +196,7 @@ private:
     void dumpPlaylists();
 
     void rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs);
-    void rcvListOfRemoteFiles(const pb::remote::ResponseFiles &files);
+    void rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files);
 
 
 
@@ -210,6 +218,8 @@ signals:
     void repeat(ushort mode);
 
     void getServerFiles(QString currentPath, QString subFolder = "");
+
+    void sendFilesToAppend();
 
 
     // signals sent from ConnectionWorker to QML

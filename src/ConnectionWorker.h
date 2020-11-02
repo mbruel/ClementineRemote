@@ -64,6 +64,9 @@ public:
     inline const QString &disconnectReason() const;
     inline void setDisconnectReason(const QString &disconnectReason);
 
+    // Sends data to client without check if authenticated
+    void sendDataToServer(pb::remote::Message &msg);
+
 signals:
     void connectToServer(const QString &host, ushort port, int auth_code);
     void disconnectFromServer();
@@ -89,7 +92,7 @@ private slots:
     void onChangePlaylist(qint32 pIdx);
 
     void onGetServerFiles(QString currentPath, QString subFolder);
-
+    void onSendFilesToAppend();
 
 
 
@@ -102,9 +105,6 @@ private slots:
 
 
 private:
-    // Sends data to client without check if authenticated
-    void sendDataToServer(pb::remote::Message &msg);
-
     void _doChangeSong(int songIndex, qint32 playlistID);
 };
 

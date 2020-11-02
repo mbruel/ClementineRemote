@@ -46,7 +46,9 @@ void RemoteFileModel::selectAllFiles(bool select)
 
 void RemoteFileModel::select(int row, bool select)
 {
-    setData(index(row), select, RemoteFileRole::selected);
+    QModelIndex idx = index(row);
+    if (idx.isValid())
+        setData(index(row), select, RemoteFileRole::selected);
 }
 
 int RemoteFileModel::rowCount(const QModelIndex &parent) const
