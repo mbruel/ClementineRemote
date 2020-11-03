@@ -15,7 +15,7 @@
    limitations under the License.
 */
 
-// Note: this file is licensed under the Apache License instead of GPL, so 
+// Note: this file is licensed under the Apache License instead of GPL, so
 // 3rd party applications or libraries can use another license besides GPL.
 
 syntax = "proto2";
@@ -84,9 +84,7 @@ enum MsgType {
   GLOBAL_SEARCH_STATUS = 56;
   // access Files from remote control
   LIST_FILES = 202;
-
 }
-
 
 // Valid Engine states
 enum EngineState {
@@ -120,7 +118,7 @@ message SongMetadata {
     STREAM = 99;
   }
 
-  optional int32 id = 1; // unique id of the song
+  optional int32 id = 1;    // unique id of the song
   optional int32 index = 2; // Index of the current row of the active playlist
   optional string title = 3;
   optional string album = 4;
@@ -171,14 +169,10 @@ enum ShuffleMode {
   Shuffle_Albums = 3;
 }
 
-message RequestPlaylists {
-  optional bool include_closed = 1;
-}
+message RequestPlaylists { optional bool include_closed = 1; }
 
 // A Client requests songs from a specific playlist
-message RequestPlaylistSongs {
-  optional int32 id = 1;
-}
+message RequestPlaylistSongs { optional int32 id = 1; }
 
 // Client want to change track
 message RequestChangeSong {
@@ -189,53 +183,42 @@ message RequestChangeSong {
 }
 
 // Set the volume
-message RequestSetVolume {
-  optional int32 volume = 1;
-}
+message RequestSetVolume { optional int32 volume = 1; }
 
 // Repeat and Random messages
-message Repeat {
-  optional RepeatMode repeat_mode = 1;
-}
+message Repeat { optional RepeatMode repeat_mode = 1; }
 
-message Shuffle {
-  optional ShuffleMode shuffle_mode = 1;
-}
+message Shuffle { optional ShuffleMode shuffle_mode = 1; }
 
 // Response from server
 // General info
 message ResponseClementineInfo {
   optional string version = 1;
   optional EngineState state = 2;
+
+  // allowed extensions for REQUEST_FILES and LIST_FILES
+  repeated string files_music_extensions = 3;
 }
 
 // The current song played
-message ResponseCurrentMetadata {
-  optional SongMetadata song_metadata = 1;
-}
+message ResponseCurrentMetadata { optional SongMetadata song_metadata = 1; }
 
 // The playlists in clementine
-message ResponsePlaylists {
-  repeated Playlist playlist = 1;
-}
+message ResponsePlaylists { repeated Playlist playlist = 1; }
 
 // A list of songs in a playlist
 message ResponsePlaylistSongs {
   optional Playlist requested_playlist = 1;
-  
+
   // The songs that are in the playlist
   repeated SongMetadata songs = 2;
 }
 
 // The current state of the play engine
-message ResponseEngineStateChanged {
-  optional EngineState state = 1;
-}
+message ResponseEngineStateChanged { optional EngineState state = 1; }
 
 // Sends the current position of the track
-message ResponseUpdateTrackPosition {  
-  optional int32 position = 1;
-}
+message ResponseUpdateTrackPosition { optional int32 position = 1; }
 
 // The connect message containing the authentication code
 message RequestConnect {
@@ -251,27 +234,21 @@ enum ReasonDisconnect {
   Not_Authenticated = 3;
   Download_Forbidden = 4;
 }
-message ResponseDisconnect {
-  optional ReasonDisconnect reason_disconnect = 1;
-}
+message ResponseDisconnect { optional ReasonDisconnect reason_disconnect = 1; }
 
-message ResponseActiveChanged {
-  optional int32 id = 1;
-}
+message ResponseActiveChanged { optional int32 id = 1; }
 
 // A client requests a new track position
 // position in seconds!
-message RequestSetTrackPosition {
-  optional int32 position = 1;
-}
+message RequestSetTrackPosition { optional int32 position = 1; }
 
 message RequestInsertUrls {
   // In which playlist should the urls be inserted?
   optional int32 playlist_id = 1;
   repeated string urls = 2;
-  optional int32 position = 3 [default=-1];
-  optional bool play_now = 4 [default=false];
-  optional bool enqueue = 5 [default=false];
+  optional int32 position = 3 [ default = -1 ];
+  optional bool play_now = 4 [ default = false ];
+  optional bool enqueue = 5 [ default = false ];
   repeated SongMetadata songs = 6;
 }
 
@@ -284,17 +261,11 @@ message RequestRemoveSongs {
 }
 
 // Messages for opening / closing playlists
-message RequestOpenPlaylist {
-  optional int32 playlist_id = 1;
-}
-message RequestClosePlaylist {
-  optional int32 playlist_id = 1;
-}
+message RequestOpenPlaylist { optional int32 playlist_id = 1; }
+message RequestClosePlaylist { optional int32 playlist_id = 1; }
 
 // Message containing lyrics
-message ResponseLyrics {
-  repeated Lyric lyrics = 1;
-}
+message ResponseLyrics { repeated Lyric lyrics = 1; }
 message Lyric {
   optional string id = 1;
   optional string title = 2;
@@ -346,9 +317,7 @@ message ResponseDownloadTotalSize {
   optional int32 file_count = 2;
 }
 
-message RequestGlobalSearch {
-  optional string query = 1;
-}
+message RequestGlobalSearch { optional string query = 1; }
 
 message ResponseGlobalSearch {
   optional int32 id = 1;
@@ -374,15 +343,12 @@ message ResponseGlobalSearchStatus {
   optional GlobalSearchStatus status = 3;
 }
 
-
 // access the FileSystem remotely from a defined root directory
-message RequestListFiles {
-  optional string relative_path = 1;
-}
+message RequestListFiles { optional string relative_path = 1; }
 
 message FileMetadata {
-    optional string filename  = 1;
-    optional bool   is_dir = 2;
+  optional string filename = 1;
+  optional bool is_dir = 2;
 }
 
 message ResponseListFiles {
@@ -394,25 +360,24 @@ message ResponseListFiles {
     UNKNOWN = 4;
   }
   optional string relative_path = 1;
-  repeated FileMetadata files  = 2;
+  repeated FileMetadata files = 2;
 
   optional Error error = 3;
-  optional string music_extentions = 4; // set on server
 }
 
 message RequestAppendFiles {
   optional string relative_path = 1;
   optional string new_playlist_name = 2;
-  repeated string files  = 3;
+  repeated string files = 3;
   optional bool play_now = 4;
   optional bool clear_first = 5;
 }
 
-
 // The message itself
 message Message {
-  optional int32 version = 1 [default=21];
-  optional MsgType type = 2 [default=UNKNOWN]; // What data is in the message?
+  optional int32 version = 1 [ default = 21 ];
+  optional MsgType type = 2
+      [ default = UNKNOWN ]; // What data is in the message?
 
   optional RequestConnect request_connect = 21;
   optional RequestPlaylists request_playlists = 27;
@@ -432,7 +397,7 @@ message Message {
 
   optional Repeat repeat = 13;
   optional Shuffle shuffle = 14;
-  
+
   optional ResponseClementineInfo response_clementine_info = 15;
   optional ResponseCurrentMetadata response_current_metadata = 16;
   optional ResponsePlaylists response_playlists = 17;

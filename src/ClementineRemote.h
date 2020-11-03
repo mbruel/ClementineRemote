@@ -61,6 +61,7 @@ private:
     QString                 _clemVersion;       //!< Clementine server version (to make sure last updates are available)
     pb::remote::EngineState _clemState;         //!< Empty, Idle, Playing or Paused
     pb::remote::EngineState _previousClemState; //!< used to restart previous selected song on the Remote
+    QStringList             _musicExtensions;   //!< extensions allowed to be seen remotely
     qint32                  _volume;            //!< server volume level
 
     pb::remote::ShuffleMode _shuffleMode;       //!< server shuffle mode

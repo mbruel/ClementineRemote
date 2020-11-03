@@ -58,7 +58,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _settings(QSettings::NativeFormat, QSettings::UserScope, sAppName),
     #endif
     _clemVersion(), _clemState(pb::remote::Idle), _previousClemState(pb::remote::Idle),
-    _volume(0), _shuffleMode(pb::remote::Shuffle_Off), _repeatMode(pb::remote::Repeat_Off),
+    _musicExtensions(), _volume(0),
+    _shuffleMode(pb::remote::Shuffle_Off), _repeatMode(pb::remote::Repeat_Off),
     _playlists(), _dispPlaylist(nullptr), _dispPlaylistId(0), _dispPlaylistIndex(0),
     _songs(), _activeSong(), _activeSongIndex(0),
 #ifdef __USE_CONNECTION_THREAD__
@@ -237,8 +238,8 @@ void ClementineRemote::rcvAllActivePlaylists(const pb::remote::ResponsePlaylists
     _dispPlaylist = nullptr;
     _dispPlaylistId = 0;
 
-    for (auto it = playlists.playlist().cbegin(), itEnd = playlists.playlist().cend(); it != itEnd; ++it)
-        _playlists.append(new RemotePlaylist(*it));
+    for (const auto& pb_playlist : playlists.playlist())
+        _playlists.append(new RemotePlaylist(pb_playlist));
 
     qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << _playlists.size();
     dumpPlaylists();
@@ -295,13 +296,8 @@ void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles 
         {
             emit preAddRemoteFiles(nbRemoteFiles -1 );
             _remoteFiles.reserve(nbRemoteFiles);
-
-            for (auto it = files.files().cbegin(), itEnd = files.files().cend();
-                 it != itEnd; ++it)
-            {
-//                qDebug() << (it->isdir()?"dir":"file") << " : " << it->filename().c_str();
-                _remoteFiles << RemoteFile(it->filename(), it->is_dir());
-            }
+            for (const auto& pb_file : files.files())
+                _remoteFiles << RemoteFile(pb_file.filename(), pb_file.is_dir());
             emit postAddRemoteFiles();
         }
 
@@ -351,11 +347,10 @@ void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs 
         emit preAddSongs(songs.songs_size() -1 );
         _songs.reserve(songs.songs_size());
         qint32 idx = 0;
-        for (auto it = songs.songs().cbegin(), itEnd = songs.songs().cend();
-             it != itEnd; ++it)
+        for (const auto& song : songs.songs())
         {
-            _songs.append(*it);
-            if (it->index() == _activeSong.index)
+            _songs << song;
+            if (song.index() == _activeSong.index)
             {
                 qDebug() << "[MsgType::PLAYLIST_SONGS] current song id: " << _activeSongIndex;
                 _activeSongIndex = idx;
@@ -366,7 +361,7 @@ void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs 
     }
 
     qDebug() << "[MsgType::PLAYLIST_SONGS] Nb Songs: " << _songs.size();
-    dumpCurrentPlaylist();
+//    dumpCurrentPlaylist();
 }
 
 void ClementineRemote::checkClementineVersion()
@@ -411,11 +406,15 @@ void ClementineRemote::parseMessage(const QByteArray &data)
     case pb::remote::INFO:
         _clemVersion = msg.response_clementine_info().version().c_str();
         _clemState   = msg.response_clementine_info().state();
+        _musicExtensions.clear();
+        for (const auto& ext : msg.response_clementine_info().files_music_extensions())
+            _musicExtensions << QString(ext.c_str());
 
         checkClementineVersion();
         qDebug() << "[MsgType::INFO] version: " << _clemVersion
                  << ", state: " << _clemState
-                 << ", support files: " << _clemFilesSupport;
+                 << ", support files: " << _clemFilesSupport
+                 << ", music extensions: " << _musicExtensions;
         break;
 
     case pb::remote::MsgType::CURRENT_METAINFO:
