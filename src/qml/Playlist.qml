@@ -150,7 +150,11 @@ Rectangle {
                     Action {
                         icon.source: "icons/renamePlaylist.png"
                         text: qsTr("Rename Playlist")
-                        onTriggered: renPlaylistDialog.open();
+                        onTriggered: {
+                            renPlaylistDialog.title = qsTr("Rename Playlist ") + playlistCombo.currentText;
+                            renPlaylistDialog.createNewPlaylist = false;
+                            renPlaylistDialog.open();
+                        }
                     }
                     Action {
                         icon.source: "icons/clear.png"
@@ -177,15 +181,25 @@ Rectangle {
                         }
                     }
                     Action {
-                        icon.source: "icons/newFile.png"
-                        text: qsTr("Create new Playlist")
+                        icon.source: "icons/open.png"
+                        text: qsTr("Open a Playlist")
                         onTriggered: {
-                            print("Create playlist");
+                            print("open playlist");
                             todoDialog.open()
                         }
                     }
+                    Action {
+                        icon.source: "icons/newFile.png"
+                        text: qsTr("Create new Playlist")
+                        onTriggered: {
+                            onTriggered: {
+                                renPlaylistDialog.title = qsTr("Create New Playlist ");
+                                renPlaylistDialog.createNewPlaylist = true;
+                                renPlaylistDialog.open();
+                            }
+                        }
+                    }
                 }
-
             }
         }
 
@@ -266,6 +280,12 @@ Rectangle {
         {
             updateCurrentPlaylist(idx);
         }
+
+        function onUpdatePlaylists()
+        {
+            playlistCombo.model = cppRemote.playlistsList()
+            playlistCombo.currentIndex = cppRemote.playlistIndex();
+        }
     }   
 
     Button {
@@ -286,15 +306,15 @@ Rectangle {
     Dialog {
         id: todoDialog
 
-        width: parent.width * 2/3
+        width: root.width * 2/3
 
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
 
         title: "TODO"
 
         Label {
-            width: parent.width
+            width: todoDialog.width
             text: "this feature is not implemented yet..."
             wrapMode: Text.WordWrap
         }
@@ -303,7 +323,9 @@ Rectangle {
     Dialog {
         id: renPlaylistDialog
 
-        width: parent.width * 2/3
+        property bool createNewPlaylist: false
+
+        width: root.width *3/4
 
         x: (parent.width - width) / 2
         y: (parent.height - height) / 2
@@ -311,27 +333,31 @@ Rectangle {
 
         focus: true
         modal: true
-        title: qsTr("Rename Playlist " + playlistCombo.currentText)
         standardButtons: Dialog.Ok | Dialog.Cancel
 
         onAccepted: {
             if (newNameField.text.length > 0)
-                cppRemote.renamePlaylist(cppRemote.currentPlaylistID(), newNameField.text);
+            {
+                if (createNewPlaylist)
+                    cppRemote.createPlaylist(newNameField.text);
+                else
+                    cppRemote.renamePlaylist(cppRemote.currentPlaylistID(), newNameField.text);
+            }
         }
 
         ColumnLayout {
             spacing: 20
             anchors.fill: parent
             Label {
-                elide: Label.ElideRight
-                text: qsTr("Please provide a new name for the Playlist "
-                           + playlistCombo.currentText)
+                id: lbl
+                elide: Label.ElideMiddle
+                text: qsTr("Please provide name for the Playlist")
                 Layout.fillWidth: true
             }
             TextField {
                 id: newNameField
                 focus: true
-                placeholderText: "new playlist name"
+                placeholderText: "playlist name"
                 Layout.fillWidth: true
             }
         }

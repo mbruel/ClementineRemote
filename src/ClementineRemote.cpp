@@ -60,7 +60,11 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _clemVersion(), _clemState(pb::remote::Idle), _previousClemState(pb::remote::Idle),
     _musicExtensions(), _volume(0),
     _shuffleMode(pb::remote::Shuffle_Off), _repeatMode(pb::remote::Repeat_Off),
-    _playlists(), _dispPlaylist(nullptr), _dispPlaylistId(0), _dispPlaylistIndex(0),
+    _playlists(),
+#ifdef __USE_CONNECTION_THREAD__
+    _securePlaylists(),
+#endif
+    _dispPlaylist(nullptr), _dispPlaylistId(0), _dispPlaylistIndex(0),
     _songs(), _activeSong(), _activeSongIndex(0),
 #ifdef __USE_CONNECTION_THREAD__
     _secureSongs(), _songsData(),
@@ -191,8 +195,11 @@ void ClementineRemote::setSongsFilter(const QString &searchTxt)
 #endif
 }
 
-QStringList ClementineRemote::playlistsList() const
+QStringList ClementineRemote::playlistsList()
 {
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_securePlaylists);
+#endif
     QStringList plist;
     for (RemotePlaylist *p : _playlists)
         plist << p->name;
@@ -233,6 +240,9 @@ void ClementineRemote::dumpCurrentPlaylist()
 
 void ClementineRemote::rcvAllActivePlaylists(const pb::remote::ResponsePlaylists &playlists)
 {
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_securePlaylists);
+#endif
     qDeleteAll(_playlists);
     _playlists.clear();
     _dispPlaylist = nullptr;
@@ -241,6 +251,7 @@ void ClementineRemote::rcvAllActivePlaylists(const pb::remote::ResponsePlaylists
     for (const auto& pb_playlist : playlists.playlist())
         _playlists << new RemotePlaylist(pb_playlist);
 
+    emit updatePlaylists();
     qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << _playlists.size();
     dumpPlaylists();
 }
@@ -306,6 +317,17 @@ void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles 
 
         _remoteFilesPath = files.relative_path().c_str();
         emit updateRemoteFilesPath(_remoteFilesPath);
+    }
+}
+
+void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios)
+{
+    qDebug() << "[MsgType::REQUEST_SAVED_RADIOS]";
+    for (const auto &radio: radios.streams())
+    {
+        qDebug() << "Radio: " << radio.name().c_str()
+                 << " : " << radio.url().c_str()
+                 << ", logo: " << radio.url_logo().c_str();
     }
 }
 
@@ -466,6 +488,8 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         _initialized = true;
         qDebug() << "[MsgType::FIRST_DATA_SENT_COMPLETE] fully Initialized \\o/";
         emit connected();
+        if (_clemFilesSupport)
+            _connection->requestSavedRadios();
         break;
 
     case pb::remote::PLAY:
@@ -500,6 +524,10 @@ void ClementineRemote::parseMessage(const QByteArray &data)
 #else
         rcvListOfRemoteFiles(msg.response_files());
 #endif
+        break;
+
+    case pb::remote::REQUEST_SAVED_RADIOS:
+        rcvSavedRadios(msg.response_saved_radios());
         break;
 
     default:

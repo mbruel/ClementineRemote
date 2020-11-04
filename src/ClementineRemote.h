@@ -68,6 +68,9 @@ private:
     pb::remote::RepeatMode  _repeatMode;        //!< server repeat mode
 
     QList<RemotePlaylist*>  _playlists;         //!< list of all the Playlists (both locally and on server)
+#ifdef __USE_CONNECTION_THREAD__
+    QMutex                  _securePlaylists;
+#endif
     RemotePlaylist         *_dispPlaylist;      //!< Playlist displayed on the Remote
     qint32                  _dispPlaylistId;    //!< ID of the displayed Playlist
     qint32                  _dispPlaylistIndex; //!< index in _playlists of the displayed Playlist
@@ -156,7 +159,7 @@ public:
     inline Q_INVOKABLE ushort repeatMode() const;
     inline Q_INVOKABLE ushort shuffleMode()const;
 
-    Q_INVOKABLE QStringList playlistsList() const;
+    Q_INVOKABLE QStringList playlistsList();
     inline const QList<RemotePlaylist*> &playlists() const;
     inline RemotePlaylist *playlist(int idx) const;
     inline Q_INVOKABLE int playlistIndex() const;
@@ -198,7 +201,7 @@ private:
 
     void rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs);
     void rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files);
-
+    void rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios);
 
 
 
@@ -222,6 +225,7 @@ signals:
 
     void sendFilesToAppend();
 
+    void createPlaylist(const QString &newPlaylistName);
     void savePlaylist(qint32 playlistID);
     void renamePlaylist(qint32 playlistID, const QString &newPlaylistName);
 
@@ -242,6 +246,7 @@ signals:
 
     void changePlaylist(qint32 idx);
     void updatePlaylist(int idx);
+    void updatePlaylists();
 
     void updateRemoteFilesPath(QString newRemotePath);
 

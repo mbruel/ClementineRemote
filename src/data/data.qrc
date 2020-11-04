@@ -53,5 +53,6 @@
         <file>icons/close.png</file>
         <file>icons/clear.png</file>
         <file>icons/newFile.png</file>
+        <file>icons/open.png</file>
     </qresource>
 </RCC>

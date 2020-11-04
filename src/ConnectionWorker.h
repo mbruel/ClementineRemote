@@ -67,6 +67,8 @@ public:
     // Sends data to client without check if authenticated
     void sendDataToServer(pb::remote::Message &msg);
 
+    void requestSavedRadios();
+
 signals:
     void connectToServer(const QString &host, ushort port, int auth_code);
     void disconnectFromServer();
@@ -94,6 +96,7 @@ private slots:
     void onGetServerFiles(QString currentPath, QString subFolder);
     void onSendFilesToAppend();
 
+    void onCreatePlaylist(const QString &newPlaylistName);
     void onSavePlaylist(qint32 playlistID);
     void onRenamePlaylist(qint32 playlistID, const QString &newPlaylistName);
 
