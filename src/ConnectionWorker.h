@@ -94,6 +94,9 @@ private slots:
     void onGetServerFiles(QString currentPath, QString subFolder);
     void onSendFilesToAppend();
 
+    void onSavePlaylist(qint32 playlistID);
+    void onRenamePlaylist(qint32 playlistID, const QString &newPlaylistName);
+
 
 
 // Socket handlers

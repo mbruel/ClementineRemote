@@ -33,14 +33,17 @@ typedef struct RemotePlaylist
     qint32 item_count;
     bool active;
     bool closed;
-
+    bool favorite;
 
 public:
     RemotePlaylist() = default;
     RemotePlaylist(const RemotePlaylist &) = default;
     RemotePlaylist(RemotePlaylist &&) = default;
 
-    RemotePlaylist(const pb::remote::Playlist &p);
+    RemotePlaylist(const pb::remote::Playlist &p):
+        id(p.id()), name(p.name().c_str()), item_count(p.item_count()),
+        active(p.active()), closed(p.closed()), favorite(p.favorite())
+    {}
 
     RemotePlaylist& operator=(const RemotePlaylist &) = default;
     RemotePlaylist& operator=(RemotePlaylist &&) = default;
@@ -52,8 +55,8 @@ public:
 
 QString RemotePlaylist::str() const
 {
-    return QString("#%1 %2 (nbSongs: %3, active: %4, closed: %5)").arg(
-                id).arg(name).arg(item_count).arg(active).arg(closed);
+    return QString("#%1 %2 (nbSongs: %3, active: %4, closed: %5, fav: %6)").arg(
+                id).arg(name).arg(item_count).arg(active).arg(closed).arg(favorite);
 }
 
 #endif // REMOTEPLAYLIST_H

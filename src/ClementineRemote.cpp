@@ -239,7 +239,7 @@ void ClementineRemote::rcvAllActivePlaylists(const pb::remote::ResponsePlaylists
     _dispPlaylistId = 0;
 
     for (const auto& pb_playlist : playlists.playlist())
-        _playlists.append(new RemotePlaylist(pb_playlist));
+        _playlists << new RemotePlaylist(pb_playlist);
 
     qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << _playlists.size();
     dumpPlaylists();

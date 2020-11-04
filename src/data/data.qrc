@@ -46,5 +46,12 @@
         <file>icons/addToPlayList.png</file>
         <file>icons/addToList.png</file>
         <file>icons/newDoc.png</file>
+        <file>icons/star.png</file>
+        <file>icons/refresh.png</file>
+        <file>icons/renamePlaylist.png</file>
+        <file>icons/delete.png</file>
+        <file>icons/close.png</file>
+        <file>icons/clear.png</file>
+        <file>icons/newFile.png</file>
     </qresource>
 </RCC>

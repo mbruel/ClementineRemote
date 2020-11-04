@@ -47,6 +47,8 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::changePlaylist,       this, &ConnectionWorker::onChangePlaylist,       Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::getServerFiles,       this, &ConnectionWorker::onGetServerFiles,       Qt::QueuedConnection);
     connect(_remote, &ClementineRemote::sendFilesToAppend,    this, &ConnectionWorker::onSendFilesToAppend,    Qt::QueuedConnection);
+    connect(_remote, &ClementineRemote::savePlaylist,         this, &ConnectionWorker::onSavePlaylist,         Qt::QueuedConnection);
+    connect(_remote, &ClementineRemote::renamePlaylist,       this, &ConnectionWorker::onRenamePlaylist,       Qt::QueuedConnection);
 
 
     connect(&_timeout, &QTimer::timeout, this, &ConnectionWorker::onSocketTimeout);
@@ -237,6 +239,24 @@ void ConnectionWorker::onGetServerFiles(QString currentPath, QString subFolder)
 void ConnectionWorker::onSendFilesToAppend()
 {
     _remote->doSendFilesToAppend();
+}
+
+void ConnectionWorker::onSavePlaylist(qint32 playlistID)
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::UPDATE_PLAYLIST);
+    msg.mutable_request_update_playlist()->set_playlist_id(playlistID);
+    msg.mutable_request_update_playlist()->set_favorite(true);
+    sendDataToServer(msg);
+}
+
+void ConnectionWorker::onRenamePlaylist(qint32 playlistID, const QString &newPlaylistName)
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::UPDATE_PLAYLIST);
+    msg.mutable_request_update_playlist()->set_playlist_id(playlistID);
+    msg.mutable_request_update_playlist()->set_new_playlist_name(newPlaylistName.toStdString());
+    sendDataToServer(msg);
 }
 
 void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)

@@ -52,8 +52,6 @@ SOURCES += \
         PlayListModel.cpp \
         RemoteFileModel.cpp \
         main.cpp \
-        player/RemotePlaylist.cpp \
-        player/RemoteSong.cpp \
         protobuf/remotecontrolmessages.pb.cc
 
 RESOURCES += \

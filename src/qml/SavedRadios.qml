@@ -18,10 +18,13 @@
 // USA.
 //
 //========================================================================
+import QtQuick 2.0
+import QtQuick.Controls 2.15
 
-#include "RemotePlaylist.h"
+import RemoteFile 1.0
 
-RemotePlaylist::RemotePlaylist(const pb::remote::Playlist &p):
-    id(p.id()), name(p.name().c_str()), item_count(p.item_count()),
-    active(p.active()), closed(p.closed())
-{}
+Rectangle {
+    id: root
+    radius: 10
+
+}

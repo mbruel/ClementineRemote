@@ -52,8 +52,8 @@ Item {
 
         ListElement { name : "playlist" ; color: "white" }
         ListElement { name : "file"     ; color: "lightgray" }
-        ListElement { name : "library"  ; color: "lightblue" }
         ListElement { name : "internet" ; color: "ivory" }
+        ListElement { name : "library"  ; color: "lightblue" }
         ListElement { name : "search"   ; color: "lightgreen" }
     }
 
@@ -109,7 +109,23 @@ Item {
                 mainArea.sourceComponent = filesPage;
             }
             else
-                mainArea.sourceComponent =  filesNotSupported            
+            {
+                mainArea.setSource("NotSupported.qml");
+                mainArea.item.title = qsTr("Files")
+            }
+        }
+        else if (selectedMenu === 2)
+        {
+            if (cppRemote.clementineFilesSupport())
+            {
+                cppRemote.getServerFiles(cppRemote.remoteFilesPath_QML());
+                mainArea.sourceComponent = radiosPage;
+            }
+            else
+            {
+                mainArea.setSource("NotSupported.qml");
+                mainArea.item.title = qsTr("Radios")
+            }
         }
         else
         {
@@ -685,36 +701,19 @@ Item {
     }
 
     Component {
-        id: filesNotSupported
-
-        Rectangle {
-            anchors{
-                verticalCenter: parent.verticalCenter;
-                fill: parent.fill
-            }
-
-            Text {
-                anchors{
-                    verticalCenter: parent.verticalCenter;
-                    left: parent.left
-                    leftMargin: 10
-                }
-                text: qsTr("<b>Files are not supported</b> server side.") +
-                      "<br/>" + qsTr("The server is running: ")+ cppRemote.clemVersion() +
-                      "<br/>" + qsTr("it should at least be v") + "<b>" + cppRemote.clementineFilesSupportMinVersion() +  "</b>"
-
-                width: parent.width - 10
-                wrapMode: Text.WordWrap
-            }
-        }
-    }
-
-    Component {
         id: filesPage
 
         ServerFiles {
             anchors.fill  : parent
             headerButtonSize: headerButtonSize
+        }
+    }
+
+    Component {
+        id: radiosPage
+
+        SavedRadios {
+            anchors.fill  : parent
         }
     }
 

@@ -182,7 +182,7 @@ public:
     inline RemoteFile &remoteFile(int index);
 
 
-    qint32 currentPlaylistID() const;
+    Q_INVOKABLE qint32 currentPlaylistID() const;
     qint32 activePlaylistID() const;
 
     void parseMessage(const QByteArray& data);
@@ -221,6 +221,9 @@ signals:
     void getServerFiles(QString currentPath, QString subFolder = "");
 
     void sendFilesToAppend();
+
+    void savePlaylist(qint32 playlistID);
+    void renamePlaylist(qint32 playlistID, const QString &newPlaylistName);
 
 
     // signals sent from ConnectionWorker to QML

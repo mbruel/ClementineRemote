@@ -9,5 +9,7 @@
         <file>Playlist.qml</file>
         <file>ImageButton.qml</file>
         <file>ServerFiles.qml</file>
+        <file>SavedRadios.qml</file>
+        <file>NotSupported.qml</file>
     </qresource>
 </RCC>

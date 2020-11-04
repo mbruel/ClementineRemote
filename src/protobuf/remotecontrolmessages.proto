@@ -36,6 +36,7 @@ enum MsgType {
   REMOVE_SONGS = 9;
   OPEN_PLAYLIST = 10;
   CLOSE_PLAYLIST = 11;
+  UPDATE_PLAYLIST = 60;
   GET_LYRICS = 14;
   DOWNLOAD_SONGS = 15;
   SONG_OFFER_RESPONSE = 16;
@@ -46,6 +47,7 @@ enum MsgType {
   GET_LIBRARY = 18;
   RATE_SONG = 19;
   GLOBAL_SEARCH = 100;
+  REQUEST_SAVED_RADIOS = 110;
   // access Files from remote control
   REQUEST_FILES = 200;
   APPEND_FILES = 201;
@@ -118,8 +120,8 @@ message SongMetadata {
     STREAM = 99;
   }
 
-  optional int32 id = 1;    // unique id of the song
-  optional int32 index = 2; // Index of the current row of the active playlist
+  optional int32 id = 1;     // unique id of the song
+  optional int32 index = 2;  // Index of the current row of the active playlist
   optional string title = 3;
   optional string album = 4;
   optional string artist = 5;
@@ -135,7 +137,7 @@ message SongMetadata {
   optional bool is_local = 15;
   optional string filename = 16;
   optional int32 file_size = 17;
-  optional float rating = 18; // 0 (0 stars) to 1 (5 stars)
+  optional float rating = 18;  // 0 (0 stars) to 1 (5 stars)
   optional string url = 19;
   optional string art_automatic = 20;
   optional string art_manual = 21;
@@ -149,6 +151,7 @@ message Playlist {
   optional int32 item_count = 3;
   optional bool active = 4;
   optional bool closed = 5;
+  optional bool favorite = 6;
 }
 
 // Valid Repeatmodes
@@ -169,10 +172,14 @@ enum ShuffleMode {
   Shuffle_Albums = 3;
 }
 
-message RequestPlaylists { optional bool include_closed = 1; }
+message RequestPlaylists {
+  optional bool include_closed = 1;
+}
 
 // A Client requests songs from a specific playlist
-message RequestPlaylistSongs { optional int32 id = 1; }
+message RequestPlaylistSongs {
+  optional int32 id = 1;
+}
 
 // Client want to change track
 message RequestChangeSong {
@@ -183,12 +190,18 @@ message RequestChangeSong {
 }
 
 // Set the volume
-message RequestSetVolume { optional int32 volume = 1; }
+message RequestSetVolume {
+  optional int32 volume = 1;
+}
 
 // Repeat and Random messages
-message Repeat { optional RepeatMode repeat_mode = 1; }
+message Repeat {
+  optional RepeatMode repeat_mode = 1;
+}
 
-message Shuffle { optional ShuffleMode shuffle_mode = 1; }
+message Shuffle {
+  optional ShuffleMode shuffle_mode = 1;
+}
 
 // Response from server
 // General info
@@ -201,10 +214,14 @@ message ResponseClementineInfo {
 }
 
 // The current song played
-message ResponseCurrentMetadata { optional SongMetadata song_metadata = 1; }
+message ResponseCurrentMetadata {
+  optional SongMetadata song_metadata = 1;
+}
 
 // The playlists in clementine
-message ResponsePlaylists { repeated Playlist playlist = 1; }
+message ResponsePlaylists {
+  repeated Playlist playlist = 1;
+}
 
 // A list of songs in a playlist
 message ResponsePlaylistSongs {
@@ -215,10 +232,14 @@ message ResponsePlaylistSongs {
 }
 
 // The current state of the play engine
-message ResponseEngineStateChanged { optional EngineState state = 1; }
+message ResponseEngineStateChanged {
+  optional EngineState state = 1;
+}
 
 // Sends the current position of the track
-message ResponseUpdateTrackPosition { optional int32 position = 1; }
+message ResponseUpdateTrackPosition {
+  optional int32 position = 1;
+}
 
 // The connect message containing the authentication code
 message RequestConnect {
@@ -234,21 +255,27 @@ enum ReasonDisconnect {
   Not_Authenticated = 3;
   Download_Forbidden = 4;
 }
-message ResponseDisconnect { optional ReasonDisconnect reason_disconnect = 1; }
+message ResponseDisconnect {
+  optional ReasonDisconnect reason_disconnect = 1;
+}
 
-message ResponseActiveChanged { optional int32 id = 1; }
+message ResponseActiveChanged {
+  optional int32 id = 1;
+}
 
 // A client requests a new track position
 // position in seconds!
-message RequestSetTrackPosition { optional int32 position = 1; }
+message RequestSetTrackPosition {
+  optional int32 position = 1;
+}
 
 message RequestInsertUrls {
   // In which playlist should the urls be inserted?
   optional int32 playlist_id = 1;
   repeated string urls = 2;
-  optional int32 position = 3 [ default = -1 ];
-  optional bool play_now = 4 [ default = false ];
-  optional bool enqueue = 5 [ default = false ];
+  optional int32 position = 3 [default = -1];
+  optional bool play_now = 4 [default = false];
+  optional bool enqueue = 5 [default = false];
   repeated SongMetadata songs = 6;
 }
 
@@ -261,11 +288,22 @@ message RequestRemoveSongs {
 }
 
 // Messages for opening / closing playlists
-message RequestOpenPlaylist { optional int32 playlist_id = 1; }
-message RequestClosePlaylist { optional int32 playlist_id = 1; }
+message RequestOpenPlaylist {
+  optional int32 playlist_id = 1;
+}
+message RequestClosePlaylist {
+  optional int32 playlist_id = 1;
+}
+message RequestUpdatePlaylist {
+  optional int32 playlist_id = 1;
+  optional string new_playlist_name = 2;
+  optional bool favorite = 3;
+}
 
 // Message containing lyrics
-message ResponseLyrics { repeated Lyric lyrics = 1; }
+message ResponseLyrics {
+  repeated Lyric lyrics = 1;
+}
 message Lyric {
   optional string id = 1;
   optional string title = 2;
@@ -290,7 +328,7 @@ message ResponseSongFileChunk {
   optional int32 chunk_count = 2;
   optional int32 file_number = 3;
   optional int32 file_count = 4;
-  optional SongMetadata song_metadata = 6; // only sent with first chunk!
+  optional SongMetadata song_metadata = 6;  // only sent with first chunk!
   optional bytes data = 7;
   optional int32 size = 8;
   optional bytes file_hash = 9;
@@ -305,11 +343,11 @@ message ResponseLibraryChunk {
 }
 
 message ResponseSongOffer {
-  optional bool accepted = 1; // true = client wants to download item
+  optional bool accepted = 1;  // true = client wants to download item
 }
 
 message RequestRateSong {
-  optional float rating = 1; // 0 to 1
+  optional float rating = 1;  // 0 to 1
 }
 
 message ResponseDownloadTotalSize {
@@ -317,7 +355,9 @@ message ResponseDownloadTotalSize {
   optional int32 file_count = 2;
 }
 
-message RequestGlobalSearch { optional string query = 1; }
+message RequestGlobalSearch {
+  optional string query = 1;
+}
 
 message ResponseGlobalSearch {
   optional int32 id = 1;
@@ -344,7 +384,9 @@ message ResponseGlobalSearchStatus {
 }
 
 // access the FileSystem remotely from a defined root directory
-message RequestListFiles { optional string relative_path = 1; }
+message RequestListFiles {
+  optional string relative_path = 1;
+}
 
 message FileMetadata {
   optional string filename = 1;
@@ -361,7 +403,6 @@ message ResponseListFiles {
   }
   optional string relative_path = 1;
   repeated FileMetadata files = 2;
-
   optional Error error = 3;
 }
 
@@ -373,11 +414,19 @@ message RequestAppendFiles {
   optional bool clear_first = 5;
 }
 
+message Stream {
+  optional string name = 1;
+  optional string url = 2;
+}
+message ResponseSavedRadios {
+  repeated Stream streams = 1;
+}
+
 // The message itself
 message Message {
-  optional int32 version = 1 [ default = 21 ];
+  optional int32 version = 1 [default = 21];
   optional MsgType type = 2
-      [ default = UNKNOWN ]; // What data is in the message?
+      [default = UNKNOWN];  // What data is in the message?
 
   optional RequestConnect request_connect = 21;
   optional RequestPlaylists request_playlists = 27;
@@ -389,6 +438,7 @@ message Message {
   optional RequestRemoveSongs request_remove_songs = 26;
   optional RequestOpenPlaylist request_open_playlist = 28;
   optional RequestClosePlaylist request_close_playlist = 29;
+  optional RequestUpdatePlaylist request_update_playlist = 53;
   optional RequestDownloadSongs request_download_songs = 31;
   optional RequestRateSong request_rate_song = 35;
   optional RequestGlobalSearch request_global_search = 37;
@@ -415,4 +465,5 @@ message Message {
   optional ResponseTranscoderStatus response_transcoder_status = 39;
   optional ResponseGlobalSearchStatus response_global_search_status = 40;
   optional ResponseListFiles response_list_files = 52;
+  optional ResponseSavedRadios response_saved_radios = 54;
 }

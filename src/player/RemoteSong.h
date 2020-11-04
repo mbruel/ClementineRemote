@@ -56,7 +56,18 @@ public:
     RemoteSong(const RemoteSong &) = default;
     RemoteSong(RemoteSong &&) = default;
 
-    RemoteSong(const pb::remote::SongMetadata &m);
+    RemoteSong(const pb::remote::SongMetadata &m):
+        id(m.id()), index(m.index()), title(m.title().c_str()), album(m.album().c_str()),
+        artist(m.artist().c_str()), albumartist(m.albumartist().c_str()), track(m.track()),
+        disc(m.disc()), pretty_year(m.pretty_year().c_str()), genre(m.genre().c_str()),
+        playcount(m.playcount()), pretty_length(m.pretty_length().c_str()), length(m.length()),
+        is_local(m.is_local()), filename(m.filename().c_str()), file_size(m.file_size()), rating(m.rating()),
+        url(m.url().c_str()), art_automatic(m.art_automatic().c_str()), art_manual(m.art_manual().c_str()),
+        type(m.type()), art()
+    {
+        if (m.has_art() && m.art().size())
+            art = QImage(m.art().c_str());
+    }
 
     RemoteSong& operator=(const RemoteSong &) = default;
     RemoteSong& operator=(RemoteSong &&) = default;
@@ -65,7 +76,7 @@ public:
 
     inline QString  str() const;
 
-//    RemoteSong& operator=(const pb::remote::SongMetadata &m);
+//    inline RemoteSong& operator=(const pb::remote::SongMetadata &m);
 } RemoteSong;
 
 
@@ -74,5 +85,33 @@ QString RemoteSong::str() const
     return QString("#%1 %2 (title: %3, length: %4 (%5), size: %6, index: %7)").arg(
                 id).arg(filename).arg(title).arg(pretty_length).arg(length).arg(file_size).arg(index);
 }
+
+/*
+RemoteSong &RemoteSong::operator=(const pb::remote::SongMetadata &m)
+{
+    id = m.id();
+    index = m.index();
+    title = m.title().c_str();
+    album = m.album().c_str();
+    artist = m.artist().c_str();
+    albumartist = m.albumartist().c_str();
+    track = m.track();
+    disc = m.disc();
+    pretty_year = m.pretty_year().c_str();
+    genre = m.genre().c_str();
+    playcount = m.playcount();
+    pretty_length = m.pretty_length().c_str();
+    length = m.length();
+    is_local = m.is_local();
+    filename = m.filename().c_str();
+    file_size = m.file_size();
+    rating = m.rating();
+    url = m.url().c_str();
+    art_automatic = m.art_automatic().c_str();
+    art_manual = m.art_manual().c_str();
+
+    return *this;
+}
+*/
 
 #endif // REMOTESONG_H
