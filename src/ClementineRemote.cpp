@@ -72,9 +72,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
     _playlistModel(new PlayListModel),
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
-     _playlistProxyModel(new PlayListProxyModel),
-#endif
+    _playlistProxyModel(new PlayListProxyModel),
+
     _clemFilesSupport(false),
     _remoteFilesPath(_settings.value("remotePath", "./").toString()),
     _remoteFiles(),
@@ -85,9 +84,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
 {
     setObjectName("ClementineRemote");
     _playlistModel->setRemote(this);
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
     _playlistProxyModel->setSourceModel(_playlistModel);
-#endif
 #ifdef __USE_CONNECTION_THREAD__
     connect(this, &ClementineRemote::songsUpdatedByWorker,
             this, &ClementineRemote::onSongsUpdatedByWorker, Qt::QueuedConnection);
@@ -120,13 +117,11 @@ void ClementineRemote::close()
 
     qDeleteAll(_playlists);
     _playlists.clear();
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
     if (_playlistProxyModel)
     {
         delete _playlistProxyModel;
         _playlistProxyModel = nullptr;
     }
-#endif
     if (_playlistModel)
     {
         delete _playlistModel;
@@ -188,11 +183,9 @@ void ClementineRemote::doSendFilesToAppend()
 void ClementineRemote::setSongsFilter(const QString &searchTxt)
 {
     qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
     Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
     QRegExp regExp(searchTxt, caseSensitivity);
     _playlistProxyModel->setFilterRegExp(regExp);
-#endif
 }
 
 QStringList ClementineRemote::playlistsList()
@@ -217,11 +210,7 @@ void ClementineRemote::updateCurrentSongIdx(qint32 currentSongIndex)
         if (s.index == currentSongIndex)
         {
             _activeSongIndex = idx;
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
             emit currentSongIdx(_playlistProxyModel->mapFromSource(_playlistModel->index(idx)).row());
-#else
-            emit currentSongIdx(idx);
-#endif
             break;
         }
         ++idx;

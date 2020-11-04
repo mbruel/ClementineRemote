@@ -91,9 +91,7 @@ private:
     bool                    _initialized;       //!< did we receive pb::remote::FIRST_DATA_SENT_COMPLETE ?
 
     PlayListModel          *_playlistModel;     //!< Model used to expose the songs to the View
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
     PlayListProxyModel     *_playlistProxyModel;//!< Proxy model used by QML ListView
-#endif
 
     bool                    _clemFilesSupport;
     QString                 _remoteFilesPath;
@@ -115,9 +113,9 @@ private:
 
 public:
     ~ClementineRemote();
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
+
+
     inline int modelRowFromProxyRow(int proxyRow) const;
-#endif
 
     inline Q_INVOKABLE bool hideServerFilesPreviousNextNavButtons() const;
 
@@ -286,14 +284,7 @@ public:
 
 };
 
-QAbstractItemModel *ClementineRemote::playListModel() const
-{
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
-    return _playlistProxyModel;
-#else
-    return _playlistModel;
-#endif
-}
+QAbstractItemModel *ClementineRemote::playListModel() const { return _playlistProxyModel; }
 
 int ClementineRemote::nbSongs() const { return _songs.size(); }
 
@@ -346,11 +337,7 @@ const RemoteSong & ClementineRemote::currentSong() const { return _activeSong; }
 //uint ClementineRemote::currentSongIndex() const { return _activeSongIndex; }
 int ClementineRemote::currentSongIndex() const
 {
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
     return _playlistProxyModel->mapFromSource(_playlistModel->index(_activeSongIndex)).row();
-#else
-    return _activeSongIndex;
-#endif
 }
 
 int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
@@ -406,7 +393,6 @@ QString ClementineRemote::disconnectReason(short reason) const
     }
 }
 
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
 int ClementineRemote::modelRowFromProxyRow(int proxyRow) const
 {
     QModelIndex proxyIndex = _playlistProxyModel->index(proxyRow, 0);
@@ -418,7 +404,6 @@ int ClementineRemote::modelRowFromProxyRow(int proxyRow) const
     }
     return -1;
 }
-#endif
 
 bool ClementineRemote::hideServerFilesPreviousNextNavButtons() const { return true; }
 

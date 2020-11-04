@@ -287,7 +287,6 @@ void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)
 
 void ConnectionWorker::onChangeToSong(int proxyRow)
 {
-#ifdef __USE_PLAYLIST_PROXY_MODEL__
     int modelRow = _remote->modelRowFromProxyRow(proxyRow);
     if (modelRow != -1)
     {
@@ -299,12 +298,6 @@ void ConnectionWorker::onChangeToSong(int proxyRow)
     }
     else
         qCritical() << "[ConnectionWorker::onChangeToSong] ERROR getting model row from proxy one: " << proxyRow;
-#else
-    _doChangeSong(proxyRow, _remote->currentPlaylistID());
-    // this will play music so we need to update the remote
-    _remote->setPlay();
-    emit _remote->updateEngineState();
-#endif
 }
 
 void ConnectionWorker::onSetTrackPostion(qint32 newPos)

@@ -2,8 +2,6 @@ QT += core network quick
 
 CONFIG += c++17
 
-DEFINES += __USE_PLAYLIST_PROXY_MODEL__
-
 # possible to remove the Connection Thread as Sockets are Async
 # cf https://forum.qt.io/topic/120468/qabstractlistmodel-populated-in-a-worker-thread-not-the-gui-one
 DEFINES  += __USE_CONNECTION_THREAD__
