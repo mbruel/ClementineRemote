@@ -3,10 +3,9 @@
 #include <QQmlContext>
 
 #include "ClementineRemote.h"
-#include "PlayListModel.h"
+#include "RemoteSongModel.h"
 #include "RemoteFileModel.h"
 #include "RadioStreamModel.h"
-
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -25,7 +24,7 @@ int main(int argc, char *argv[])
     }, Qt::QueuedConnection);
 
 
-    qmlRegisterType<PlayListModel>("PlayList", 1, 0, "PlayListModel");
+    qmlRegisterType<RemoteSongModel>("PlayList", 1, 0, "RemoteSongModel");
     qmlRegisterInterface<QAbstractItemModel>("PlayList", 1);
     qmlRegisterUncreatableType<ClementineRemote>("PlayList", 1, 0, "ClementineRemote",
         QStringLiteral("ClementineRemote should not be created in QML"));

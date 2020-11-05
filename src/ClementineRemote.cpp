@@ -22,7 +22,7 @@
 
 #include "ClementineRemote.h"
 #include "ConnectionWorker.h"
-#include "PlayListModel.h"
+#include "RemoteSongModel.h"
 #include "player/RemotePlaylist.h"
 
 #include <QTcpSocket>
@@ -69,11 +69,10 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #ifdef __USE_CONNECTION_THREAD__
     _secureSongs(), _songsData(),
 #endif
+    _songsModel(new RemoteSongModel),
+    _songsProxyModel(new RemoteSongProxyModel),
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
-    _playlistModel(new PlayListModel),
-    _playlistProxyModel(new PlayListProxyModel),
-
     _clemFilesSupport(false),
     _remoteFilesPath(_settings.value("remotePath", "./").toString()),
     _remoteFiles(),
@@ -88,8 +87,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
 {
     setObjectName("ClemRemote");
-    _playlistModel->setRemote(this);
-    _playlistProxyModel->setSourceModel(_playlistModel);
+    _songsModel->setRemote(this);
+    _songsProxyModel->setSourceModel(_songsModel);
 #ifdef __USE_CONNECTION_THREAD__
     connect(this, &ClementineRemote::songsUpdatedByWorker,
             this, &ClementineRemote::onSongsUpdatedByWorker, Qt::QueuedConnection);
@@ -122,15 +121,15 @@ void ClementineRemote::close()
 
     qDeleteAll(_playlists);
     _playlists.clear();
-    if (_playlistProxyModel)
+    if (_songsProxyModel)
     {
-        delete _playlistProxyModel;
-        _playlistProxyModel = nullptr;
+        delete _songsProxyModel;
+        _songsProxyModel = nullptr;
     }
-    if (_playlistModel)
+    if (_songsModel)
     {
-        delete _playlistModel;
-        _playlistModel = nullptr;
+        delete _songsModel;
+        _songsModel = nullptr;
     }
     if (_connection)
     {
@@ -199,7 +198,7 @@ void ClementineRemote::setSongsFilter(const QString &searchTxt)
     qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
     Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
     QRegExp regExp(searchTxt, caseSensitivity);
-    _playlistProxyModel->setFilterRegExp(regExp);
+    _songsProxyModel->setFilterRegExp(regExp);
 }
 
 QStringList ClementineRemote::playlistsList()
@@ -224,7 +223,7 @@ void ClementineRemote::updateCurrentSongIdx(qint32 currentSongIndex)
         if (s.index == currentSongIndex)
         {
             _activeSongIndex = idx;
-            emit currentSongIdx(_playlistProxyModel->mapFromSource(_playlistModel->index(idx)).row());
+            emit currentSongIdx(_songsProxyModel->mapFromSource(_songsModel->index(idx)).row());
             break;
         }
         ++idx;

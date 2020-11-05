@@ -47,9 +47,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         ClementineRemote.cpp \
         ConnectionWorker.cpp \
-        PlayListModel.cpp \
         RadioStreamModel.cpp \
         RemoteFileModel.cpp \
+        RemoteSongModel.cpp \
         main.cpp \
         protobuf/remotecontrolmessages.pb.cc
 
@@ -71,9 +71,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     ClementineRemote.h \
     ConnectionWorker.h \
-    PlayListModel.h \
     RadioStreamModel.h \
     RemoteFileModel.h \
+    RemoteSongModel.h \
     Singleton.h \
     player/RemoteFile.h \
     player/RemotePlaylist.h \

@@ -23,7 +23,7 @@
 #define CLEMENTINEREMOTE_H
 
 #include "Singleton.h"
-#include "PlayListModel.h"
+#include "RemoteSongModel.h"
 #include "player/RemoteSong.h"
 #include "player/RemoteFile.h"
 #include "player/Stream.h"
@@ -83,16 +83,14 @@ private:
     QMutex                  _secureSongs;
     pb::remote::Message     _songsData;
 #endif
+    RemoteSongModel        *_songsModel;     //!< Model used to expose the songs to the View
+    RemoteSongProxyModel   *_songsProxyModel;//!< Proxy model used by QML ListView
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
 
     qint32                  _trackPostition;    //!< position in the track of the active song (pb::remote::UPDATE_TRACK_POSITION)
 
-
     bool                    _initialized;       //!< did we receive pb::remote::FIRST_DATA_SENT_COMPLETE ?
-
-    PlayListModel          *_playlistModel;     //!< Model used to expose the songs to the View
-    PlayListProxyModel     *_playlistProxyModel;//!< Proxy model used by QML ListView
 
     bool                    _clemFilesSupport;
     QString                 _remoteFilesPath;
@@ -270,7 +268,7 @@ signals:
     void addRadioToPlaylist(int radioIdx);
 
 
-    // signals for PlayListModel
+    // signals for RemoteSongModel
     void preSongAppended();
     void preAddSongs(int lastSongIdx);
     void postSongAppended();
@@ -311,7 +309,7 @@ public:
 
 };
 
-QAbstractItemModel *ClementineRemote::playListModel() const { return _playlistProxyModel; }
+QAbstractItemModel *ClementineRemote::playListModel() const { return _songsProxyModel; }
 
 int ClementineRemote::nbSongs() const { return _songs.size(); }
 
@@ -364,7 +362,7 @@ const RemoteSong & ClementineRemote::currentSong() const { return _activeSong; }
 //uint ClementineRemote::currentSongIndex() const { return _activeSongIndex; }
 int ClementineRemote::currentSongIndex() const
 {
-    return _playlistProxyModel->mapFromSource(_playlistModel->index(_activeSongIndex)).row();
+    return _songsProxyModel->mapFromSource(_songsModel->index(_activeSongIndex)).row();
 }
 
 int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
@@ -426,10 +424,10 @@ QString ClementineRemote::disconnectReason(short reason) const
 
 int ClementineRemote::modelRowFromProxyRow(int proxyRow) const
 {
-    QModelIndex proxyIndex = _playlistProxyModel->index(proxyRow, 0);
+    QModelIndex proxyIndex = _songsProxyModel->index(proxyRow, 0);
     if (proxyIndex.isValid())
     {
-        QModelIndex modelIndex = _playlistProxyModel->mapToSource(proxyIndex);
+        QModelIndex modelIndex = _songsProxyModel->mapToSource(proxyIndex);
         if (modelIndex.isValid())
             return modelIndex.row();
     }
@@ -447,10 +445,10 @@ bool ClementineRemote::clementineFilesSupport() const { return _clemFilesSupport
 
 int ClementineRemote::activeSongIndex() const
 {
-    QModelIndex modelIndex = _playlistModel->index(_activeSongIndex, 0);
+    QModelIndex modelIndex = _songsModel->index(_activeSongIndex, 0);
     if (modelIndex.isValid())
     {
-        QModelIndex proxyIndex = _playlistProxyModel->mapFromSource(modelIndex);
+        QModelIndex proxyIndex = _songsProxyModel->mapFromSource(modelIndex);
         if (proxyIndex.isValid())
             return proxyIndex.row();
     }

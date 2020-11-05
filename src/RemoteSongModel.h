@@ -19,14 +19,14 @@
 //
 //========================================================================
 
-#ifndef PLAYLISTMODEL_H
-#define PLAYLISTMODEL_H
+#ifndef REMOTESONGMODEL_H
+#define REMOTESONGMODEL_H
 #include <QSortFilterProxyModel>
 #include <QAbstractListModel>
 
 class ClementineRemote;
 
-class PlayListModel : public QAbstractListModel
+class RemoteSongModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(ClementineRemote *remote READ remote WRITE setRemote)
@@ -34,7 +34,7 @@ class PlayListModel : public QAbstractListModel
     static const QHash<int, QByteArray> sRoleNames;
 
 public:
-    explicit PlayListModel(QObject *parent = nullptr);
+    explicit RemoteSongModel(QObject *parent = nullptr);
 
     enum SongRole {
         title = Qt::UserRole,
@@ -66,15 +66,15 @@ private:
     ClementineRemote *_remote;
 };
 
-QHash<int, QByteArray> PlayListModel::roleNames() const { return sRoleNames; }
+QHash<int, QByteArray> RemoteSongModel::roleNames() const { return sRoleNames; }
 
 
 
-class PlayListProxyModel : public QSortFilterProxyModel {
+class RemoteSongProxyModel : public QSortFilterProxyModel {
 
 public:
-    PlayListProxyModel(QObject *parent = nullptr);
-    ~PlayListProxyModel() override = default;
+    RemoteSongProxyModel(QObject *parent = nullptr);
+    ~RemoteSongProxyModel() override = default;
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
@@ -82,4 +82,4 @@ protected:
 };
 
 
-#endif // PLAYLISTMODEL_H
+#endif // REMOTESONGMODEL_H

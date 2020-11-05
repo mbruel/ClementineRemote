@@ -19,11 +19,11 @@
 //
 //========================================================================
 
-#include "PlayListModel.h"
+#include "RemoteSongModel.h"
 #include "ClementineRemote.h"
 #include "player/RemoteSong.h"
 
-const QHash<int, QByteArray> PlayListModel::sRoleNames = {
+const QHash<int, QByteArray> RemoteSongModel::sRoleNames = {
     {SongRole::title,         "title"},
     {SongRole::track,         "track"},
     {SongRole::artist,        "artist"},
@@ -32,12 +32,12 @@ const QHash<int, QByteArray> PlayListModel::sRoleNames = {
     {SongRole::pretty_length, "pretty_length"},
 };
 
-PlayListModel::PlayListModel(QObject *parent):
+RemoteSongModel::RemoteSongModel(QObject *parent):
     QAbstractListModel(parent),
     _remote(nullptr)
 {}
 
-int PlayListModel::rowCount(const QModelIndex &parent) const
+int RemoteSongModel::rowCount(const QModelIndex &parent) const
 {
     // For list models only the root node (an invalid parent) should return the list's size. For all
     // other (valid) parents, rowCount() should return 0 so that it does not become a tree model.
@@ -47,7 +47,7 @@ int PlayListModel::rowCount(const QModelIndex &parent) const
     return _remote->numberOfPlaylistSongs();
 }
 
-QVariant PlayListModel::data(const QModelIndex &index, int role) const
+QVariant RemoteSongModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || !_remote)
         return QVariant();
@@ -71,7 +71,7 @@ QVariant PlayListModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-//bool PlayListModel::setData(const QModelIndex &index, const QVariant &value, int role)
+//bool RemoteSongModel::setData(const QModelIndex &index, const QVariant &value, int role)
 //{
 //    if (!_remote)
 //        return false;
@@ -130,7 +130,7 @@ QVariant PlayListModel::data(const QModelIndex &index, int role) const
 //    return false;
 //}
 
-Qt::ItemFlags PlayListModel::flags(const QModelIndex &index) const
+Qt::ItemFlags RemoteSongModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
         return Qt::NoItemFlags;
@@ -139,12 +139,12 @@ Qt::ItemFlags PlayListModel::flags(const QModelIndex &index) const
 }
 
 
-ClementineRemote *PlayListModel::remote() const
+ClementineRemote *RemoteSongModel::remote() const
 {
     return _remote;
 }
 
-void PlayListModel::setRemote(ClementineRemote *remote)
+void RemoteSongModel::setRemote(ClementineRemote *remote)
 {
     beginResetModel();
 
@@ -180,30 +180,30 @@ void PlayListModel::setRemote(ClementineRemote *remote)
 }
 
 
-PlayListProxyModel::PlayListProxyModel(QObject *parent): QSortFilterProxyModel(parent)
+RemoteSongProxyModel::RemoteSongProxyModel(QObject *parent): QSortFilterProxyModel(parent)
 {}
 
 
-bool PlayListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+bool RemoteSongProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
     QRegExp regexp = filterRegExp();
 
     if (regexp.isEmpty())
         return true;
 
-    PlayListModel *model = static_cast<PlayListModel *>(sourceModel());
+    RemoteSongModel *model = static_cast<RemoteSongModel *>(sourceModel());
     QModelIndex srcRowIndex = model->index(sourceRow, 0, sourceParent);
 
-    QString title = model->data(srcRowIndex, PlayListModel::SongRole::title).toString();
+    QString title = model->data(srcRowIndex, RemoteSongModel::SongRole::title).toString();
     if (title.contains(regexp))
         return true;
     else
     {
-        QString artist = model->data(srcRowIndex, PlayListModel::SongRole::artist).toString();
+        QString artist = model->data(srcRowIndex, RemoteSongModel::SongRole::artist).toString();
         if (artist.contains(regexp))
             return true;
         else{
-            QString album = model->data(srcRowIndex, PlayListModel::SongRole::album).toString();
+            QString album = model->data(srcRowIndex, RemoteSongModel::SongRole::album).toString();
             if (album.contains(regexp))
                 return true;
         }
