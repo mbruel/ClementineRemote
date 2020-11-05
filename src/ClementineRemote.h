@@ -26,6 +26,7 @@
 #include "PlayListModel.h"
 #include "player/RemoteSong.h"
 #include "player/RemoteFile.h"
+#include "player/Stream.h"
 #include <QSettings>
 #ifdef __USE_CONNECTION_THREAD__
 #include <QThread>
@@ -101,8 +102,17 @@ private:
     pb::remote::Message     _remoteFilesData;
 #endif
 
+#ifdef __USE_CONNECTION_THREAD__
     QMutex                  _secureFilesToAppend;
+#endif
     pb::remote::Message     _filesToAppend;
+
+    QList<Stream>           _radioStreams;
+#ifdef __USE_CONNECTION_THREAD__
+    QMutex                  _secureRadioStreams;
+    pb::remote::Message     _radioStreamsData;
+#endif
+
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -182,9 +192,15 @@ public:
     inline const RemoteFile &remoteFile(int index) const;
     inline RemoteFile &remoteFile(int index);
 
+    inline int numberOfRadioStreams() const;
+    inline const Stream &radioStream(int index) const;
+    inline Stream &radioStream(int index);
+
 
     Q_INVOKABLE qint32 currentPlaylistID() const;
     qint32 activePlaylistID() const;
+
+    void closingPlaylist(qint32 playlistID);
 
     void parseMessage(const QByteArray& data);
 
@@ -227,6 +243,9 @@ signals:
     void savePlaylist(qint32 playlistID);
     void renamePlaylist(qint32 playlistID, const QString &newPlaylistName);
 
+    void clearPlaylist(qint32 playlistID);
+    void closePlaylist(qint32 playlistID);
+
 
     // signals sent from ConnectionWorker to QML
     void connected();
@@ -263,6 +282,13 @@ signals:
     void postAddRemoteFiles();
     void preClearRemoteFiles(int lastIdx);
     void postClearRemoteFiles();
+
+    // signals for RadioStrreamModel
+    void preAddRadioStreams(int lastIdx);
+    void postAddRadioStreams();
+    void preClearRadioStreams(int lastIdx);
+    void postClearRadioStreams();
+
 
 #ifdef __USE_CONNECTION_THREAD__
     void songsUpdatedByWorker();
@@ -353,6 +379,10 @@ qint32 ClementineRemote::currentTrackLength() const{ return _activeSong.length; 
 int ClementineRemote::numberOfRemoteFiles() const { return _remoteFiles.size(); }
 const RemoteFile &ClementineRemote::remoteFile(int index) const { return _remoteFiles.at(index); }
 RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]; }
+
+int ClementineRemote::numberOfRadioStreams() const { return _radioStreams.size(); }
+const Stream &ClementineRemote::radioStream(int index) const { return _radioStreams.at(index); }
+Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; }
 
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString &ClementineRemote::appName() { return sAppName; }

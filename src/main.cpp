@@ -5,6 +5,7 @@
 #include "ClementineRemote.h"
 #include "PlayListModel.h"
 #include "RemoteFileModel.h"
+#include "RadioStreamModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
         QStringLiteral("ClementineRemote should not be created in QML"));
 
     qmlRegisterType<RemoteFileModel>("RemoteFile", 1, 0, "RemoteFileModel");
+    qmlRegisterType<RadioStreamModel>("RadioStream", 1, 0, "RadioStreamModel");
 
 
     QPointer<ClementineRemote> remote = QPointer<ClementineRemote>(ClementineRemote::getInstance());

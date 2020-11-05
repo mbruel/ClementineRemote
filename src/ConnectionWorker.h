@@ -100,6 +100,9 @@ private slots:
     void onSavePlaylist(qint32 playlistID);
     void onRenamePlaylist(qint32 playlistID, const QString &newPlaylistName);
 
+    void onClearPlaylist(qint32 playlistID);
+    void onClosePlaylist(qint32 playlistID);
+
 
 
 // Socket handlers

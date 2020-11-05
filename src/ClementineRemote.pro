@@ -48,6 +48,7 @@ SOURCES += \
         ClementineRemote.cpp \
         ConnectionWorker.cpp \
         PlayListModel.cpp \
+        RadioStreamModel.cpp \
         RemoteFileModel.cpp \
         main.cpp \
         protobuf/remotecontrolmessages.pb.cc
@@ -71,11 +72,13 @@ HEADERS += \
     ClementineRemote.h \
     ConnectionWorker.h \
     PlayListModel.h \
+    RadioStreamModel.h \
     RemoteFileModel.h \
     Singleton.h \
     player/RemoteFile.h \
     player/RemotePlaylist.h \
     player/RemoteSong.h \
+    player/Stream.h \
     protobuf/remotecontrolmessages.pb.h
 
 DISTFILES += \

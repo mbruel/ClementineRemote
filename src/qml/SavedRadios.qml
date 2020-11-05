@@ -21,10 +21,87 @@
 import QtQuick 2.0
 import QtQuick.Controls 2.15
 
-import RemoteFile 1.0
+import RadioStream 1.0
 
 Rectangle {
     id: root
     radius: 10
 
+    property int   lineSpacing    : 10
+    property int   lineHeigth     : 45
+    property color colorSelected  : "lightblue"
+
+
+    ListView {
+        id: filesView
+        focus: true
+
+        model: RadioStreamModel {
+            remote: cppRemote
+        }
+        delegate: radioStreamDelegate
+
+        anchors{
+            top: parent.top
+            left: parent.left
+        }
+        implicitWidth: parent.width
+        implicitHeight: parent.height
+
+        clip: true
+    }
+
+    Component {
+        id: radioStreamDelegate
+
+        Rectangle {
+            id: rootDelegate
+//            property bool isSelected: ListView.isCurrentItem
+
+            width: ListView.view.width
+            height: lineHeigth
+
+            color: ListView.isCurrentItem ? colorSelected : "white"
+
+            Image {
+                id: icon
+                x: lineSpacing
+                width: lineHeigth
+                height: lineHeigth - 4
+                source: logoUrl
+            }
+
+            Text{
+                id: txtRadio
+                text: name
+                x: lineHeigth + 2*lineSpacing
+
+                anchors.verticalCenter: icon.verticalCenter
+
+                elide: Text.ElideRight
+                width: parent.width - icon.width - 3*lineSpacing
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: filesView.currentIndex = index;
+
+//                onDoubleClicked: {
+////                    print("onDoubleClicked #" + index + ": " + filename )
+//                    filesView.currentIndex = index
+//                    if (isDir)
+//                    {
+//                        resetSelectionMode();
+//                        cppRemote.getServerFiles(relativePath.text, filename);
+//                    }
+//                    else
+//                    {
+//                        selected = true;
+//                        sendSelectedFiles("");
+//                        selected = false;
+//                    }
+//                }
+            }
+        }
+    }
 }

@@ -34,26 +34,33 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
 {
     setObjectName("ConnectionWorker");
 
-    connect(_remote, &ClementineRemote::connectToServer,      this, &ConnectionWorker::onConnectToServer,      Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::disconnectFromServer, this, &ConnectionWorker::onDisconnectFromServer, Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::changeToSong,         this, &ConnectionWorker::onChangeToSong,         Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::setTrackPostion,      this, &ConnectionWorker::onSetTrackPostion,      Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::setVolume,            this, &ConnectionWorker::onSetVolume,            Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::nextSong,             this, &ConnectionWorker::onNextSong,             Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::previousSong,         this, &ConnectionWorker::onPreviousSong,         Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::setEngineState,       this, &ConnectionWorker::onSetEngineState,       Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::shuffle,              this, &ConnectionWorker::onShuffle,              Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::repeat,               this, &ConnectionWorker::onRepeat,               Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::changePlaylist,       this, &ConnectionWorker::onChangePlaylist,       Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::getServerFiles,       this, &ConnectionWorker::onGetServerFiles,       Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::sendFilesToAppend,    this, &ConnectionWorker::onSendFilesToAppend,    Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::savePlaylist,         this, &ConnectionWorker::onSavePlaylist,         Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::renamePlaylist,       this, &ConnectionWorker::onRenamePlaylist,       Qt::QueuedConnection);
-    connect(_remote, &ClementineRemote::createPlaylist,       this, &ConnectionWorker::onCreatePlaylist,       Qt::QueuedConnection);
+#ifdef __USE_CONNECTION_THREAD__
+    Qt::ConnectionType connectionType = Qt::QueuedConnection;
+#else
+    Qt::ConnectionType connectionType = Qt::DirectConnection;
+#endif
 
-    connect(&_timeout, &QTimer::timeout, this, &ConnectionWorker::onSocketTimeout);
+    connect(_remote, &ClementineRemote::connectToServer,      this, &ConnectionWorker::onConnectToServer,      connectionType);
+    connect(_remote, &ClementineRemote::disconnectFromServer, this, &ConnectionWorker::onDisconnectFromServer, connectionType);
+    connect(_remote, &ClementineRemote::changeToSong,         this, &ConnectionWorker::onChangeToSong,         connectionType);
+    connect(_remote, &ClementineRemote::setTrackPostion,      this, &ConnectionWorker::onSetTrackPostion,      connectionType);
+    connect(_remote, &ClementineRemote::setVolume,            this, &ConnectionWorker::onSetVolume,            connectionType);
+    connect(_remote, &ClementineRemote::nextSong,             this, &ConnectionWorker::onNextSong,             connectionType);
+    connect(_remote, &ClementineRemote::previousSong,         this, &ConnectionWorker::onPreviousSong,         connectionType);
+    connect(_remote, &ClementineRemote::setEngineState,       this, &ConnectionWorker::onSetEngineState,       connectionType);
+    connect(_remote, &ClementineRemote::shuffle,              this, &ConnectionWorker::onShuffle,              connectionType);
+    connect(_remote, &ClementineRemote::repeat,               this, &ConnectionWorker::onRepeat,               connectionType);
+    connect(_remote, &ClementineRemote::changePlaylist,       this, &ConnectionWorker::onChangePlaylist,       connectionType);
+    connect(_remote, &ClementineRemote::getServerFiles,       this, &ConnectionWorker::onGetServerFiles,       connectionType);
+    connect(_remote, &ClementineRemote::sendFilesToAppend,    this, &ConnectionWorker::onSendFilesToAppend,    connectionType);
+    connect(_remote, &ClementineRemote::savePlaylist,         this, &ConnectionWorker::onSavePlaylist,         connectionType);
+    connect(_remote, &ClementineRemote::renamePlaylist,       this, &ConnectionWorker::onRenamePlaylist,       connectionType);
+    connect(_remote, &ClementineRemote::createPlaylist,       this, &ConnectionWorker::onCreatePlaylist,       connectionType);
+    connect(_remote, &ClementineRemote::clearPlaylist,        this, &ConnectionWorker::onClearPlaylist,        connectionType);
+    connect(_remote, &ClementineRemote::closePlaylist,        this, &ConnectionWorker::onClosePlaylist,        connectionType);
 
-    connect(this, &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket, Qt::QueuedConnection);
+    connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
+    connect(this,     &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket,    connectionType);
 }
 
 ConnectionWorker::~ConnectionWorker()
@@ -266,6 +273,26 @@ void ConnectionWorker::onRenamePlaylist(qint32 playlistID, const QString &newPla
     msg.mutable_request_update_playlist()->set_playlist_id(playlistID);
     msg.mutable_request_update_playlist()->set_new_playlist_name(newPlaylistName.toStdString());
     sendDataToServer(msg);
+}
+
+void ConnectionWorker::onClearPlaylist(qint32 playlistID)
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::UPDATE_PLAYLIST);
+    msg.mutable_request_update_playlist()->set_playlist_id(playlistID);
+    msg.mutable_request_update_playlist()->set_clear_playlist(true);
+    sendDataToServer(msg);
+}
+
+void ConnectionWorker::onClosePlaylist(qint32 playlistID)
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::CLOSE_PLAYLIST);
+    msg.mutable_request_close_playlist()->set_playlist_id(playlistID);
+    sendDataToServer(msg);
+
+    _remote->closingPlaylist(playlistID);
+    onChangePlaylist(_remote->playlistIndex());
 }
 
 void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)

@@ -79,10 +79,15 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _remoteFiles(),
 #ifdef __USE_CONNECTION_THREAD__
     _secureRemoteFilesData(), _remoteFilesData(),
+    _secureFilesToAppend(),
 #endif
-    _secureFilesToAppend(), _filesToAppend()
+    _filesToAppend(),
+    _radioStreams()
+#ifdef __USE_CONNECTION_THREAD__
+    ,_secureRadioStreams(), _radioStreamsData()
+#endif
 {
-    setObjectName("ClementineRemote");
+    setObjectName("ClemRemote");
     _playlistModel->setRemote(this);
     _playlistProxyModel->setSourceModel(_playlistModel);
 #ifdef __USE_CONNECTION_THREAD__
@@ -136,7 +141,9 @@ void ClementineRemote::close()
 
 int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
 {
+#ifdef __USE_CONNECTION_THREAD__
     _secureFilesToAppend.lock();
+#endif
     _filesToAppend.clear_response_list_files();
     QStringList selectedFiles;
     for (const RemoteFile &f : _remoteFiles)
@@ -146,7 +153,9 @@ int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
     }
     if (selectedFiles.isEmpty())
     {
+#ifdef __USE_CONNECTION_THREAD__
         _secureFilesToAppend.unlock();
+#endif
         return 0;
     }
     else
@@ -155,6 +164,9 @@ int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
         files->set_relative_path(_remoteFilesPath.toStdString());
         if (!newPlaylistName.isEmpty())
             files->set_new_playlist_name(newPlaylistName.toStdString());
+        else
+            files->set_playlist_id(_dispPlaylistId);
+
         for (const QString &filename : selectedFiles)
             *files->add_files() = filename.toStdString();
 
@@ -177,7 +189,9 @@ void ClementineRemote::doSendFilesToAppend()
 {
     _connection->sendDataToServer(_filesToAppend);
     _filesToAppend.clear_request_append_files();
+#ifdef __USE_CONNECTION_THREAD__
     _secureFilesToAppend.unlock();
+#endif
 }
 
 void ClementineRemote::setSongsFilter(const QString &searchTxt)
@@ -287,10 +301,6 @@ void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles 
             emit postClearRemoteFiles();
         }
 
-//        // HACK to resolve ListView issue (displaying empty Rows after the number of elements)
-//        int nbFiles = _remoteFiles.size();
-//        Q_UNUSED(nbFiles)
-
         qint32 nbRemoteFiles = files.files_size();
         if (nbRemoteFiles)
         {
@@ -311,13 +321,24 @@ void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles 
 
 void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios)
 {
-    qDebug() << "[MsgType::REQUEST_SAVED_RADIOS]";
-    for (const auto &radio: radios.streams())
+    if (_radioStreams.size())
     {
-        qDebug() << "Radio: " << radio.name().c_str()
-                 << " : " << radio.url().c_str()
-                 << ", logo: " << radio.url_logo().c_str();
+        emit preClearRadioStreams(_radioStreams.size() - 1);
+        _radioStreams.clear();
+        emit postClearRadioStreams();
+
     }
+    qint32 nbStreams = radios.streams_size();
+    if (nbStreams)
+    {
+        emit preAddRadioStreams(nbStreams -1 );
+        _radioStreams.reserve(nbStreams);
+        for (const auto &radio: radios.streams())
+            _radioStreams << Stream(radio.name(), radio.url(), radio.url_logo());
+        emit postAddRadioStreams();
+    }
+
+    qDebug() << "[MsgType::REQUEST_SAVED_RADIOS] Nb Radio Streams: " << _radioStreams.size();
 }
 
 #ifdef __USE_CONNECTION_THREAD__
@@ -511,7 +532,7 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         _remoteFilesData = std::move(msg);
         emit remoteFilesUpdatedByWorker();
 #else
-        rcvListOfRemoteFiles(msg.response_files());
+        rcvListOfRemoteFiles(msg.response_list_files());
 #endif
         break;
 
@@ -538,4 +559,23 @@ qint32 ClementineRemote::currentPlaylistID() const
 qint32 ClementineRemote::activePlaylistID() const
 {
     return _activePlaylistId;
+}
+
+void ClementineRemote::closingPlaylist(qint32 playlistID)
+{
+    int idx = 0;
+    RemotePlaylist *newDispPlaylist = nullptr;
+    for (RemotePlaylist *p : _playlists)
+    {
+        if (p->id != playlistID)
+        {
+            newDispPlaylist = p;
+            break;
+        }
+        ++idx;
+    }
+    _dispPlaylist      = newDispPlaylist;
+    _dispPlaylistIndex = idx;
+    if (_activePlaylistId == playlistID)
+        _activePlaylistId = newDispPlaylist->id;
 }

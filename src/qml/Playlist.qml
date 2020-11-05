@@ -137,10 +137,7 @@ Rectangle {
                     Action {
                         icon.source: "icons/refresh.png"
                         text: qsTr("Refresh Playlist")
-                        onTriggered: {
-                            print("Refresh playlist");
-                            todoDialog.open()
-                        }
+                        onTriggered: cppRemote.changePlaylist(playlistCombo.currentIndex);
                     }
                     Action {
                         icon.source: "icons/star.png"
@@ -159,17 +156,18 @@ Rectangle {
                     Action {
                         icon.source: "icons/clear.png"
                         text: qsTr("Clear Playlist")
-                        onTriggered: {
-                            print("Clear playlist");
-                            todoDialog.open()
-                        }
+                        onTriggered: cppRemote.clearPlaylist(cppRemote.currentPlaylistID());
                     }
                     Action {
                         icon.source: "icons/close.png"
                         text: qsTr("Close Playlist")
                         onTriggered: {
-                            print("Close playlist");
-                            todoDialog.open()
+                            // Won't allow removing the last playlist
+                            if (playlistCombo.count <= 1)
+                                return;
+
+                            //MB_TODO: if playlist is not saved ask confirmation!
+                            cppRemote.closePlaylist(cppRemote.currentPlaylistID());
                         }
                     }
                     Action {
