@@ -103,6 +103,7 @@ private slots:
     void onClearPlaylist(qint32 playlistID);
     void onClosePlaylist(qint32 playlistID);
 
+    void onAddRadioToPlaylist(int radioIdx);
 
 
 // Socket handlers

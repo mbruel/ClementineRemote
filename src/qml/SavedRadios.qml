@@ -86,21 +86,10 @@ Rectangle {
                 anchors.fill: parent
                 onClicked: filesView.currentIndex = index;
 
-//                onDoubleClicked: {
-////                    print("onDoubleClicked #" + index + ": " + filename )
-//                    filesView.currentIndex = index
-//                    if (isDir)
-//                    {
-//                        resetSelectionMode();
-//                        cppRemote.getServerFiles(relativePath.text, filename);
-//                    }
-//                    else
-//                    {
-//                        selected = true;
-//                        sendSelectedFiles("");
-//                        selected = false;
-//                    }
-//                }
+                onDoubleClicked: {
+                    filesView.currentIndex = index;
+                    cppRemote.addRadioToPlaylist(index);
+                }
             }
         }
     }

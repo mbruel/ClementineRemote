@@ -267,6 +267,7 @@ signals:
 
     void updateRemoteFilesPath(QString newRemotePath);
 
+    void addRadioToPlaylist(int radioIdx);
 
 
     // signals for PlayListModel
