@@ -18,7 +18,7 @@
 // USA.
 //
 //========================================================================
-import QtQuick 2.0
+import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 import RemoteFile 1.0
@@ -27,12 +27,14 @@ Rectangle {
     id: root
     radius: 10
 
-    property bool  selectionMode       : false
     property int   newPlaylistNameWidth: 100
     property int   headerButtonSize    : 30
     property int   headerSpacing       : 5
     property int   lineHeigth          : 25
     property color colorSelected       : "lightblue"
+
+    // private properties
+    property bool  selectionMode       : false
 
 
     Rectangle{
@@ -122,6 +124,11 @@ Rectangle {
 
         clip: true
 
+        flickableDirection: Flickable.VerticalFlick
+        boundsBehavior    : Flickable.DragOverBounds
+        boundsMovement    : Flickable.FollowBoundsBehavior
+        ScrollBar.vertical: ScrollBar {}
+
         function selectAllFiles(selectAll)
         {
             model.selectAllFiles(selectAll);
@@ -158,7 +165,7 @@ Rectangle {
                 leftMargin: headerSpacing
                 verticalCenter: parent.verticalCenter
             }
-            source: selectionMode ? "icons/selection.png" :  "icons/click.png";
+            source: "icons/" + (selectionMode ? "selection.png" : "click.png");
             onClicked: {
                 selectionMode = !selectionMode
                 if (selectionMode)
@@ -180,7 +187,7 @@ Rectangle {
             source: "icons/select_all.png";
             onClicked: {
                 selectionMode = !cppRemote.allFilesSelected();
-                filesView.selectAllFiles(selectionMode);;
+                filesView.selectAllFiles(selectionMode);
 //                print("[ServerFiles] selectAll: " + selectionMode);
             }
         }

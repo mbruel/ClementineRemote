@@ -29,7 +29,7 @@ typedef struct RemoteFile
     QString filename;
     bool isDir;
     bool closed;
-    bool selected;
+    bool selected; // for its selection in ListView
 
 
 public:

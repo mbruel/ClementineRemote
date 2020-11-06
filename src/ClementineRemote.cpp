@@ -71,6 +71,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _songsModel(new RemoteSongModel),
     _songsProxyModel(new RemoteSongProxyModel),
+    _songsToRemove(),
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
     _clemFilesSupport(false),
@@ -100,6 +101,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
 
     _filesToAppend.set_type(pb::remote::APPEND_FILES);
+    _songsToRemove.set_type(pb::remote::REMOVE_SONGS);
 }
 
 ClementineRemote::~ClementineRemote()
@@ -199,6 +201,57 @@ void ClementineRemote::setSongsFilter(const QString &searchTxt)
     Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
     QRegExp regExp(searchTxt, caseSensitivity);
     _songsProxyModel->setFilterRegExp(regExp);
+}
+
+#include <QMutexLocker>
+bool ClementineRemote::allSongsSelected()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_secureSongs);
+#endif
+    return _songsProxyModel->allSongsSelected();
+}
+
+void ClementineRemote::selectAllSongsFromProxyModel(bool selectAll)
+{
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_secureSongs);
+#endif
+    _songsProxyModel->selectAllSongs(selectAll);
+}
+
+void ClementineRemote::deleteSelectedSongs()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    _secureSongs.lock();
+#endif
+    _songsToRemove.clear_request_remove_songs();
+    QList<int> selectedSongsIdexes = _songsProxyModel->selectedSongsIdexes();
+    if (selectedSongsIdexes.isEmpty())
+    {
+#ifdef __USE_CONNECTION_THREAD__
+        _secureSongs.unlock();
+#endif
+        return ;
+    }
+    else
+    {
+        pb::remote::RequestRemoveSongs *req = _songsToRemove.mutable_request_remove_songs();
+        req->set_playlist_id(_dispPlaylistId);
+        for (int songIndex : selectedSongsIdexes)
+            req->add_songs(songIndex);
+
+        emit sendSongsToRemove();
+    }
+}
+
+void ClementineRemote::doSendSongsToRemove()
+{
+    _connection->sendDataToServer(_songsToRemove);
+    _songsToRemove.clear_request_append_files();
+#ifdef __USE_CONNECTION_THREAD__
+    _secureSongs.unlock();
+#endif
 }
 
 QStringList ClementineRemote::playlistsList()

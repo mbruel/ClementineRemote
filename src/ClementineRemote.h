@@ -85,6 +85,8 @@ private:
 #endif
     RemoteSongModel        *_songsModel;     //!< Model used to expose the songs to the View
     RemoteSongProxyModel   *_songsProxyModel;//!< Proxy model used by QML ListView
+    pb::remote::Message     _songsToRemove;
+
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
 
@@ -144,6 +146,10 @@ public:
     inline Q_INVOKABLE QAbstractItemModel *playListModel() const;
     inline int nbSongs() const;
     Q_INVOKABLE void setSongsFilter(const QString &searchTxt);
+    Q_INVOKABLE bool allSongsSelected();
+    Q_INVOKABLE void selectAllSongsFromProxyModel(bool selectAll);
+    Q_INVOKABLE void deleteSelectedSongs();
+    void doSendSongsToRemove();
 
     inline Q_INVOKABLE QString settingHost() const;
     inline Q_INVOKABLE QString settingPort() const;
@@ -236,6 +242,7 @@ signals:
 
     void getServerFiles(QString currentPath, QString subFolder = "");
 
+    void sendSongsToRemove();
     void sendFilesToAppend();
 
     void createPlaylist(const QString &newPlaylistName);
@@ -453,6 +460,7 @@ bool ClementineRemote::clementineFilesSupport() const { return _clemFilesSupport
 
 int ClementineRemote::activeSongIndex() const
 {
+    _songsModel->index(0);
     QModelIndex modelIndex = _songsModel->index(_activeSongIndex, 0);
     if (modelIndex.isValid())
     {

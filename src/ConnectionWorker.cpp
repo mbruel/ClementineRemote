@@ -59,6 +59,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::clearPlaylist,        this, &ConnectionWorker::onClearPlaylist,        connectionType);
     connect(_remote, &ClementineRemote::closePlaylist,        this, &ConnectionWorker::onClosePlaylist,        connectionType);
     connect(_remote, &ClementineRemote::addRadioToPlaylist,   this, &ConnectionWorker::onAddRadioToPlaylist,   connectionType);
+    connect(_remote, &ClementineRemote::sendSongsToRemove,    this, &ConnectionWorker::onSendSongsToRemove,    connectionType);
 
     connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
     connect(this,     &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket,    connectionType);
@@ -307,6 +308,11 @@ void ConnectionWorker::onAddRadioToPlaylist(int radioIdx)
     *reqInsert->add_urls() = _remote->radioStream(radioIdx).url.toStdString();
 
     sendDataToServer(msg);
+}
+
+void ConnectionWorker::onSendSongsToRemove()
+{
+    _remote->doSendSongsToRemove();
 }
 
 void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)

@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 
 
     qmlRegisterType<RemoteSongModel>("PlayList", 1, 0, "RemoteSongModel");
+    qmlRegisterType<RemoteSongProxyModel>("PlayList", 1, 0, "RemoteSongProxyModel");
     qmlRegisterType<PlaylistModel>(  "PlayList", 1, 0, "PlaylistModel");
     qmlRegisterInterface<QAbstractItemModel>("PlayList", 1);
 

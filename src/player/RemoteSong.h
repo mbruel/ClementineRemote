@@ -51,6 +51,8 @@ typedef struct RemoteSong
     pb::remote::SongMetadata_Type type;
     QImage art;
 
+    bool selected; // for its selection in ListView
+
 public:
     RemoteSong() = default;
     RemoteSong(const RemoteSong &) = default;
@@ -63,7 +65,8 @@ public:
         playcount(m.playcount()), pretty_length(m.pretty_length().c_str()), length(m.length()),
         is_local(m.is_local()), filename(m.filename().c_str()), file_size(m.file_size()), rating(m.rating()),
         url(m.url().c_str()), art_automatic(m.art_automatic().c_str()), art_manual(m.art_manual().c_str()),
-        type(m.type()), art()
+        type(m.type()), art(),
+        selected(false)
     {
         if (m.has_art() && m.art().size())
             art = QImage(m.art().c_str());

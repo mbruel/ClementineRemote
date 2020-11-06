@@ -30,12 +30,16 @@ const QHash<int, QByteArray> RemoteSongModel::sRoleNames = {
     {SongRole::album,         "album"},
     {SongRole::length,        "length"},
     {SongRole::pretty_length, "pretty_length"},
+    {SongRole::selected,      "selected"},
+    {SongRole::songIndex,     "songIndex"},
+    {SongRole::songId,        "songId"},
 };
 
 RemoteSongModel::RemoteSongModel(QObject *parent):
     QAbstractListModel(parent),
     _remote(nullptr)
 {}
+
 
 int RemoteSongModel::rowCount(const QModelIndex &parent) const
 {
@@ -55,80 +59,49 @@ QVariant RemoteSongModel::data(const QModelIndex &index, int role) const
     const RemoteSong &song = _remote->playlistSong(index.row());
     switch (role) {
     case SongRole::title:
-        return QVariant(song.title);
+        return song.title;
     case SongRole::track:
-        return QVariant(song.track);
+        return song.track;
     case SongRole::artist:
-        return QVariant(song.artist);
+        return song.artist;
     case SongRole::album:
-        return QVariant(song.album);
+        return song.album;
     case SongRole::length:
-        return QVariant(song.length);
+        return song.length;
     case SongRole::pretty_length:
-        return QVariant(song.pretty_length);
+        return song.pretty_length;
+    case SongRole::selected:
+        return song.selected;
+    case SongRole::songIndex:
+        return song.index;
+    case SongRole::songId:
+        return song.id;
     }
 
     return QVariant();
 }
 
-//bool RemoteSongModel::setData(const QModelIndex &index, const QVariant &value, int role)
-//{
-//    if (!_remote)
-//        return false;
+bool RemoteSongModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!_remote)
+        return false;
 
-//    bool update = false;
-//    RemoteSong &song = _remote->playlistSong(index.row());
-//    switch (role) {
-//    case SongRole::title:
-//        if (song.title != value.toString())
-//        {
-//            song.title = value.toString();
-//            update = true;
-//        }
-//        break;
-//    case SongRole::track:
-//        if (song.track != value.toInt())
-//        {
-//            song.track = value.toInt();
-//            update = true;
-//        }
-//        break;
-//    case SongRole::artist:
-//        if (song.artist != value.toString())
-//        {
-//            song.artist = value.toString();
-//            update = true;
-//        }
-//        break;
-//    case SongRole::album:
-//        if (song.album != value.toString())
-//        {
-//            song.album = value.toString();
-//            update = true;
-//        }
-//        break;
-//    case SongRole::length:
-//        if (song.length != value.toInt())
-//        {
-//            song.length = value.toInt();
-//            update = true;
-//        }
-//        break;
-//    case SongRole::pretty_length:
-//        if (song.pretty_length != value.toString())
-//        {
-//            song.pretty_length = value.toString();
-//            update = true;
-//        }
-//        break;
-//    }
+    RemoteSong &song = _remote->playlistSong(index.row());
+    switch (role) {
+    case SongRole::selected:
+        if (song.selected != value.toBool())
+        {
+            song.selected = value.toBool();
+            emit dataChanged(index, index, QVector<int>() << role);
+            return true;
+        }
+        break;
+    default:
+        return false;
+    }
 
-//    if (update) {
-//        emit dataChanged(index, index, QVector<int>() << role);
-//        return true;
-//    }
-//    return false;
-//}
+    return false;
+}
 
 Qt::ItemFlags RemoteSongModel::flags(const QModelIndex &index) const
 {
@@ -212,3 +185,34 @@ bool RemoteSongProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &so
     return false;
 }
 
+
+bool RemoteSongProxyModel::allSongsSelected() const
+{
+    bool allSelected = true;
+    for (int i = 0; i < rowCount() ; ++i)
+    {
+        if (!data(index(i, 0), RemoteSongModel::selected).toBool())
+        {
+            allSelected = false;
+            break;
+        }
+    }
+    return allSelected;
+}
+
+void RemoteSongProxyModel::selectAllSongs(bool selectAll)
+{
+    for (int i = 0; i < rowCount() ; ++i)
+        setData(index(i, 0), selectAll, RemoteSongModel::selected);
+}
+
+QList<int> RemoteSongProxyModel::selectedSongsIdexes()
+{
+    QList<int> selectedIndexes;
+    for (int i = 0; i < rowCount() ; ++i)
+    {
+        if (data(index(i, 0), RemoteSongModel::selected).toBool())
+            selectedIndexes << data(index(i, 0), RemoteSongModel::songIndex).toInt();
+    }
+    return selectedIndexes;
+}

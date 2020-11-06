@@ -105,6 +105,9 @@ private slots:
 
     void onAddRadioToPlaylist(int radioIdx);
 
+    void onSendSongsToRemove();
+
+
 
 // Socket handlers
     void onConnected();

@@ -48,11 +48,10 @@ Rectangle {
 
     property color colorSongPlaying  : "#ff8c00"
     property color colorSongSelected : "lightblue"
-    property color colorSongEdited   : "lightgray"
 
 
     // private properties
-    property bool editMode         : false
+    property bool selectionMode    : false
 
     property int  playingSongIdx   : -1
     property int  playlistIdx      : 0
@@ -109,8 +108,6 @@ Rectangle {
         if (playlistCombo.currentIndex !== idx)
             playlistCombo.currentIndex = idx;
     }
-
-
 
 
     Rectangle{
@@ -201,8 +198,62 @@ Rectangle {
         model: cppRemote.playListModel()
         delegate: songDelegate
 
+        flickableDirection: Flickable.VerticalFlick
+        boundsBehavior    : Flickable.DragOverBounds
+        boundsMovement    : Flickable.FollowBoundsBehavior
+        ScrollBar.vertical: ScrollBar {}
+
 //        onCurrentItemChanged: console.log("songsView current index: "+songsView.currentIndex)
     } // songsView
+
+
+    ImageButton {
+        id:   exitSelectModeButton
+        size: buttonSize
+        anchors {
+            bottom: parent.bottom
+            right:  selectAllButton.left
+            rightMargin: headerSpacing
+        }
+        source: "icons/close.png";
+        onClicked: {
+            cppRemote.selectAllSongsFromProxyModel(false);
+            selectionMode = false;
+        }
+        visible: selectionMode
+    }
+    ImageButton {
+        id:   selectAllButton
+        size: buttonSize
+        anchors {
+            bottom: parent.bottom
+            right:  deleteSongsButton.left
+            rightMargin: headerSpacing
+        }
+        source: "icons/select_all.png";
+        onClicked: {
+            let allSelected = cppRemote.allSongsSelected();
+            cppRemote.selectAllSongsFromProxyModel(!allSelected);
+            if (allSelected)
+                songsView.currentIndex = -1;
+        }
+        visible: selectionMode
+    }
+    ImageButton {
+        id: deleteSongsButton
+        size  : buttonSize
+        source: "icons/delete.png";
+        anchors{
+            bottom: parent.bottom
+            right:  parent.right
+            rightMargin: headerSpacing
+        }
+        onClicked: {
+            cppRemote.deleteSelectedSongs();
+            selectionMode = false;
+        }
+        visible: selectionMode
+    } // deleteSongsButton
 
 
 
@@ -368,17 +419,23 @@ Rectangle {
             height: 50
 
             color: {
-                if (/*searchField.text === ""
-                        &&*/ activePlaylistIdx === playlistIdx
-                        && index === playingSongIdx)
-                    return colorSongPlaying;
-                else
-                {
-                    if (ListView.isCurrentItem)
+                if (selectionMode){
+                    if (selected)
                         return colorSongSelected;
-                    else
-                        return editMode ? colorSongEdited : "white";
                 }
+                else {
+                    if (activePlaylistIdx === playlistIdx && index === playingSongIdx)
+                        return colorSongPlaying
+                    else if (ListView.isCurrentItem)
+                        return colorSongSelected;
+                }
+                return "white";
+//                if (/*searchField.text === ""
+//                        &&*/ activePlaylistIdx === playlistIdx
+//                        && index === playingSongIdx)
+//                    return colorSongPlaying;
+//                else
+//                    return ListView.isCurrentItem ? colorSongSelected : "white"
             }
 
             onIsSelectedChanged: {
@@ -488,6 +545,8 @@ Rectangle {
                 onClicked: {
                     print("Clicked #" + index + ": " + title)
                     songsView.currentIndex = index
+                    if (selectionMode)
+                        selected = !selected;
                 }
 
                 onDoubleClicked: {
@@ -498,7 +557,8 @@ Rectangle {
 
                 onPressAndHold: {
                     songsView.currentIndex = index
-                    editMode = true
+                    selectionMode = true
+                    selected = true;
                     print("onPressAndHold #" + index + ": " + title)
                 }
             }

@@ -42,7 +42,10 @@ public:
         artist,
         album,
         length,
-        pretty_length
+        pretty_length,
+        selected,
+        songIndex,
+        songId
     };
 
     // Basic functionality:
@@ -50,9 +53,9 @@ public:
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
-    // Editable:
-//    bool setData(const QModelIndex &index, const QVariant &value,
-//                 int role = Qt::EditRole) override;
+    // Editable (only for selected role...)
+    bool setData(const QModelIndex &index, const QVariant &value,
+                 int role = Qt::EditRole) override;
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
@@ -75,6 +78,10 @@ class RemoteSongProxyModel : public QSortFilterProxyModel {
 public:
     RemoteSongProxyModel(QObject *parent = nullptr);
     ~RemoteSongProxyModel() override = default;
+
+    bool allSongsSelected() const;
+    void selectAllSongs(bool selectAll);
+    QList<int> selectedSongsIdexes();
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
