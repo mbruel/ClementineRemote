@@ -26,9 +26,6 @@ import QtQuick.Layouts 1.3
 import PlayList 1.0
 
 Rectangle {
-    //    property alias lbl: lbl
-    //    property int iconSize: 30
-
     id: root
     radius: 10
 
@@ -60,20 +57,15 @@ Rectangle {
 
     Connections {
         target: cppRemote
-        function onCurrentSongIdx(idx){
-            updateCurrentSong(idx);
-        }
-
-        function onUpdatePlaylist(idx)
-        {
-            updateCurrentPlaylist(idx);
-        }
 
         function onUpdatePlaylists()
         {
-            playlistCombo.model = cppRemote.playlistsList()
+            playlistCombo.model = cppRemote.playlistsList();
             playlistCombo.currentIndex = cppRemote.playlistIndex();
         }
+        function onCurrentSongIdx(idx) { updateCurrentSong(idx); }
+        function onUpdatePlaylist(idx) { updateCurrentPlaylist(idx); }
+
     } // Connections cppRemote
 
 
@@ -96,7 +88,7 @@ Rectangle {
         {
             playingSongIdx    = songsView.currentIndex;
             activePlaylistIdx = cppRemote.playlistIndex();
-            print("activePlaylistIdx: "+activePlaylistIdx)
+            print("activePlaylistIdx: "+activePlaylistIdx);
         }
 //        if (idx)
 //            songsView.positionViewAtIndex(idx, ListView.Center)
@@ -430,12 +422,6 @@ Rectangle {
                         return colorSongSelected;
                 }
                 return "white";
-//                if (/*searchField.text === ""
-//                        &&*/ activePlaylistIdx === playlistIdx
-//                        && index === playingSongIdx)
-//                    return colorSongPlaying;
-//                else
-//                    return ListView.isCurrentItem ? colorSongSelected : "white"
             }
 
             onIsSelectedChanged: {
