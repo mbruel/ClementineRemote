@@ -110,6 +110,14 @@ ClementineRemote::~ClementineRemote()
     close();
 }
 
+const QString ClementineRemote::hostname() const
+{
+    if (_connection)
+        return _connection->hostname();
+    else
+        return "nowhere..."; // should never happen
+}
+
 void ClementineRemote::close()
 {
     qDebug() << "[MB_TRACE] close ClementineRemote";

@@ -57,7 +57,6 @@ Rectangle {
 
     Connections {
         target: cppRemote
-
         function onUpdatePlaylists()
         {
             playlistCombo.model = cppRemote.playlistsList();
@@ -65,7 +64,6 @@ Rectangle {
         }
         function onCurrentSongIdx(idx) { updateCurrentSong(idx); }
         function onUpdatePlaylist(idx) { updateCurrentPlaylist(idx); }
-
     } // Connections cppRemote
 
 

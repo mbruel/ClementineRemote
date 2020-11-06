@@ -46,8 +46,7 @@ Item {
     property color bgGradiantStop:  "#ff8c00" // darkorange
 
 
-    // ListModel for ToolBar
-    ListModel {
+    ListModel { // ListModel for ToolBar
         id: toolBarModel
 
         ListElement { name : "playlist" ; color: "white" }
@@ -56,6 +55,21 @@ Item {
         ListElement { name : "library"  ; color: "lightblue" }
         ListElement { name : "search"   ; color: "lightgreen" }
     }
+    ListModel { // ListModel for repeatMenu
+        id: repeatModel
+        ListElement { text : qsTr("Don't Repeat")    ; icon: "icons/ab_repeat_off.png" }
+        ListElement { text : qsTr("Repeat Track")    ; icon: "icons/ab_repeat_track.png" }
+        ListElement { text : qsTr("Repeat Album")    ; icon: "icons/ab_repeat_album.png" }
+        ListElement { text : qsTr("Repeat Playlist") ; icon: "icons/ab_repeat_playlist.png" }
+    }
+    ListModel { // ListModel for shuffleMenu
+        id: shuffleModel
+        ListElement { text : qsTr("Don't Shuffle")                ; icon: "icons/ab_shuffle_off.png" }
+        ListElement { text : qsTr("Shuffle All")                  ; icon: "icons/ab_shuffle.png" }
+        ListElement { text : qsTr("Shuffle tracks in this Albums"); icon: "icons/ab_shuffle_album.png" }
+        ListElement { text : qsTr("Shuffle Albums")               ; icon: "icons/ab_shuffle_albums.png" }
+    }
+
 
     Connections{
         target: cppRemote
@@ -144,8 +158,7 @@ Item {
         stopSong.opacity = enableStop ? 1 : 0.5
     } // function updatePlayerState
 
-    function useVolumeButtonWithVerticalSlider(useVolButton)
-    {
+    function useVolumeButtonWithVerticalSlider(useVolButton) {
         if (useVolButton)
         {
             // make volButton visible and invert its position with volPct
@@ -174,7 +187,7 @@ Item {
         }
     } // function useVolumeButtonWithVerticalSlider
 
-    function updateShuffle(mode){
+    function updateShuffle(mode) {
         switch(mode)
         {
         case 0:
@@ -238,19 +251,6 @@ Item {
     } // background
 
 
-    Loader {
-        id: mainArea
-        anchors {
-            top      : toolBar.bottom
-            left     : parent.left
-            topMargin: toolBarMargin;
-        }
-        width : parent.width
-        height: parent.height - toolBarHeight - 3*toolBarMargin - playerBar.height
-    } // mainArea
-
-
-
     ToolBarButton {
         id: nav_menu
         anchors {
@@ -294,6 +294,19 @@ Item {
             } // ToolBarButton
         } // Repeater
     } // toolBar
+
+
+
+    Loader {
+        id: mainArea
+        anchors {
+            top      : toolBar.bottom
+            left     : parent.left
+            topMargin: toolBarMargin;
+        }
+        width : parent.width
+        height: parent.height - toolBarHeight - 3*toolBarMargin - playerBar.height
+    } // mainArea
 
 
     Rectangle {
@@ -383,103 +396,21 @@ Item {
 //                onMoved:{
 ////                    print("new trackPosition: "+value*trackLength)
 //                }
-            }
+            } // trackSlider
 
             ImageButton {
                 id: repeatButton
-                size: headerButtonSize
-                source: "icons/ab_repeat_off.png";
-                onClicked: {
-                    print("[MainApp] repeatButton clicked! TODO...")
-                    repeatMenu.open()
-                }
+                size     : headerButtonSize
+                source   : "icons/ab_repeat_off.png";
+                onClicked: repeatMenu.open()
+            } // repeatButton
 
-                Menu {
-                    id: repeatMenu
-                    x: parent.width - width
-                    transformOrigin: Menu.TopRight
-
-                    Action {
-                        icon.source: "icons/ab_repeat_off.png";
-                        text: qsTr("Don't Repeat")
-                        onTriggered: {
-                            cppRemote.repeat(0)
-                            updateRepeat(0)
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/ab_repeat_track.png";
-                        text: qsTr("Repeat Track")
-                        onTriggered: {
-                            cppRemote.repeat(1)
-                            updateRepeat(1)
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/ab_repeat_album.png";
-                        text: qsTr("Repeat Album")
-                        onTriggered: {
-                            cppRemote.repeat(2)
-                            updateRepeat(2)
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/ab_repeat_playlist.png";
-                        text: qsTr("Repeat Playlist")
-                        onTriggered: {
-                            cppRemote.repeat(3)
-                            updateRepeat(3)
-                        }
-                    }
-                }
-            }
             ImageButton {
                 id: shuffleButton
-                size: headerButtonSize
-                source: "icons/ab_shuffle_off.png";
-                onClicked: {
-                    print("[MainApp] shuffleButton clicked! TODO...")
-                    shuffleMenu.open()
-                }
+                size     : headerButtonSize
+                source   : "icons/ab_shuffle_off.png";
+                onClicked: shuffleMenu.open();
 
-                Menu {
-                    id: shuffleMenu
-                    x: parent.width - width
-                    transformOrigin: Menu.TopRight
-
-                    Action {
-                        icon.source: "icons/ab_shuffle_off.png";
-                        text: qsTr("Don't Shuffle")
-                        onTriggered: {
-                            cppRemote.shuffle(0)
-                            updateShuffle(0)
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/ab_shuffle.png";
-                        text: qsTr("Shuffle All")
-                        onTriggered: {
-                            cppRemote.shuffle(1)
-                            updateShuffle(1)
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/ab_shuffle_album.png";
-                        text: qsTr("Shuffle tracks in this Albums")
-                        onTriggered: {
-                            cppRemote.shuffle(2)
-                            updateShuffle(2)
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/ab_shuffle_albums.png";
-                        text: qsTr("Shuffle Albums")
-                        onTriggered: {
-                            cppRemote.shuffle(3)
-                            updateShuffle(3)
-                        }
-                    }
-                }
             }
         } // trackRow
 
@@ -492,9 +423,8 @@ Item {
                 leftMargin: headerButtonSize + toolBarMargin
                 topMargin: -5
             }
-
             text: ""
-        }
+        } // trackPosition
 
         Text{
             id: trackDuration
@@ -504,62 +434,52 @@ Item {
                 rightMargin: 2*headerButtonSize + toolBarMargin
                 topMargin: -5
             }
-
             text: cppRemote.currentTrackDuration()
-        }
+        } // trackDuration
+
 
 
         // Second line
-
         Row {
             id: commandsRow
-
             anchors{
-                left: parent.left
-                bottom: parent.bottom
+                left        : parent.left
+                bottom      : parent.bottom
                 bottomMargin: toolBarMargin
             }
             spacing: 10
 
             ImageButton {
                 id: previousSong
-                size: headerButtonSize
-                source: "icons/media-skip-backward.png";
-                onClicked: {
-                    print("[MainApp] previousSong clicked!")
-                     cppRemote.previousSong();
-                }
-            }
+                size     : headerButtonSize
+                source   : "icons/media-skip-backward.png";
+                onClicked: cppRemote.previousSong();
+            } // previousSong
             ImageButton {
                 id: playSong
-                size: headerButtonSize
-                source: "icons/media-playback-start.png";
+                size     : headerButtonSize
+                source   : "icons/media-playback-start.png";
                 onClicked: {
-                    print("[MainApp] playSong clicked!")
                     cppRemote.playpause();
                     updatePlayerState();
                 }
-            }
+            } // playSong
             ImageButton {
                 id: stopSong
-                size: headerButtonSize
-                source: "icons/media-playback-stop.png";
+                size     : headerButtonSize
+                source   : "icons/media-playback-stop.png";
                 onClicked: {
-                    print("[MainApp] stopSong clicked!")
                      cppRemote.stop();
                      updatePlayerState();
                 }
-            }
+            } // stopSong
             ImageButton {
                 id: nextSong
-                size: headerButtonSize
-                source: "icons/media-skip-forward.png";
-                onClicked: {
-                    print("[MainApp] nextSong clicked!")
-                     cppRemote.nextSong();
-                }
-            }
-        }
+                size     : headerButtonSize
+                source   : "icons/media-skip-forward.png";
+                onClicked: cppRemote.nextSong();
+            }// nextSong
+        } // commandsRow
 
         Slider {
             id: volumeSlider
@@ -569,54 +489,48 @@ Item {
             width: resizableWidth
 
             anchors{
-                right: volPct.left
-                bottom: parent.bottom
+                right       : volPct.left
+                bottom      : parent.bottom
                 bottomMargin: toolBarMargin
-                rightMargin: toolBarMargin
+                rightMargin : toolBarMargin
             }
-
             background: Rectangle {
                 x: volumeSlider.leftPadding
                 y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - height / 2
-                implicitWidth: 200
+                implicitWidth : 200
                 implicitHeight: 4
-                width: volumeSlider.availableWidth
+                width : volumeSlider.availableWidth
                 height: implicitHeight
                 radius: 2
-                color: "#bdbebf"
+                color : "#bdbebf"
 
                 Rectangle {
-                    width: volumeSlider.visualPosition * parent.width
+                    width : volumeSlider.visualPosition * parent.width
                     height: parent.height
-                    color: "#21be2b"
+                    color : "#21be2b"
                     radius: 2
                 }
             }
-
             handle: Rectangle {
                 x: volumeSlider.leftPadding + volumeSlider.visualPosition * (volumeSlider.availableWidth - width)
                 y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - height / 2
-                implicitWidth: 26
+                implicitWidth : 26
                 implicitHeight: 26
                 color: "transparent"
                 Image{
-                    source: "icons/sound.png"
+                    source  : "icons/sound.png"
                     fillMode: Image.PreserveAspectFit;
-                    width: parent.width
-                    height: parent.height
+                    width   : parent.width
+                    height  : parent.height
                 }
             }
-
             onPressedChanged: {
                 if (!pressed)
                 {
-                    print("onPressedChanged volume: "+Math.round(value*100))
-                    cppRemote.setCurrentVolume(Math.round(value*100))
+                    cppRemote.setCurrentVolume(Math.round(value*100));
                     volPct.text = cppRemote.volumePct();
                 }
-            }
-
-
+            }            
             transform: [
                 Rotation {
                     id: rotationSliderVol
@@ -624,39 +538,40 @@ Item {
                     angle: 0
                 }
             ]
-        }
+        } // volumeSlider
+
 
         ImageButton {
             id: volButton
 
             anchors{
-                right: volPct.left
-                bottom: parent.bottom
+                right       : volPct.left
+                bottom      : parent.bottom
                 bottomMargin: toolBarMargin
-//                rightMargin: toolBarMargin
             }
-
             visible: false
 
-            size: headerButtonSize
-            source: "icons/sound.png";
-            onClicked: {volumeSlider.visible = !volumeSlider.visible;}
-        }
+            size     : headerButtonSize
+            source   : "icons/sound.png";
+            onClicked: volumeSlider.visible = !volumeSlider.visible;
+        } // volButton
 
         Text{
             id: volPct
             anchors{
-                right: parent.right
-//                bottom: parent.bottom
-//                bottomMargin: toolBarMargin
-                rightMargin: toolBarMargin
+                right         : parent.right
+                rightMargin   : toolBarMargin
                 verticalCenter: volumeSlider.verticalCenter
             }
             text: cppRemote.volumePct();
-        }
-    }
+        } // volPct
+    } // playerBar
 
 
+
+    ////////////////////////////////////////
+    //      Components and Popups         //
+    ////////////////////////////////////////
 
 
     Component {
@@ -697,9 +612,47 @@ Item {
         }
     } // todoDialog
 
+    Menu {
+        id: repeatMenu
+        x: repeatButton.x - width + mainMargin
+        y: root.height - height
+        transformOrigin: Menu.TopRight
+
+        Repeater {
+            model: repeatModel;
+            MenuItem {
+                text       : model.text
+                icon.source: model.icon;
+                onTriggered: {
+                    cppRemote.repeat(model.index);
+                    updateRepeat(model.index);
+                }
+            }
+        } // Repeater
+    } // repeatMenu
+
+    Menu {
+        id: shuffleMenu
+        x: shuffleButton.x - width + mainMargin
+        y: root.height - height
+        transformOrigin: Menu.TopRight
+
+        Repeater {
+            model: shuffleModel;
+            MenuItem {
+                text       : model.text
+                icon.source: model.icon;
+                onTriggered: {
+                    cppRemote.repeat(model.index);
+                    updateRepeat(model.index);
+                }
+            }
+        } // Repeater
+    } // shuffleMenu
+
     Drawer {
         id: drawer
-        width: parent.width * 2/3
+        width : parent.width * 2/3
         height: parent.height
 
 //        height: drawerContent.height //parent.height / 2
@@ -709,10 +662,10 @@ Item {
 
         Column {
             anchors.fill: parent
-//            anchors.topMargin: mainMargin
             spacing: toolBarMargin
 
             Rectangle {
+                id: drawerHeader
                 anchors.horizontalCenter: parent.horizontalCenter
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
@@ -724,112 +677,87 @@ Item {
 
                 Image {
                     id: drawerLogo
-                    source: "icon_large.png";
+                    width   : 50
+                    height  : 50
+                    source  : "icon_large.png";
                     fillMode: Image.PreserveAspectFit;
                     anchors {
                         left: parent.left
                         verticalCenter: parent.verticalCenter
                         leftMargin: toolBarSpacing
                     }
-                    height: 50
-                    width: 50
-                }
+                } // drawerLogo
                 Text {
-                    width: parent.width - drawerLogo.width - 2*toolBarSpacing
+                    id: drawerHeaderTxt
                     anchors {
                         left: drawerLogo.right
                         verticalCenter: parent.verticalCenter
                         leftMargin: toolBarSpacing
                     }
-                    font.pointSize: 20;
-                    text: "Clementine on localhost"
+                    width: parent.width - drawerLogo.width - 2*toolBarSpacing
+                    font.pointSize: 18;
                     wrapMode: Text.WordWrap
-                }
-            }
+
+                    text    : qsTr("Clementine on ") + cppRemote.hostname()
+                } // drawerHeaderTxt
+            }// drawerHeader
 
             ItemDelegate {
                 id: settings
                 width: parent.width
-
-                text: qsTr("Settings")
-                icon {
-                    source: "icons/nav_settings.png"
-//                    height: 30
-                }
-//                highlighted: true;
-
+                text : qsTr("Settings")
+                icon.source: "icons/nav_settings.png"
                 onClicked: {
                     console.log("onClicked " + settings.text);
                     drawer.close();
                     todoDialog.open();
                 }
-            }
-
+//                highlighted: true;
+            } // settings
             ItemDelegate {
                 id: downloads
                 width: parent.width
-
-                text: qsTr("Downloads")
-                icon {
-                    source: "icons/nav_downloads.png"
-                }
-
+                text : qsTr("Downloads")
+                icon.source: "icons/nav_downloads.png"
                 onClicked: {
                     console.log("onClicked " + downloads.text);
                     drawer.close();
                     todoDialog.open();
                 }
-            }
-
+            } // downloads
             ItemDelegate {
                 id: donate
                 width: parent.width
-
-                text: qsTr("Donate")
-                icon {
-                    source: "icons/nav_donate.png"
-                }
-
+                text : qsTr("Donate")
+                icon.source: "icons/nav_donate.png"
                 onClicked: {
                     console.log("onClicked " + donate.text)
                     drawer.close();
                     todoDialog.open();
                 }
-            }
-
+            } // donate
             ItemDelegate {
                 id: about
                 width: parent.width
-
-                text: qsTr("About")
-                icon {
-                    source: "icon.png"
-                }
-
+                text : qsTr("About")
+                icon.source: "icon.png"
                 onClicked: {
                     console.log("onClicked " + about.text)
                     drawer.close();
                     todoDialog.open();
                 }
-            }
-
-
+            } // about
             ItemDelegate {
                 id: logout
                 width: parent.width
-
-                text: qsTr("Disconnect")
-                icon {
-//                    source: "icons/logout.png"
-                    source: "icons/nav_quit.png"
-                }
-
+                text : qsTr("Disconnect")
+                icon.source: "icons/nav_quit.png"
                 onClicked: {
                     console.log("onClicked " + logout.text)
                     drawer.close();
                     drawer.disconnect = true;
                 }
-            }
+            } // logout
         }
         // to disconnect we need to wait that the Drawer is completely closed
         // otherwise the Overlay would stay

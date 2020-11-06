@@ -125,6 +125,8 @@ public:
     ~ClementineRemote();
 
 
+    Q_INVOKABLE const QString hostname() const;
+
     inline int modelRowFromProxyRow(int proxyRow) const;
 
     inline Q_INVOKABLE bool hideServerFilesPreviousNextNavButtons() const;

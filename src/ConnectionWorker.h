@@ -69,6 +69,8 @@ public:
 
     void requestSavedRadios();
 
+    inline const QString &hostname() const;
+
 signals:
     void connectToServer(const QString &host, ushort port, int auth_code);
     void disconnectFromServer();
@@ -121,6 +123,7 @@ private:
     void _doChangeSong(int songIndex, qint32 playlistID);
 };
 
+const QString &ConnectionWorker::hostname() const { return _host; }
 const QString &ConnectionWorker::disconnectReason() const { return _disconnectReason; }
 void ConnectionWorker::setDisconnectReason(const QString &disconnectReason) { _disconnectReason = disconnectReason; }
 

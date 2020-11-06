@@ -506,4 +506,3 @@ void ConnectionWorker::requestSavedRadios()
     msg.set_type(pb::remote::REQUEST_SAVED_RADIOS);
     sendDataToServer(msg);
 }
-
