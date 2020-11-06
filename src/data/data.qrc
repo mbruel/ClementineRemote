@@ -54,5 +54,6 @@
         <file>icons/clear.png</file>
         <file>icons/newFile.png</file>
         <file>icons/open.png</file>
+        <file>icons/tmpFile.png</file>
     </qresource>
 </RCC>

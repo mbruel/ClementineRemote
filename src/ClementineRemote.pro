@@ -47,6 +47,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         ClementineRemote.cpp \
         ConnectionWorker.cpp \
+        PlaylistModel.cpp \
         RadioStreamModel.cpp \
         RemoteFileModel.cpp \
         RemoteSongModel.cpp \
@@ -71,6 +72,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     ClementineRemote.h \
     ConnectionWorker.h \
+    PlaylistModel.h \
     RadioStreamModel.h \
     RemoteFileModel.h \
     RemoteSongModel.h \

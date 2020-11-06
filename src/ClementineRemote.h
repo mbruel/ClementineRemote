@@ -169,6 +169,7 @@ public:
     inline const QList<RemotePlaylist*> &playlists() const;
     inline RemotePlaylist *playlist(int idx) const;
     inline Q_INVOKABLE int playlistIndex() const;
+    inline int numberOfPlaylists() const;
 
 
     inline void setPlay();
@@ -268,6 +269,12 @@ signals:
     void addRadioToPlaylist(int radioIdx);
 
 
+    // signals for PlaylistModel
+    void preAddPlaylists(int lastIdx);
+    void postAddPlaylists();
+    void preClearPlaylists(int lastIdx);
+    void postClearPlaylists();
+
     // signals for RemoteSongModel
     void preSongAppended();
     void preAddSongs(int lastSongIdx);
@@ -350,6 +357,7 @@ ushort ClementineRemote::shuffleMode() const { return sQmlShuffleCodes.value(_sh
 const QList<RemotePlaylist *> &ClementineRemote::playlists() const { return _playlists; }
 RemotePlaylist *ClementineRemote::playlist(int idx) const { return idx < _playlists.size() ? _playlists.at(idx) : nullptr; }
 int ClementineRemote::playlistIndex() const { return _dispPlaylistIndex; }
+int ClementineRemote::numberOfPlaylists() const { return _playlists.size(); }
 
 void ClementineRemote::setPlay()
 {

@@ -32,243 +32,34 @@ Rectangle {
     id: root
     radius: 10
 
-    property bool  editMode: false
 
-    property int playlistIdx: 0
-    property int activePlaylistIdx: 0
+    property int   buttonSize        : 30
 
-    property int headerButtonSize   : 30
+    property int   headerHeight      : 50;
+    property int   headerSpacing     : 10;
+    property int   headerPadding     : 5;
+    property color headerColor       : "white"
+    property color headerBorderColor : "black"
+    property int   headerBorderWidth : 1
 
-    property int playingSongIdx: -1
+    property int   comboLineHeight   : 40;
+    property int   comboIconSize     : 30
+    property int   comboLineSpacing  : 5;
 
-    property color colorSongPlaying:  "#ff8c00"
-    property color colorSongSelected: "lightblue"
-    property color colorSongEdited:   "lightgray"
-
-    Rectangle{
-        id: playlistsRow
-        width: parent.width
-        height:50
-        anchors {
-            top: parent.top
-            left: parent.left
-        }
-        color: "white"
-        border.color: "black"
-
-        Row{
-            width: parent.width
-            anchors {
-//                leftMargin: 20;
-                verticalCenter: parent.verticalCenter
-            }
-            spacing: 10
-            leftPadding: 5
-            ComboBox {
-                id: playlistCombo
-                model : cppRemote.playlistsList()
-
-                onActivated:{
-                    if (index != playlistIdx)
-                    {
-                        print("Playlist clicked: #" + index+ " : " +currentText )
-                        cppRemote.changePlaylist(index)
-                    }
-                }
-            }
-
-            TextField {
-                id: searchField
-                width: playlistsRow.width - playlistCombo.width - moreOptions.width - 3*parent.spacing
-//                Layout.fillWidth: true
-                placeholderText: qsTr("search")
+    property color colorSongPlaying  : "#ff8c00"
+    property color colorSongSelected : "lightblue"
+    property color colorSongEdited   : "lightgray"
 
 
-                inputMethodHints: Qt.ImhNoPredictiveText;
+    // private properties
+    property bool editMode         : false
+
+    property int  playingSongIdx   : -1
+    property int  playlistIdx      : 0
+    property int  activePlaylistIdx: 0
 
 
-                onTextChanged: {
-                    print("searchField text changed: " + text);
-                    cppRemote.setSongsFilter(text);
-                    playingSongIdx = cppRemote.activeSongIndex();
-                }
-
-
-                Button {
-                    id: clearSearch
-                    Text {
-                        text: "x"
-                        anchors{
-                            horizontalCenter: parent.horizontalCenter
-                            verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-//                    text: "x"
-//                    verticalAlignment: Text.AlignVCenter
-
-                    width: 30
-                    height: parent.height - 4
-                    anchors {
-                        right: parent.right
-                        rightMargin: 2
-                        verticalCenter: parent.verticalCenter
-                    }
-
-                    onClicked: searchField.text = ""
-                }
-            }
-
-            ImageButton {
-                id: moreOptions
-                size: headerButtonSize
-                source: "icons/moreOptions.png";
-                onClicked: {
-                    print("playlist moreOptions clicked!")
-                     playlistMenu.open();
-                }
-                anchors.verticalCenter: parent.verticalCenter
-
-                Menu {
-                    id: playlistMenu
-                    x: parent.width - width
-                    transformOrigin: Menu.TopLeft
-
-                    Action {
-                        icon.source: "icons/refresh.png"
-                        text: qsTr("Refresh Playlist")
-                        onTriggered: cppRemote.changePlaylist(playlistCombo.currentIndex);
-                    }
-                    Action {
-                        icon.source: "icons/star.png"
-                        text: qsTr("Save Playlist")
-                        onTriggered: cppRemote.savePlaylist(cppRemote.currentPlaylistID());
-                    }
-                    Action {
-                        icon.source: "icons/renamePlaylist.png"
-                        text: qsTr("Rename Playlist")
-                        onTriggered: {
-                            renPlaylistDialog.title = qsTr("Rename Playlist ") + playlistCombo.currentText;
-                            renPlaylistDialog.createNewPlaylist = false;
-                            renPlaylistDialog.open();
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/clear.png"
-                        text: qsTr("Clear Playlist")
-                        onTriggered: cppRemote.clearPlaylist(cppRemote.currentPlaylistID());
-                    }
-                    Action {
-                        icon.source: "icons/close.png"
-                        text: qsTr("Close Playlist")
-                        onTriggered: {
-                            // Won't allow removing the last playlist
-                            if (playlistCombo.count <= 1)
-                                return;
-
-                            //MB_TODO: if playlist is not saved ask confirmation!
-                            cppRemote.closePlaylist(cppRemote.currentPlaylistID());
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/nav_downloads.png"
-                        text: qsTr("Download Playlist")
-                        onTriggered: {
-                            print("Download playlist");
-                            todoDialog.open()
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/open.png"
-                        text: qsTr("Open a Playlist")
-                        onTriggered: {
-                            print("open playlist");
-                            todoDialog.open()
-                        }
-                    }
-                    Action {
-                        icon.source: "icons/newFile.png"
-                        text: qsTr("Create new Playlist")
-                        onTriggered: {
-                            onTriggered: {
-                                renPlaylistDialog.title = qsTr("Create New Playlist ");
-                                renPlaylistDialog.createNewPlaylist = true;
-                                renPlaylistDialog.open();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    ListView {
-        id: songsView
-
-        anchors{
-            top: playlistsRow.bottom
-            left: parent.left
-        }
-        implicitWidth: parent.width
-        implicitHeight: parent.height - playlistsRow.height
-
-        //        implicitWidth: 250
-        //        implicitHeight: 250
-        //                    anchors.fill: parent
-
-        clip: true
-
-        model: cppRemote.playListModel()
-//        model: PlayListModel {
-//            remote: cppRemote
-//        }
-
-
-        delegate: songDelegate
-
-        //        onCurrentItemChanged: console.log(model.get(songsView.currentIndex).name + ' selected')
-        onCurrentItemChanged: console.log("songsView current index: "+songsView.currentIndex)
-
-
-    }
-
-    Component.onCompleted : {
-        updateCurrentPlaylist(cppRemote.playlistIndex());
-
-        print("songsView.size: "+songsView.count);
-        let songIdx = cppRemote.currentSongIndex();
-        updateCurrentSong(songIdx);
-        if (songIdx)
-            songsView.positionViewAtIndex(songsView.currentIndex, ListView.Center);
-
-    }
-
-    function updateCurrentSong(idx)
-    {
-        print("updateCurrentSong: " + idx);
-        songsView.currentIndex = idx;
-        if (cppRemote.isPlaying())
-        {
-            playingSongIdx    = songsView.currentIndex;
-            activePlaylistIdx = cppRemote.playlistIndex();
-            print("activePlaylistIdx: "+activePlaylistIdx)
-        }
-
-//        if (idx)
-//            songsView.positionViewAtIndex(idx, ListView.Center)
-
-    }
-
-    function updateCurrentPlaylist(idx){
-        print("updateCurrentPlaylist: "+idx);
-        playlistIdx = idx;
-        if (playlistCombo.currentIndex !== idx)
-            playlistCombo.currentIndex = idx;
-
-    }
-
-    Connections{
+    Connections {
         target: cppRemote
         function onCurrentSongIdx(idx){
             updateCurrentSong(idx);
@@ -284,22 +75,136 @@ Rectangle {
             playlistCombo.model = cppRemote.playlistsList()
             playlistCombo.currentIndex = cppRemote.playlistIndex();
         }
-    }   
+    } // Connections cppRemote
 
-    Button {
-        text: qsTr("Edit Mode")
-        onClicked: {
-            print("change delegate")
-            editMode = !editMode;
+
+    Component.onCompleted : {
+        updateCurrentPlaylist(cppRemote.playlistIndex());
+
+//        print("songsView.size: "+songsView.count);
+        let songIdx = cppRemote.currentSongIndex();
+        updateCurrentSong(songIdx);
+        if (songIdx)
+            songsView.positionViewAtIndex(songsView.currentIndex, ListView.Center);
+    } // Component.onCompleted
+
+
+    function updateCurrentSong(idx)
+    {
+//        print("updateCurrentSong: " + idx);
+        songsView.currentIndex = idx;
+        if (cppRemote.isPlaying())
+        {
+            playingSongIdx    = songsView.currentIndex;
+            activePlaylistIdx = cppRemote.playlistIndex();
+            print("activePlaylistIdx: "+activePlaylistIdx)
         }
+//        if (idx)
+//            songsView.positionViewAtIndex(idx, ListView.Center)
+    }
 
-        Layout.fillWidth: true
+    function updateCurrentPlaylist(idx){
+//        print("updateCurrentPlaylist: "+idx);
+        playlistIdx = idx;
+        if (playlistCombo.currentIndex !== idx)
+            playlistCombo.currentIndex = idx;
+    }
+
+
+
+
+    Rectangle{
+        id     : playlistsRow
+        width  : parent.width
+        height : headerHeight
+        anchors {
+            top : parent.top
+            left: parent.left
+        }
+        color       : headerColor
+        border.color: headerBorderColor
+        border.width: headerBorderWidth
+
+        Row {
+            width: parent.width
+            anchors {
+//                leftMargin: 20;
+                verticalCenter: parent.verticalCenter
+            }
+            spacing    : headerSpacing
+            leftPadding: headerPadding
+            ComboBox {
+                id: playlistCombo
+//                model : cppRemote.playlistsList()
+
+                model   : PlaylistModel{ remote: cppRemote }
+                delegate: playlistDelegate
+                textRole: "name"
+            }
+
+            TextField {
+                id: searchField
+                width: playlistsRow.width - playlistCombo.width - moreOptions.width - 3*parent.spacing
+//                Layout.fillWidth: true
+                placeholderText: qsTr("search")
+
+                inputMethodHints: Qt.ImhNoPredictiveText;
+
+                onTextChanged: {
+                    cppRemote.setSongsFilter(text);                    
+                    playingSongIdx = cppRemote.activeSongIndex();
+                }
+
+                Button {
+                    id: clearSearch
+                    Text {
+                        text: "x"
+                        anchors{
+                            horizontalCenter: parent.horizontalCenter
+                            verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    width: 30
+                    height: parent.height - 4
+                    anchors {
+                        right: parent.right
+                        rightMargin: 2
+                        verticalCenter: parent.verticalCenter
+                    }
+                    onClicked: searchField.text = ""
+                } //clearSearch
+            } // searchField
+
+            ImageButton {
+                id: moreOptions
+                size  : buttonSize
+                source: "icons/moreOptions.png";                
+                anchors.verticalCenter: parent.verticalCenter
+
+                onClicked: playlistMenu.open();
+            } // moreOptions
+        } // Row
+    } // playlistsRow
+
+
+    ListView {
+        id: songsView
 
         anchors{
-            bottom: parent.bottom
-            right: parent.right
+            top: playlistsRow.bottom
+            left: parent.left
         }
-    }
+        implicitWidth: parent.width
+        implicitHeight: parent.height - playlistsRow.height
+        clip: true
+
+        model: cppRemote.playListModel()
+        delegate: songDelegate
+
+//        onCurrentItemChanged: console.log("songsView current index: "+songsView.currentIndex)
+    } // songsView
+
+
 
     Dialog {
         id: todoDialog
@@ -316,7 +221,8 @@ Rectangle {
             text: "this feature is not implemented yet..."
             wrapMode: Text.WordWrap
         }
-    }
+    } // todoDialog
+
 
     Dialog {
         id: renPlaylistDialog
@@ -359,11 +265,98 @@ Rectangle {
                 Layout.fillWidth: true
             }
         }
-    }
+    } // renPlaylistDialog
 
 
 
-    // Delegate
+    // Delegates
+    Component {
+        id: playlistDelegate
+
+        ItemDelegate {
+            width: ListView.view.width
+            height: comboLineHeight
+
+            Image {
+                id: icon
+                x : comboLineSpacing
+                width : comboIconSize
+                height: comboIconSize
+                source: iconSrc
+
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text{
+                id: txtName
+                text: name
+                x: comboLineHeight + 2*comboLineSpacing
+
+                anchors.verticalCenter: icon.verticalCenter
+
+                elide: Text.ElideRight
+                width: parent.width - icon.width - 3*comboLineSpacing
+            }
+
+            highlighted: ListView.isCurrentItem
+            onClicked: {
+                playlistCombo.popup.close()
+                playlistCombo.currentIndex = index;
+                if (index != playlistIdx)
+                {
+                    print("Playlist clicked: #" + index+ " : " +name )
+                    cppRemote.changePlaylist(index)
+                }
+            }
+        }
+/*
+        Rectangle {
+            width: ListView.view.width
+            height: comboLineHeight
+
+//            color: ListView.isCurrentItem ? colorSongSelected : "white"
+
+            Image {
+                id: icon
+                x : combolineSpacing
+                width : comboIconSize
+                height: comboIconSize
+                source: iconSrc
+
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text{
+                id: txtName
+                text: name
+                x: comboLineHeight + 2*combolineSpacing
+
+                anchors.verticalCenter: icon.verticalCenter
+
+                elide: Text.ElideRight
+                width: parent.width - icon.width - 3*combolineSpacing
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled : true
+                onClicked: {
+                    playlistCombo.popup.close()
+                    playlistCombo.currentIndex = index;
+                    if (index != playlistIdx)
+                    {
+                        print("Playlist clicked: #" + index+ " : " +name )
+                        cppRemote.changePlaylist(index)
+                    }
+                }
+
+                onEntered: color = "lightgray"
+                onExited: color = "white"
+            }
+        }
+*/
+    } // Component playlistDelegate
+
     Component {
         id: songDelegate
 
@@ -465,7 +458,7 @@ Rectangle {
                 color: "blue"
                 anchors{
                     top: txtTitle.bottom
-                    //                    topMargin: 2
+//                    topMargin: 2
 //                    left: txtTitle.left
                 }
                 x: 0
@@ -510,8 +503,75 @@ Rectangle {
                 }
             }
         }
-    }
+    } // Component songDelegate
+
+
+
+    Menu {
+        id: playlistMenu
+        x: parent.width - width
+        transformOrigin: Menu.TopLeft
+
+        Action {
+            icon.source: "icons/refresh.png"
+            text: qsTr("Refresh Playlist")
+            onTriggered: cppRemote.changePlaylist(playlistCombo.currentIndex);
+        }
+        Action {
+            icon.source: "icons/star.png"
+            text: qsTr("Save Playlist")
+            onTriggered: cppRemote.savePlaylist(cppRemote.currentPlaylistID());
+        }
+        Action {
+            icon.source: "icons/renamePlaylist.png"
+            text: qsTr("Rename Playlist")
+            onTriggered: {
+                renPlaylistDialog.title = qsTr("Rename Playlist ") + playlistCombo.currentText;
+                renPlaylistDialog.createNewPlaylist = false;
+                renPlaylistDialog.open();
+            }
+        }
+        Action {
+            icon.source: "icons/clear.png"
+            text: qsTr("Clear Playlist")
+            onTriggered: cppRemote.clearPlaylist(cppRemote.currentPlaylistID());
+        }
+        Action {
+            icon.source: "icons/close.png"
+            text: qsTr("Close Playlist")
+            onTriggered: {
+                // Won't allow removing the last playlist
+                if (playlistCombo.count <= 1)
+                    return;
+
+                //MB_TODO: if playlist is not saved ask confirmation!
+                cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+            }
+        }
+        Action {
+            icon.source: "icons/nav_downloads.png"
+            text: qsTr("Download Playlist")
+            onTriggered: {
+                print("Download playlist");
+                todoDialog.open()
+            }
+        }
+        Action {
+            icon.source: "icons/open.png"
+            text: qsTr("Open a Playlist")
+            onTriggered: {
+                print("open playlist");
+                todoDialog.open()
+            }
+        }
+        Action {
+            icon.source: "icons/newFile.png"
+            text: qsTr("Create new Playlist")
+            onTriggered: {
+                renPlaylistDialog.title = qsTr("Create New Playlist ");
+                renPlaylistDialog.createNewPlaylist = true;
+                renPlaylistDialog.open();
+            }
+        }
+    } // playlistMenu
 }
-
-
-
