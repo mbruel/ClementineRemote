@@ -47,7 +47,9 @@ int main(int argc, char *argv[])
     // which means the model get deleted when any View is...
     // This wouldn't happen if the Model has already a parent
     // (cf http://doc.qt.io/qt-5/qtqml-cppintegration-data.html#data-ownership )
-    engine.setObjectOwnership(remote->playListModel(), QQmlEngine::CppOwnership);
+    engine.setObjectOwnership(remote->modelOpenedPlaylists(), QQmlEngine::CppOwnership);
+    engine.setObjectOwnership(remote->modelClosedPlaylists(), QQmlEngine::CppOwnership);
+    engine.setObjectOwnership(remote->modelRemoteSongs(), QQmlEngine::CppOwnership);
 
     engine.load(url);
 

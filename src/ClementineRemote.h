@@ -34,6 +34,7 @@
 #endif
 class ConnectionWorker;
 class RemotePlaylist;
+class PlaylistModel;
 
 class ClementineRemote : public QObject, public Singleton<ClementineRemote>
 {
@@ -68,13 +69,17 @@ private:
     pb::remote::ShuffleMode _shuffleMode;       //!< server shuffle mode
     pb::remote::RepeatMode  _repeatMode;        //!< server repeat mode
 
-    QList<RemotePlaylist*>  _playlists;         //!< list of all the Playlists (both locally and on server)
+    QList<RemotePlaylist*>  _playlistsOpened;  //!< list of all the opened Playlists (both locally and on server)
+    QList<RemotePlaylist*>  _playlistsClosed;  //!< list of all the closed Playlists (available to open)
 #ifdef __USE_CONNECTION_THREAD__
     QMutex                  _securePlaylists;
+    pb::remote::Message     _playlistData;
 #endif
     RemotePlaylist         *_dispPlaylist;      //!< Playlist displayed on the Remote
     qint32                  _dispPlaylistId;    //!< ID of the displayed Playlist
-    qint32                  _dispPlaylistIndex; //!< index in _playlists of the displayed Playlist
+    qint32                  _dispPlaylistIndex; //!< index in _playlistsOpened of the displayed Playlist
+    PlaylistModel          *_plOpenedModel;
+    PlaylistModel          *_plClosedModel;
 
     QList<RemoteSong>       _songs;             //!< list of Song of the Playlist displayed on the Remote
     RemoteSong              _activeSong;        //!< song played (or about to) on the server (pb::remote::CURRENT_METAINFO)
@@ -125,6 +130,9 @@ public:
     ~ClementineRemote();
 
 
+    inline Q_INVOKABLE PlaylistModel *modelOpenedPlaylists() const;
+    inline Q_INVOKABLE PlaylistModel *modelClosedPlaylists() const;
+
     Q_INVOKABLE const QString hostname() const;
 
     inline int modelRowFromProxyRow(int proxyRow) const;
@@ -145,7 +153,7 @@ public:
 
     inline Q_INVOKABLE int activeSongIndex() const;
 
-    inline Q_INVOKABLE QAbstractItemModel *playListModel() const;
+    inline Q_INVOKABLE QAbstractItemModel *modelRemoteSongs() const;
     inline int nbSongs() const;
     Q_INVOKABLE void setSongsFilter(const QString &searchTxt);
     Q_INVOKABLE bool allSongsSelected();
@@ -173,11 +181,11 @@ public:
     inline Q_INVOKABLE ushort repeatMode() const;
     inline Q_INVOKABLE ushort shuffleMode()const;
 
-    Q_INVOKABLE QStringList playlistsList();
     inline const QList<RemotePlaylist*> &playlists() const;
-    inline RemotePlaylist *playlist(int idx) const;
+    inline RemotePlaylist *playlist(int idx, bool closedPlaylists= false) const;
     inline Q_INVOKABLE int playlistIndex() const;
-    inline int numberOfPlaylists() const;
+    inline int numberOfPlaylists(bool closedPlaylists = false) const;
+    Q_INVOKABLE bool isCurrentPlaylistSaved() const;
 
 
     inline void setPlay();
@@ -216,7 +224,7 @@ private:
     void dumpCurrentPlaylist();
 
 
-    void rcvAllActivePlaylists(const pb::remote::ResponsePlaylists &playlists);
+    void rcvPlaylists(const pb::remote::ResponsePlaylists &playlists);
     void updateCurrentPlaylist();
     void dumpPlaylists();
 
@@ -243,6 +251,9 @@ signals:
     void repeat(ushort mode);
 
     void getServerFiles(QString currentPath, QString subFolder = "");
+    void getAllPlaylists();
+    void closedPlaylistsReceived(int nbClosedPlaylists);
+    void openPlaylist(int playlistID);
 
     void sendSongsToRemove();
     void sendFilesToAppend();
@@ -278,17 +289,9 @@ signals:
     void addRadioToPlaylist(int radioIdx);
 
 
-    // signals for PlaylistModel
-    void preAddPlaylists(int lastIdx);
-    void postAddPlaylists();
-    void preClearPlaylists(int lastIdx);
-    void postClearPlaylists();
-
     // signals for RemoteSongModel
-    void preSongAppended();
     void preAddSongs(int lastSongIdx);
     void postSongAppended();
-    void preSongRemoved(int index);
     void preClearSongs(int lastSongIdx);
     void postSongRemoved();
 
@@ -306,10 +309,12 @@ signals:
 
 
 #ifdef __USE_CONNECTION_THREAD__
+    void playlistsOpenedUpdatedByWorker();
     void songsUpdatedByWorker();
     void remoteFilesUpdatedByWorker();
 
 private slots:
+    void onPlaylistsOpenedUpdatedByWorker();
     void onSongsUpdatedByWorker();
     void onRemoteFilesUpdatedByWorker();
 #endif
@@ -325,7 +330,7 @@ public:
 
 };
 
-QAbstractItemModel *ClementineRemote::playListModel() const { return _songsProxyModel; }
+QAbstractItemModel *ClementineRemote::modelRemoteSongs() const { return _songsProxyModel; }
 
 int ClementineRemote::nbSongs() const { return _songs.size(); }
 
@@ -363,10 +368,19 @@ void ClementineRemote::stop()
 ushort ClementineRemote::repeatMode()  const { return sQmlRepeatCodes.value(_repeatMode); }
 ushort ClementineRemote::shuffleMode() const { return sQmlShuffleCodes.value(_shuffleMode); }
 
-const QList<RemotePlaylist *> &ClementineRemote::playlists() const { return _playlists; }
-RemotePlaylist *ClementineRemote::playlist(int idx) const { return idx < _playlists.size() ? _playlists.at(idx) : nullptr; }
+const QList<RemotePlaylist *> &ClementineRemote::playlists() const { return _playlistsOpened; }
+RemotePlaylist *ClementineRemote::playlist(int idx, bool closedPlaylists) const
+{
+    if ( closedPlaylists )
+        return idx < _playlistsClosed.size() ? _playlistsClosed.at(idx) : nullptr;
+    else
+        return idx < _playlistsOpened.size() ? _playlistsOpened.at(idx) : nullptr;
+}
 int ClementineRemote::playlistIndex() const { return _dispPlaylistIndex; }
-int ClementineRemote::numberOfPlaylists() const { return _playlists.size(); }
+int ClementineRemote::numberOfPlaylists(bool closedPlaylists) const
+{
+    return closedPlaylists ?  _playlistsClosed.size() : _playlistsOpened.size();
+}
 
 void ClementineRemote::setPlay()
 {
@@ -438,6 +452,9 @@ QString ClementineRemote::disconnectReason(short reason) const
         return tr("Unknown Reason...");
     }
 }
+
+PlaylistModel *ClementineRemote::modelOpenedPlaylists() const { return _plOpenedModel; }
+PlaylistModel *ClementineRemote::modelClosedPlaylists() const { return _plClosedModel; }
 
 int ClementineRemote::modelRowFromProxyRow(int proxyRow) const
 {

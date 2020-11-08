@@ -127,20 +127,12 @@ void RemoteSongModel::setRemote(ClementineRemote *remote)
     _remote = remote;
 
     if (_remote) {
-//        connect(_remote, &ClementineRemote::preSongAppended, this, [=]() {
-//            const int index = _remote->numberOfPlaylistSongs();
-//            beginInsertRows(QModelIndex(), index, index);
-//        });
         connect(_remote, &ClementineRemote::preAddSongs, this, [=](int lastSongIdx) {
             beginInsertRows(QModelIndex(), 0, lastSongIdx);
         });
         connect(_remote, &ClementineRemote::postSongAppended, this, [=]() {
             endInsertRows();
         });
-
-//        connect(_remote, &ClementineRemote::preSongRemoved, this, [=](int index) {
-//            beginRemoveRows(QModelIndex(), index, index);
-//        });
         connect(_remote, &ClementineRemote::preClearSongs, this, [=](int lastSongIdx) {
             beginRemoveRows(QModelIndex(), 0, lastSongIdx);
         });
@@ -148,7 +140,6 @@ void RemoteSongModel::setRemote(ClementineRemote *remote)
             endRemoveRows();
         });
     }
-
     endResetModel();
 }
 

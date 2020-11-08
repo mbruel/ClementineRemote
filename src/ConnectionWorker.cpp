@@ -60,6 +60,10 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::closePlaylist,        this, &ConnectionWorker::onClosePlaylist,        connectionType);
     connect(_remote, &ClementineRemote::addRadioToPlaylist,   this, &ConnectionWorker::onAddRadioToPlaylist,   connectionType);
     connect(_remote, &ClementineRemote::sendSongsToRemove,    this, &ConnectionWorker::onSendSongsToRemove,    connectionType);
+    connect(_remote, &ClementineRemote::getAllPlaylists,      this, &ConnectionWorker::onGetAllPlaylists,      connectionType);
+    connect(_remote, &ClementineRemote::openPlaylist,         this, &ConnectionWorker::onOpenPlaylist,         connectionType);
+
+
 
     connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
     connect(this,     &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket,    connectionType);
@@ -295,6 +299,22 @@ void ConnectionWorker::onClosePlaylist(qint32 playlistID)
 
     _remote->closingPlaylist(playlistID);
     onChangePlaylist(_remote->playlistIndex());
+}
+
+void ConnectionWorker::onGetAllPlaylists()
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::REQUEST_PLAYLISTS);
+    msg.mutable_request_playlists()->set_include_closed(true);
+    sendDataToServer(msg);
+}
+
+void ConnectionWorker::onOpenPlaylist(int playlistID)
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::OPEN_PLAYLIST);
+    msg.mutable_request_open_playlist()->set_playlist_id(playlistID);
+    sendDataToServer(msg);
 }
 
 void ConnectionWorker::onAddRadioToPlaylist(int radioIdx)

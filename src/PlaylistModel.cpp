@@ -36,8 +36,28 @@ const QHash<int, QByteArray> PlaylistModel::sRoleNames = {
 
 PlaylistModel::PlaylistModel(QObject *parent):
     QAbstractListModel(parent),
-    _remote(nullptr)
+    _remote(nullptr),
+    _useClosedPlaylists(false)
 {}
+
+PlaylistModel::PlaylistModel(ClementineRemote *remote, bool useClosedPl, QObject *parent):
+    QAbstractListModel(parent),
+    _remote(remote),
+    _useClosedPlaylists(useClosedPl)
+{
+    connect(this, &PlaylistModel::preAddPlaylist, this, [=](int index) {
+        beginInsertRows(QModelIndex(), index, index);
+    }, Qt::DirectConnection);
+    connect(this, &PlaylistModel::postAddPlaylist, this, [=]() {
+        endInsertRows();
+    }, Qt::DirectConnection);
+    connect(this, &PlaylistModel::preClearPlaylists, this, [=](int lastIdx) {
+        beginRemoveRows(QModelIndex(), 0, lastIdx);
+    }, Qt::DirectConnection);
+    connect(this, &PlaylistModel::postClearPlaylists, this, [=]() {
+        endRemoveRows();
+    }, Qt::DirectConnection);
+}
 
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const
@@ -47,7 +67,7 @@ int PlaylistModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid() || !_remote)
         return 0;
 
-    return _remote->numberOfPlaylists();
+    return _remote->numberOfPlaylists(_useClosedPlaylists);
 }
 
 QVariant PlaylistModel::data(const QModelIndex &index, int role) const
@@ -55,7 +75,7 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || !_remote)
         return QVariant();
 
-    RemotePlaylist *p = _remote->playlist(index.row());
+    RemotePlaylist *p = _remote->playlist(index.row(), _useClosedPlaylists);
     switch (role) {
     case PlaylistModel::name:
         return p->name;
@@ -89,36 +109,12 @@ Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const
     return Qt::ItemIsSelectable|Qt::ItemIsEnabled;
 }
 
-
-ClementineRemote *PlaylistModel::remote() const
-{
-    return _remote;
-}
-
-void PlaylistModel::setRemote(ClementineRemote *remote)
-{
-    beginResetModel();
-
-    if (_remote)
-        _remote->disconnect(this);
-
-    _remote = remote;
-
-    if (_remote) {
-        connect(_remote, &ClementineRemote::preAddPlaylists, this, [=](int lastIdx) {
-            beginInsertRows(QModelIndex(), 0, lastIdx);
-        });
-        connect(_remote, &ClementineRemote::postAddPlaylists, this, [=]() {
-            endInsertRows();
-        });
-        connect(_remote, &ClementineRemote::preClearPlaylists, this, [=](int lastIdx) {
-            beginRemoveRows(QModelIndex(), 0, lastIdx);
-        });
-        connect(_remote, &ClementineRemote::postClearPlaylists, this, [=]() {
-            endRemoveRows();
-        });
-    }
-
-    endResetModel();
-}
+//void PlaylistModel::setRemote(ClementineRemote *remote)
+//{
+//    beginResetModel();
+//    if (_remote)
+//        _remote->disconnect(this);
+//    _remote = remote;
+//    endResetModel();
+//}
 

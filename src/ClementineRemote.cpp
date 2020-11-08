@@ -23,6 +23,7 @@
 #include "ClementineRemote.h"
 #include "ConnectionWorker.h"
 #include "RemoteSongModel.h"
+#include "PlaylistModel.h"
 #include "player/RemotePlaylist.h"
 
 #include <QTcpSocket>
@@ -60,11 +61,12 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _clemVersion(), _clemState(pb::remote::Idle), _previousClemState(pb::remote::Idle),
     _musicExtensions(), _volume(0),
     _shuffleMode(pb::remote::Shuffle_Off), _repeatMode(pb::remote::Repeat_Off),
-    _playlists(),
+    _playlistsOpened(), _playlistsClosed(),
 #ifdef __USE_CONNECTION_THREAD__
-    _securePlaylists(),
+    _securePlaylists(), _playlistData(),
 #endif
     _dispPlaylist(nullptr), _dispPlaylistId(0), _dispPlaylistIndex(0),
+    _plOpenedModel(new PlaylistModel(this, false)), _plClosedModel(new PlaylistModel(this, true)),
     _songs(), _activeSong(), _activeSongIndex(0),
 #ifdef __USE_CONNECTION_THREAD__
     _secureSongs(), _songsData(),
@@ -91,6 +93,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _songsModel->setRemote(this);
     _songsProxyModel->setSourceModel(_songsModel);
 #ifdef __USE_CONNECTION_THREAD__
+    connect(this, &ClementineRemote::playlistsOpenedUpdatedByWorker,
+            this, &ClementineRemote::onPlaylistsOpenedUpdatedByWorker, Qt::QueuedConnection);
     connect(this, &ClementineRemote::songsUpdatedByWorker,
             this, &ClementineRemote::onSongsUpdatedByWorker, Qt::QueuedConnection);
     connect(this, &ClementineRemote::remoteFilesUpdatedByWorker,
@@ -129,8 +133,20 @@ void ClementineRemote::close()
     _thread.wait();
 #endif
 
-    qDeleteAll(_playlists);
-    _playlists.clear();
+    qDeleteAll(_playlistsOpened);
+    _playlistsOpened.clear();
+    if (_plOpenedModel)
+    {
+        delete _plOpenedModel;
+        _plOpenedModel = nullptr;
+    }
+    qDeleteAll(_playlistsClosed);
+    _playlistsClosed.clear();
+    if (_plClosedModel)
+    {
+        delete _plClosedModel;
+        _plClosedModel = nullptr;
+    }
     if (_songsProxyModel)
     {
         delete _songsProxyModel;
@@ -262,19 +278,14 @@ void ClementineRemote::doSendSongsToRemove()
 #endif
 }
 
-QStringList ClementineRemote::playlistsList()
+bool ClementineRemote::isCurrentPlaylistSaved() const
 {
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(&_securePlaylists);
-#endif
-    QStringList plist;
-    for (RemotePlaylist *p : _playlists)
-        plist << p->name;
-
-    if (plist.isEmpty())
-        plist << tr("no playlist");
-    return plist;
+    if (_dispPlaylist)
+        return _dispPlaylist->favorite;
+    else
+        return false;
 }
+
 
 void ClementineRemote::updateCurrentSongIdx(qint32 currentSongIndex)
 {
@@ -301,21 +312,53 @@ void ClementineRemote::dumpCurrentPlaylist()
 }
 
 
-void ClementineRemote::rcvAllActivePlaylists(const pb::remote::ResponsePlaylists &playlists)
+void ClementineRemote::rcvPlaylists(const pb::remote::ResponsePlaylists &playlists)
 {
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(&_securePlaylists);
-#endif
-    qDeleteAll(_playlists);
-    _playlists.clear();
-    _dispPlaylist = nullptr;
-    _dispPlaylistId = 0;
+    bool includeClosedPlaylists = playlists.has_include_closed() && playlists.include_closed();
+    if (_playlistsOpened.size())
+    {
+        emit _plOpenedModel->preClearPlaylists(_playlistsOpened.size() - 1);
+        qDeleteAll(_playlistsOpened);
+        _playlistsOpened.clear();
+        emit _plOpenedModel->postClearPlaylists();
+    }
+    if (includeClosedPlaylists && _playlistsClosed.size())
+    {
+        emit _plClosedModel->preClearPlaylists(_playlistsClosed.size() - 1);
+        qDeleteAll(_playlistsClosed);
+        _playlistsClosed.clear();
+        emit _plClosedModel->postClearPlaylists();
+    }
 
-    for (const auto& pb_playlist : playlists.playlist())
-        _playlists << new RemotePlaylist(pb_playlist);
+    qint32 nbPlaylists = playlists.playlist_size();
+    int idxOpened = 0, idxClosed = 0;
+    if (nbPlaylists)
+    {
+        for (const auto& pb_playlist : playlists.playlist())
+        {
+            if(pb_playlist.closed())
+            {
+                emit _plClosedModel->preAddPlaylist(idxClosed);
+                _playlistsClosed << new RemotePlaylist(pb_playlist);
+                emit _plClosedModel->postAddPlaylist(idxClosed++);
+            }
+            else
+            {
+                emit _plOpenedModel->preAddPlaylist(idxOpened);
+                _playlistsOpened << new RemotePlaylist(pb_playlist);
+                emit _plOpenedModel->postAddPlaylist(idxOpened++);
+            }
+        }
+    }
 
-    emit updatePlaylists();
-    qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << _playlists.size();
+    updateCurrentPlaylist();
+
+    if (includeClosedPlaylists)
+        emit closedPlaylistsReceived(idxClosed);
+
+//    emit updatePlaylists();
+    qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << idxOpened
+             << " (closed ones: " << idxClosed << ")";
     dumpPlaylists();
 }
 
@@ -325,7 +368,7 @@ void ClementineRemote::updateCurrentPlaylist()
     _dispPlaylist       = nullptr;
     _dispPlaylistIndex = 0;
     int idx = 0;
-    for (RemotePlaylist *p : _playlists)
+    for (RemotePlaylist *p : _playlistsOpened)
     {
         if (p->id == _dispPlaylistId)
         {
@@ -343,7 +386,7 @@ void ClementineRemote::updateCurrentPlaylist()
 
 void ClementineRemote::dumpPlaylists()
 {
-    for (RemotePlaylist *p : _playlists)
+    for (RemotePlaylist *p : _playlistsOpened)
         qDebug() << "  - " << p->str();
 }
 
@@ -402,13 +445,18 @@ void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &rad
 }
 
 #ifdef __USE_CONNECTION_THREAD__
+void ClementineRemote::onPlaylistsOpenedUpdatedByWorker()
+{
+    rcvPlaylists(_playlistData.response_playlists());
+    _playlistData.clear_response_playlists();
+    _securePlaylists.unlock();
+}
 void ClementineRemote::onSongsUpdatedByWorker()
 {
     rcvPlaylistSongs(_songsData.response_playlist_songs());
     _songsData.clear_response_playlist_songs();
     _secureSongs.unlock();
 }
-
 void ClementineRemote::onRemoteFilesUpdatedByWorker()
 {
     rcvListOfRemoteFiles(_remoteFilesData.response_list_files());
@@ -529,7 +577,13 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         break;
 
     case pb::remote::PLAYLISTS:
-        rcvAllActivePlaylists(msg.response_playlists());
+#ifdef __USE_CONNECTION_THREAD__
+        _securePlaylists.lock();
+        _playlistData = std::move(msg);
+        emit playlistsOpenedUpdatedByWorker();
+#else
+        rcvPlaylists(msg.response_playlists());
+#endif
         break;
 
     case pb::remote::PLAYLIST_SONGS:
@@ -625,7 +679,7 @@ void ClementineRemote::closingPlaylist(qint32 playlistID)
 {
     int idx = 0;
     RemotePlaylist *newDispPlaylist = nullptr;
-    for (RemotePlaylist *p : _playlists)
+    for (RemotePlaylist *p : _playlistsOpened)
     {
         if (p->id != playlistID)
         {

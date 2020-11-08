@@ -104,6 +104,9 @@ private slots:
 
     void onClearPlaylist(qint32 playlistID);
     void onClosePlaylist(qint32 playlistID);
+    void onGetAllPlaylists();
+    void onOpenPlaylist(int playlistID);
+
 
     void onAddRadioToPlaylist(int radioIdx);
 

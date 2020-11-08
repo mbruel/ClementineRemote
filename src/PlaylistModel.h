@@ -29,12 +29,14 @@ class ClementineRemote;
 class PlaylistModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(ClementineRemote *remote READ remote WRITE setRemote)
+//    Q_PROPERTY(ClementineRemote *remote READ remote WRITE setRemote)
+//    Q_PROPERTY(bool useClosedPl READ useClosedPl WRITE setUsedClosedPl)
 
     static const QHash<int, QByteArray> sRoleNames;
 
 public:
     explicit PlaylistModel(QObject *parent = nullptr);
+    explicit PlaylistModel(ClementineRemote *remote, bool useClosedPl, QObject *parent = nullptr);
 
     enum PlaylistRole {
         name = Qt::UserRole,
@@ -54,13 +56,29 @@ public:
 
     inline virtual QHash<int, QByteArray> roleNames() const override;
 
-    ClementineRemote *remote() const;
-    void setRemote(ClementineRemote *remote);
+    inline ClementineRemote *remote() const;
+//    void setRemote(ClementineRemote *remote);
+
+    inline bool useClosedPl() const;
+//    inline void setUsedClosedPl(bool useClosed);
+
+signals:
+    // signals for PlaylistModel
+    void preAddPlaylist(int index);
+    void postAddPlaylist(int index);
+    void preClearPlaylists(int lastIdx);
+    void postClearPlaylists();
 
 private:
-    ClementineRemote *_remote;
+    ClementineRemote *const _remote;
+    const bool              _useClosedPlaylists;
 };
 
 QHash<int, QByteArray> PlaylistModel::roleNames() const { return sRoleNames; }
+
+ClementineRemote *PlaylistModel::remote() const { return _remote; }
+
+bool PlaylistModel::useClosedPl() const { return _useClosedPlaylists; }
+//void PlaylistModel::setUsedClosedPl(bool useClosed) { _useClosedPlaylists = useClosed; }
 
 #endif // PLAYLISTMODEL_H

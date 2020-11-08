@@ -57,13 +57,15 @@ Rectangle {
 
     Connections {
         target: cppRemote
-        function onUpdatePlaylists()
-        {
-            playlistCombo.model = cppRemote.playlistsList();
-            playlistCombo.currentIndex = cppRemote.playlistIndex();
-        }
         function onCurrentSongIdx(idx) { updateCurrentSong(idx); }
         function onUpdatePlaylist(idx) { updateCurrentPlaylist(idx); }
+        function onClosedPlaylistsReceived(nbClosedPlaylists){
+//            print("nb Closed Playlists: "+nbClosedPlaylists);
+            if (nbClosedPlaylists === 0)
+                noMorePlaylistDialog.open();
+            else
+                openPlaylistDialog.open();
+        }
     } // Connections cppRemote
 
 
@@ -124,7 +126,7 @@ Rectangle {
                 id: playlistCombo
 //                model : cppRemote.playlistsList()
 
-                model   : PlaylistModel{ remote: cppRemote }
+                model   : cppRemote.modelOpenedPlaylists()
                 delegate: playlistDelegate
                 textRole: "name"
             }
@@ -185,7 +187,7 @@ Rectangle {
         implicitHeight: parent.height - playlistsRow.height
         clip: true
 
-        model: cppRemote.playListModel()
+        model: cppRemote.modelRemoteSongs()
         delegate: songDelegate
 
         flickableDirection: Flickable.VerticalFlick
@@ -250,20 +252,99 @@ Rectangle {
     Dialog {
         id: todoDialog
 
-        width: root.width * 2/3
+        width: root.width *3/4
 
         x: (root.width - width) / 2
         y: (root.height - height) / 2
 
-        title: "TODO"
+        title: qsTr("TODO")
 
         Label {
-            width: todoDialog.width
-            text: "this feature is not implemented yet..."
+            width: parent.width - 5
+            text: qsTr("this feature is not implemented yet...")
             wrapMode: Text.WordWrap
         }
     } // todoDialog
 
+    Dialog {
+        id: noMorePlaylistDialog
+
+        width: root.width *3/4
+
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+
+        title: qsTr("No more Playlists")
+
+        Label {
+            width: parent.width - 5
+            text: qsTr("All available Playlists are already opened")
+            wrapMode: Text.WordWrap
+        }
+    } // noMorePlaylistDialog
+
+
+    Dialog {
+        id: playlistDestructionConfirmationDialog
+
+        width: root.width *3/4
+
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+
+        title: qsTr("Delete Playlist")
+
+        standardButtons: Dialog.Yes | Dialog.No
+        onAccepted:  cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+
+        Label {
+            width: parent.width - 5
+            text: qsTr("You are about to remove a playlist which is not part of your favourite playlists: \
+the playlist will be deleted (this action cannot be undone).<br/>
+Are you sure you want to continue?")
+            wrapMode: Text.WordWrap
+        }
+    } // playlistDestructionConfirmationDialog
+
+    Dialog {
+        id: openPlaylistDialog
+
+        property bool createNewPlaylist: false
+
+        width: root.width *3/4
+
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+        parent: Overlay.overlay
+
+        focus: true
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+
+        onAccepted: cppRemote.openPlaylist(closedPlaylistCombo.currentValue);
+        onOpened:   closedPlaylistCombo.currentIndex = 0;
+
+        ColumnLayout {
+            spacing: 20
+            anchors.fill: parent
+            Label {
+                elide: Label.ElideMiddle
+                text: qsTr("Please select a Playlist to open")
+                Layout.fillWidth: true
+            }
+            ComboBox {
+                id: closedPlaylistCombo
+                model   : cppRemote.modelClosedPlaylists()
+                delegate: ItemDelegate{
+                    text: name ;
+                    width: ListView.view.width;
+                    highlighted: ListView.isCurrentItem
+                }
+                textRole: "name"
+                valueRole: "id"
+            }
+        }
+    } // openPlaylistDialog
 
     Dialog {
         id: renPlaylistDialog
@@ -272,8 +353,8 @@ Rectangle {
 
         width: root.width *3/4
 
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
         parent: Overlay.overlay
 
         focus: true
@@ -294,9 +375,8 @@ Rectangle {
             spacing: 20
             anchors.fill: parent
             Label {
-                id: lbl
                 elide: Label.ElideMiddle
-                text: qsTr("Please provide name for the Playlist")
+                text: qsTr("Please provide a name for the Playlist")
                 Layout.fillWidth: true
             }
             TextField {
@@ -587,9 +667,10 @@ Rectangle {
                 // Won't allow removing the last playlist
                 if (playlistCombo.count <= 1)
                     return;
-
-                //MB_TODO: if playlist is not saved ask confirmation!
-                cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+                if (!cppRemote.isCurrentPlaylistSaved())
+                    playlistDestructionConfirmationDialog.open();
+                else
+                    cppRemote.closePlaylist(cppRemote.currentPlaylistID());
             }
         }
         Action {
@@ -600,13 +681,11 @@ Rectangle {
                 todoDialog.open()
             }
         }
+        MenuSeparator {}
         Action {
             icon.source: "icons/open.png"
             text: qsTr("Open a Playlist")
-            onTriggered: {
-                print("open playlist");
-                todoDialog.open()
-            }
+            onTriggered: cppRemote.getAllPlaylists();
         }
         Action {
             icon.source: "icons/newFile.png"
