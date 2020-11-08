@@ -6,6 +6,8 @@ CONFIG += c++17
 # cf https://forum.qt.io/topic/120468/qabstractlistmodel-populated-in-a-worker-thread-not-the-gui-one
 DEFINES  += __USE_CONNECTION_THREAD__
 
+INCLUDEPATH += $$PWD/../protobuf-3.13.0/src
+DEPENDPATH += $$PWD/../protobuf-3.13.0/src
 
 CONFIG(debug, debug|release) :{
     DEFINES += __DEBUG__
@@ -13,23 +15,52 @@ CONFIG(debug, debug|release) :{
 
 #For linux
 linux {
-    LIBS += -lprotobuf
+    LIBS += -L$$PWD/../protobuf-3.13.0/lib/x86_64/ -lprotobuf
 }
 
 macx{
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/macx/ -lprotobuf
-
-    INCLUDEPATH += $$PWD/../protobuf-3.13.0/src
-    DEPENDPATH += $$PWD/../protobuf-3.13.0/src
 
     PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/macx/libprotobuf.a
 }
 
 win32{
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/win64/ -lprotobuf
+}
 
-    INCLUDEPATH += $$PWD/../protobuf-3.13.0/src
-    DEPENDPATH += $$PWD/../protobuf-3.13.0/src
+android {
+#    include(/home/bruel/android/android_openssl/openssl.pri)
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
+#    LIBS += -L$$PWD/../protobuf-3.13.0/lib/arm64/ -lprotobuf
+
+
+#    PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/arm64/libprotobuf.a
+
+    DISTFILES += \
+        android/AndroidManifest.xml \
+        android/build.gradle \
+        android/gradle/wrapper/gradle-wrapper.jar \
+        android/gradle/wrapper/gradle-wrapper.properties \
+        android/gradlew \
+        android/gradlew.bat \
+        android/res/values/libs.xml \
+        android/src/fr/mbruel/ClementineRemote/ClementineRemote.java
+
+
+    include(/home/bruel/android/android_openssl/openssl.pri)
+
+    ANDROID_EXTRA_LIBS += \
+        $$PWD/../protobuf-3.13.0/lib/armv7a/libprotobuf.so \
+        $$PWD/../protobuf-3.13.0/lib/arm64/libprotobuf.so
+
+    contains(ANDROID_TARGET_ARCH, armeabi-v7a) {
+        LIBS += -L$$PWD/../protobuf-3.13.0/lib/armv7a/ -lprotobuf
+    }
+
+    contains(ANDROID_TARGET_ARCH, arm64-v8a) {
+        LIBS += -L$$PWD/../protobuf-3.13.0/lib/arm64/ -lprotobuf
+    }
 }
 
 # The following define makes your compiler emit warnings if you use
@@ -85,4 +116,3 @@ HEADERS += \
 
 DISTFILES += \
     protobuf/remotecontrolmessages.proto
-
