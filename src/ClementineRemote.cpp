@@ -22,8 +22,8 @@
 
 #include "ClementineRemote.h"
 #include "ConnectionWorker.h"
-#include "RemoteSongModel.h"
-#include "PlaylistModel.h"
+#include "model/RemoteSongModel.h"
+#include "model/PlaylistModel.h"
 #include "player/RemotePlaylist.h"
 
 #include <QTcpSocket>

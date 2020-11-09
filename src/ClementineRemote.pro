@@ -78,10 +78,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         ClementineRemote.cpp \
         ConnectionWorker.cpp \
-        PlaylistModel.cpp \
-        RadioStreamModel.cpp \
-        RemoteFileModel.cpp \
-        RemoteSongModel.cpp \
+        model/PlaylistModel.cpp \
+        model/RadioStreamModel.cpp \
+        model/RemoteFileModel.cpp \
+        model/RemoteSongModel.cpp \
         main.cpp \
         protobuf/remotecontrolmessages.pb.cc
 
@@ -103,15 +103,15 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     ClementineRemote.h \
     ConnectionWorker.h \
-    PlaylistModel.h \
-    RadioStreamModel.h \
-    RemoteFileModel.h \
-    RemoteSongModel.h \
-    Singleton.h \
+    model/PlaylistModel.h \
+    model/RadioStreamModel.h \
+    model/RemoteFileModel.h \
+    model/RemoteSongModel.h \
     player/RemoteFile.h \
     player/RemotePlaylist.h \
     player/RemoteSong.h \
     player/Stream.h \
+    utils/Singleton.h \
     protobuf/remotecontrolmessages.pb.h
 
 DISTFILES += \

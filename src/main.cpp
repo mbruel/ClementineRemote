@@ -3,10 +3,10 @@
 #include <QQmlContext>
 
 #include "ClementineRemote.h"
-#include "RemoteSongModel.h"
-#include "PlaylistModel.h"
-#include "RemoteFileModel.h"
-#include "RadioStreamModel.h"
+#include "model/RemoteSongModel.h"
+#include "model/PlaylistModel.h"
+#include "model/RemoteFileModel.h"
+#include "model/RadioStreamModel.h"
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);

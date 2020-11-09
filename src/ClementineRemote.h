@@ -22,8 +22,8 @@
 #ifndef CLEMENTINEREMOTE_H
 #define CLEMENTINEREMOTE_H
 
-#include "Singleton.h"
-#include "RemoteSongModel.h"
+#include "utils/Singleton.h"
+#include "model/RemoteSongModel.h"
 #include "player/RemoteSong.h"
 #include "player/RemoteFile.h"
 #include "player/Stream.h"
