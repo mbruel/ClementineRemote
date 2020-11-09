@@ -24,13 +24,16 @@
 #include "ClementineRemote.h"
 #include "player/RemotePlaylist.h"
 
+#include <QFile>
+#include <QCryptographicHash>
+
 ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     QObject(parent),
     _remote(remote),
-    _allow_downloads(false), _downloader(false),
     _socket(nullptr), _timeout(), _disconnectReason(" "),
     _reading_protobuf(false), _expected_length(0), _buffer(),
-    _host(), _port(0), _auth_code(-1)
+    _host(), _port(0), _auth_code(-1),
+    _downloader()
 {
     setObjectName("ConnectionWorker");
 
@@ -62,6 +65,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::sendSongsToRemove,    this, &ConnectionWorker::onSendSongsToRemove,    connectionType);
     connect(_remote, &ClementineRemote::getAllPlaylists,      this, &ConnectionWorker::onGetAllPlaylists,      connectionType);
     connect(_remote, &ClementineRemote::openPlaylist,         this, &ConnectionWorker::onOpenPlaylist,         connectionType);
+    connect(_remote, &ClementineRemote::downloadCurrentSong,  this, &ConnectionWorker::onDownloadCurrentSong,  connectionType);
 
 
 
@@ -322,10 +326,10 @@ void ConnectionWorker::onAddRadioToPlaylist(int radioIdx)
     pb::remote::Message msg;
     msg.set_type(pb::remote::INSERT_URLS);
 
-    pb::remote::RequestInsertUrls *reqInsert = msg.mutable_request_insert_urls();
-    reqInsert->set_playlist_id(_remote->currentPlaylistID());
-    reqInsert->set_play_now(true);
-    *reqInsert->add_urls() = _remote->radioStream(radioIdx).url.toStdString();
+    pb::remote::RequestInsertUrls *req = msg.mutable_request_insert_urls();
+    req->set_playlist_id(_remote->currentPlaylistID());
+    req->set_play_now(true);
+    *req->add_urls() = _remote->radioStream(radioIdx).url.toStdString();
 
     sendDataToServer(msg);
 }
@@ -333,6 +337,16 @@ void ConnectionWorker::onAddRadioToPlaylist(int radioIdx)
 void ConnectionWorker::onSendSongsToRemove()
 {
     _remote->doSendSongsToRemove();
+}
+
+void ConnectionWorker::onDownloadCurrentSong()
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::DOWNLOAD_SONGS);
+
+    pb::remote::RequestDownloadSongs *req = msg.mutable_request_download_songs();
+    req->set_download_item(pb::remote::DownloadItem::CurrentItem);
+    sendDataToServer(msg);
 }
 
 void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)
@@ -424,6 +438,8 @@ void ConnectionWorker::onDisconnected()
     _socket->deleteLater();
     _socket = nullptr;
 
+    _downloader.init(0, 0);
+
     emit _remote->disconnected(_disconnectReason);
 }
 
@@ -504,12 +520,7 @@ void ConnectionWorker::sendDataToServer(pb::remote::Message &msg)
         // write the length of the data first
         QDataStream s(_socket);
         s << qint32(data.length());
-        if (_downloader) {
-            // Don't use QDataSteam for large files
-            _socket->write(data.data(), static_cast<qint64>(data.length()));
-        } else {
-            s.writeRawData(data.data(), static_cast<int>(data.length()));
-        }
+        s.writeRawData(data.data(), static_cast<int>(data.length()));
 
         // Do NOT flush data here! If the client is already disconnected, it
         // causes a SIGPIPE termination!!!
@@ -526,3 +537,137 @@ void ConnectionWorker::requestSavedRadios()
     msg.set_type(pb::remote::REQUEST_SAVED_RADIOS);
     sendDataToServer(msg);
 }
+
+void ConnectionWorker::prepareDownload(const pb::remote::ResponseDownloadTotalSize &downloadSize)
+{
+    _downloader.init(downloadSize.file_count(), downloadSize.total_size());
+    qDebug() << "[ConnectionWorker::prepareDownload] nbFiles: " << _downloader.nbFiles
+             << ", total size: " << _downloader.totalSize;
+}
+
+void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &songChunk)
+{
+    _downloader.chunkNumber = songChunk.chunk_number();
+    _downloader.chunkCount  = songChunk.chunk_count();
+    _downloader.fileNumber  = songChunk.file_number();
+    _downloader.fileSize    = songChunk.size();
+
+//    qDebug() << "rcv ResponseSongFileChunk File: " << _downloader.fileNumber
+//             << " / " << _downloader.nbFiles << " size: " << _downloader.fileSize
+//             << " - Chunk " << _downloader.chunkNumber << " / " << _downloader.chunkCount;
+
+    // Song offer is chunk no 0
+    if (_downloader.chunkNumber == 0)
+    {
+        if (songChunk.has_song_metadata() && songChunk.size() != 0)
+        {
+            _downloader.song = songChunk.song_metadata();
+            _downloader.file = new QFile(QString("%1/%2").arg(_remote->downloadPath()).arg(_downloader.song.filename));
+            _downloader.canWrite = _downloader.file->open(QIODevice::ReadWrite);
+            qDebug() << "rcv ResponseSongFileChunk has SongMeta: "
+                     << _downloader.song.str()
+                     << ", canWrite: " << _downloader.canWrite;
+            if (!_downloader.canWrite)
+                _downloader.addError(tr("can't write file %1").arg(_downloader.song.filename));
+        }
+        pb::remote::Message msg;
+        msg.set_type(pb::remote::SONG_OFFER_RESPONSE);
+        msg.mutable_response_song_offer()->set_accepted(true);
+        sendDataToServer(msg);
+    }
+    else if (_downloader.canWrite)
+    {
+        const std::string &data = songChunk.data();
+        qint64 bytesWritten = 0, size = static_cast<qint64>(data.size());
+        int iterMax = 10, iter = 0;
+        do {
+            qint64 bytes = _downloader.file->write(data.c_str(), size);
+            if (bytes == -1)
+            {
+                _downloader.addError(tr("error writing file %1 (%2)").arg(
+                                         _downloader.song.filename).arg(_downloader.file->errorString()));
+
+                qCritical() << tr("error writing file %1 (%2)").arg(
+                                  _downloader.song.filename).arg(_downloader.file->errorString());
+                break;
+            }
+            else
+                bytesWritten += bytes;
+
+            if (++iter == iterMax)
+            {
+                _downloader.addError(tr("error writing file %1 (iterMax reached %2)").arg(
+                                         _downloader.song.filename).arg(iterMax));
+
+                qCritical() << "Error writting: "  << _downloader.song.filename
+                            << " : iterMax reached " << iterMax;
+                break;
+            }
+        } while (bytesWritten != size);
+
+        _downloader.dowloadedSize += bytesWritten;
+
+        if (_downloader.chunkNumber == _downloader.chunkCount) {
+            bool sha1Ok = sha1Hex(*_downloader.file) == songChunk.file_hash().c_str();
+            qDebug() << "Dowloaded: "  << _downloader.song.str()
+                     << " sha1Ok : " << sha1Ok;
+            if (!sha1Ok)
+            {
+                _downloader.addError(tr("error file %1 (wrong sha1)").arg(
+                                         _downloader.song.filename));
+                _downloader.file->remove();
+            }
+            else
+                _downloader.file->close();
+
+            delete _downloader.file;
+            _downloader.file = nullptr;
+
+            if (_downloader.fileNumber == _downloader.nbFiles)
+                emit _remote->downloadComplete(_downloader.nbFiles, _downloader.errorByFileNum.values());
+        }
+    }
+}
+
+QByteArray ConnectionWorker::sha1Hex(QFile &file)
+{
+    file.seek(0);
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+    QByteArray data;
+
+    while (!file.atEnd()) {
+      data = file.read(1000000);  // 1 mib
+      hash.addData(data.data(), data.length());
+      data.clear();
+    }
+
+    return hash.result().toHex();
+}
+
+Downloader::~Downloader()
+{
+    if (file)
+    {
+        file->remove();
+        delete file;
+    }
+}
+
+void Downloader::init(qint32 nbFiles_, qint32 totalSize_)
+{
+    nbFiles     = nbFiles_;
+    totalSize   = totalSize_;
+    chunkNumber = 0;
+    chunkCount  = 0;
+    fileNumber  = 0;
+    fileSize    = 0;
+    song = RemoteSong();
+    dowloadedSize = 0;
+    if (file){
+        file->remove();
+        delete file;
+    }
+    canWrite = false;
+}
+
+

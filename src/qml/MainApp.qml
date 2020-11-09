@@ -40,6 +40,8 @@ Item {
     property int headerButtonSize   : 30
     property int mainMargin         : 20
 
+    property int downDialogTimeout  : 2000
+
     property int trackLength: cppRemote.currentTrackLength()
 
     property color bgGradiantStart: "#8b008b" // darkmagenta (https://doc.qt.io/qt-5/qml-color.html)
@@ -91,6 +93,21 @@ Item {
         function onUpdateShuffle(mode){ updateShuffle(mode); }
         function onUpdateRepeat(mode) { updateRepeat(mode); }
 
+        function onDownloadComplete(nbFiles, errorList){
+            downloadsDialog.title = qsTr("Download Complete");
+            if (errorList.length === 0)
+                downloadsDialog.text = "" + nbFiles + qsTr(" file(s) downloaded successfully!");
+            else
+            {
+                downloadsDialog.text = "" + errorList.length + qsTr(" error(s) on ") + nbFiles + qsTr(" file(s) :");
+                downloadsDialog.text += "<ul>";
+                for (const err of errorList)
+                    downloadsDialog.text += "<li>" + err + "</li>";
+                downloadsDialog.text += "</ul>";
+            }
+            downloadsDialog.open();
+            downloadsTimer.start();
+        }
     } // Connections cppRemote
 
     Component.onCompleted: {
@@ -229,6 +246,33 @@ Item {
         }
     } // function updateRepeat
 
+    function downloadCurrentSong() {
+        if (cppRemote.downloadsAllowed())
+        {
+            let downloadPath = cppRemote.downloadPath();
+            if (downloadPath === "")
+            {
+                let error = cppRemote.setDownloadFolder();
+                if (error === "")
+                    downloadPath = cppRemote.downloadPath()
+                else
+                {
+                    downloadsDialog.title = qsTr("Download Error");
+                    downloadsDialog.text  = error;
+                    downloadsDialog.open();
+                }
+            }
+            print("downloadPath: "+downloadPath);
+            cppRemote.downloadCurrentSong();
+        }
+        else
+        {
+            downloadsDialog.title = qsTr("Downloads forbidden...");
+            downloadsDialog.text  = qsTr("Downloads are not allowed on Clementine...<br/><br/>\
+You can change that in:<br/>Tools -> Preferences -> Network Remote");
+            downloadsDialog.open();
+        }
+    } // downloadCurrentSong
 
 
     ////////////////////////////////////////
@@ -330,20 +374,11 @@ Item {
             }
             width: parent.width
 
-            Image {
-                id: downSong                
-                width : headerButtonSize
-                height: headerButtonSize
-
-                source  : "icons/nav_downloads.png";
-                fillMode: Image.PreserveAspectFit;
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                       print("[MainApp] downSong clicked! TODO...")
-                    }
-                }
+            ImageButton {
+                id: downSong
+                size     : headerButtonSize
+                source   : "icons/nav_downloads.png";
+                onClicked: downloadCurrentSong()
             } // downSong
 
             Slider {
@@ -602,13 +637,43 @@ Item {
     Dialog {
         id: todoDialog
 
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
+        width: root.width *4/5
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
 
         title: "TODO"
 
         Label {
-            text: "this feature is not implemented yet..."
+            width: parent.width - 5
+            wrapMode: Text.WordWrap
+            text: qsTr("this feature is not implemented yet...")
+        }
+    } // todoDialog
+
+    Dialog {
+        id: downloadsDialog
+        width: root.width *4/5
+        property alias text: downloadsDialogLbl.text
+
+
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+
+        title: qsTr("Downloads forbidden...")
+
+        Label {
+            id: downloadsDialogLbl
+            width: downloadsDialog.width - 5
+            wrapMode: Text.WordWrap
+            text: "to be set"
+        }
+
+        Timer {
+            id: downloadsTimer
+            interval: downDialogTimeout;
+            running: false;
+            repeat: false
+            onTriggered: downloadsDialog.close()
         }
     } // todoDialog
 

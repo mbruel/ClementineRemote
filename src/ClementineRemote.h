@@ -66,6 +66,9 @@ private:
     QStringList             _musicExtensions;   //!< extensions allowed to be seen remotely
     qint32                  _volume;            //!< server volume level
 
+    bool                    _downloadsAllowed;  //!< is Clementine allowing downloads
+    QString                 _downloadPath;      //!< where we put downloaded songs
+
     pb::remote::ShuffleMode _shuffleMode;       //!< server shuffle mode
     pb::remote::RepeatMode  _repeatMode;        //!< server repeat mode
 
@@ -122,7 +125,7 @@ private:
 private:
     ClementineRemote(QObject *parent = nullptr);
 
-    inline QString disconnectReason(short reason) const;
+    inline QString disconnectReason(int reason) const;
 
     void checkClementineVersion();
 
@@ -130,6 +133,7 @@ public:
     ~ClementineRemote();
 
 
+    inline Q_INVOKABLE bool downloadsAllowed() const;
     inline Q_INVOKABLE PlaylistModel *modelOpenedPlaylists() const;
     inline Q_INVOKABLE PlaylistModel *modelClosedPlaylists() const;
 
@@ -219,6 +223,9 @@ public:
 
     void parseMessage(const QByteArray& data);
 
+    inline Q_INVOKABLE QString downloadPath() const;
+    Q_INVOKABLE QString setDownloadFolder();
+
 
 private:
     void dumpCurrentPlaylist();
@@ -231,8 +238,6 @@ private:
     void rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs);
     void rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files);
     void rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios);
-
-
 
 
 signals:
@@ -264,6 +269,9 @@ signals:
 
     void clearPlaylist(qint32 playlistID);
     void closePlaylist(qint32 playlistID);
+
+    void downloadCurrentSong();
+    void downloadComplete(qint32 nbFiles, QStringList errors);
 
 
     // signals sent from ConnectionWorker to QML
@@ -414,6 +422,8 @@ int ClementineRemote::numberOfRadioStreams() const { return _radioStreams.size()
 const Stream &ClementineRemote::radioStream(int index) const { return _radioStreams.at(index); }
 Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; }
 
+QString ClementineRemote::downloadPath() const{ return _downloadPath; }
+
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString &ClementineRemote::appName() { return sAppName; }
 const QString &ClementineRemote::appVersion() { return sVersion; }
@@ -437,7 +447,7 @@ QString ClementineRemote::prettyLength(qint32 sec)
     }
 }
 
-QString ClementineRemote::disconnectReason(short reason) const
+QString ClementineRemote::disconnectReason(int reason) const
 {
     switch (reason) {
     case pb::remote::ReasonDisconnect::Server_Shutdown:
@@ -447,11 +457,13 @@ QString ClementineRemote::disconnectReason(short reason) const
     case pb::remote::ReasonDisconnect::Not_Authenticated:
         return tr("Not authenticated");
     case pb::remote::ReasonDisconnect::Download_Forbidden:
-        return tr("Download fobidden");
+        return tr("Download forbidden");
     default:
         return tr("Unknown Reason...");
     }
 }
+
+bool ClementineRemote::downloadsAllowed() const { return _downloadsAllowed; }
 
 PlaylistModel *ClementineRemote::modelOpenedPlaylists() const { return _plOpenedModel; }
 PlaylistModel *ClementineRemote::modelClosedPlaylists() const { return _plClosedModel; }

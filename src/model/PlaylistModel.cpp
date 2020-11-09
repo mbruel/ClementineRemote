@@ -85,7 +85,7 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const
         else if (p->favorite)
             return "icons/star.png";
         else
-            return "icons/tmpFile.png";
+            return "icons/playlistFile.png";
     case PlaylistModel::id:
         return p->id;
     case PlaylistModel::active:

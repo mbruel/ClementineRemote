@@ -28,7 +28,8 @@
 
 #include <QTcpSocket>
 #include <QDataStream>
-
+#include <QStandardPaths>
+#include <QDir>
 const QString ClementineRemote::sAppName = "ClementineRemote";
 const QString ClementineRemote::sVersion = "0.2";
 const QString ClementineRemote::sAppTitle = tr("Clementine Remote");
@@ -60,6 +61,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     #endif
     _clemVersion(), _clemState(pb::remote::Idle), _previousClemState(pb::remote::Idle),
     _musicExtensions(), _volume(0),
+    _downloadsAllowed(true), _downloadPath(),
     _shuffleMode(pb::remote::Shuffle_Off), _repeatMode(pb::remote::Repeat_Off),
     _playlistsOpened(), _playlistsClosed(),
 #ifdef __USE_CONNECTION_THREAD__
@@ -126,6 +128,7 @@ void ClementineRemote::close()
 {
     qDebug() << "[MB_TRACE] close ClementineRemote";
     _settings.setValue("remotePath", _remoteFilesPath);
+    _settings.setValue("downloadPath", _downloadPath);
     _settings.sync();
 #ifdef __USE_CONNECTION_THREAD__
     emit _connection->killSocket();
@@ -444,6 +447,38 @@ void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &rad
     qDebug() << "[MsgType::REQUEST_SAVED_RADIOS] Nb Radio Streams: " << _radioStreams.size();
 }
 
+QString ClementineRemote::setDownloadFolder()
+{
+    _downloadPath = _settings.value("downloadPath", "").toString();
+    if (_downloadPath.isEmpty())
+    {
+#if defined(Q_OS_ANDROID)
+        _downloadPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+#elif defined(Q_OS_IOS)
+        _downloadPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+#else
+        _downloadPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+#endif
+        qDebug() << "Download path: " << _downloadPath;
+        QFileInfo fi(_downloadPath);
+        if (!fi.isDir())
+            return tr("the download folder is not a directory...");
+        else if (!fi.isWritable())
+            return tr("the download folder is not writable...");
+
+        fi = QFileInfo(QString("%1/ClemRemote").arg(_downloadPath));
+        if (!fi.exists())
+        {
+            QDir dir(_downloadPath);
+            if (!dir.mkdir("ClemRemote"))
+                return tr("error creating default Download folder: %1").arg(fi.absoluteFilePath());
+        }
+        _downloadPath = fi.absoluteFilePath();
+    }
+    qDebug() << "Download Path: " << _downloadPath;
+    return QString();
+}
+
 #ifdef __USE_CONNECTION_THREAD__
 void ClementineRemote::onPlaylistsOpenedUpdatedByWorker()
 {
@@ -550,11 +585,16 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         for (const auto& ext : msg.response_clementine_info().files_music_extensions())
             _musicExtensions << QString(ext.c_str());
 
+        if (msg.response_clementine_info().has_allow_downloads())
+            _downloadsAllowed = msg.response_clementine_info().allow_downloads();
+
         checkClementineVersion();
         qDebug() << "[MsgType::INFO] version: " << _clemVersion
                  << ", state: " << _clemState
                  << ", support files: " << _clemFilesSupport
-                 << ", music extensions: " << _musicExtensions;
+                 << ", music extensions: " << _musicExtensions
+                 << ", Downloads Allowed: " << _downloadsAllowed;
+
         break;
 
     case pb::remote::MsgType::CURRENT_METAINFO:
@@ -652,6 +692,16 @@ void ClementineRemote::parseMessage(const QByteArray &data)
 
     case pb::remote::REQUEST_SAVED_RADIOS:
         rcvSavedRadios(msg.response_saved_radios());
+        break;
+
+    case pb::remote::DOWNLOAD_TOTAL_SIZE:
+        _connection->prepareDownload(msg.response_download_total_size());
+        break;
+    case pb::remote::DOWNLOAD_QUEUE_EMPTY:
+        qDebug() << "[MsgType::DOWNLOAD_QUEUE_EMPTY] nothing left to download!";
+        break;
+    case pb::remote::SONG_FILE_CHUNK:
+        _connection->downloadSong(msg.response_song_file_chunk());
         break;
 
     default:

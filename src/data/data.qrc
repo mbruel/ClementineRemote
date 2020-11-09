@@ -55,5 +55,6 @@
         <file>icons/newFile.png</file>
         <file>icons/open.png</file>
         <file>icons/tmpFile.png</file>
+        <file>icons/playlistFile.png</file>
     </qresource>
 </RCC>

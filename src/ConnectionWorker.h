@@ -22,12 +22,53 @@
 #ifndef CONNECTIONWORKER_H
 #define CONNECTIONWORKER_H
 #include "protobuf/remotecontrolmessages.pb.h"
-
+#include "player/RemoteSong.h"
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QTimer>
 class ClementineRemote;
 class RemotePlaylist;
+class QFile;
+
+struct Downloader{
+
+    Downloader():
+        nbFiles(0), totalSize(0),
+        chunkNumber(0), chunkCount(0),
+        fileNumber(0), fileSize(0),
+        song(), dowloadedSize(0),
+        file(nullptr), canWrite(false)
+    {}
+
+    ~Downloader();
+    Downloader(const Downloader&) = delete;
+    Downloader(Downloader&&) = delete;
+    Downloader &operator=(const Downloader&) = delete;
+    Downloader &operator=(Downloader&&) = delete;
+
+    void init(qint32 nbFiles_, qint32 totalSize_);
+
+    void addError(const QString &err)
+    {
+        errorByFileNum[fileNumber] = QString("[%1 / %2] %3").arg(
+                    fileNumber).arg(nbFiles).arg(err);
+    }
+
+    qint32 nbFiles;
+    qint32 totalSize;
+    qint32 chunkNumber;
+    qint32 chunkCount;
+    qint32 fileNumber;
+    qint32 fileSize;
+
+    RemoteSong song;
+    int  dowloadedSize;
+
+    QFile *file;
+    bool   canWrite;
+
+    QMap<int, QString> errorByFileNum;
+};
 
 /*!
  * \brief manages all the network communications
@@ -40,9 +81,6 @@ class ConnectionWorker : public QObject
 private:
 
     ClementineRemote *_remote;
-
-    bool _allow_downloads;
-    bool _downloader;
 
     QTcpSocket *_socket;
     QTimer      _timeout;
@@ -57,6 +95,8 @@ private:
     ushort  _port;
     int     _auth_code; //!< -1 <=> no pass
 
+    Downloader _downloader;
+
 public:
     ConnectionWorker(ClementineRemote *remote, QObject *parent = nullptr);
     ~ConnectionWorker();
@@ -70,6 +110,9 @@ public:
     void requestSavedRadios();
 
     inline const QString &hostname() const;
+
+    void prepareDownload(const pb::remote::ResponseDownloadTotalSize &downloadSize);
+    void downloadSong(const pb::remote::ResponseSongFileChunk &songChunk);
 
 signals:
     void connectToServer(const QString &host, ushort port, int auth_code);
@@ -112,6 +155,9 @@ private slots:
 
     void onSendSongsToRemove();
 
+    void onDownloadCurrentSong();
+
+
 
 
 // Socket handlers
@@ -124,6 +170,9 @@ private slots:
 
 private:
     void _doChangeSong(int songIndex, qint32 playlistID);
+
+    QByteArray sha1Hex(QFile &file);
+
 };
 
 const QString &ConnectionWorker::hostname() const { return _host; }
