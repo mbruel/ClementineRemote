@@ -59,8 +59,7 @@ mkdir -p release/armv7a
 rm -rf build
 mkdir build
 cd build
-CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang  CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang++  CFLAGS="-fPIE -fPIC"  LDFLAGS="-pie -llog"
-../configure --host=armv7a-linux-androideabi --prefix=$APPS_DIR/protobuf/release/armv7a --with-protoc=~/apps/protobuf/release/x86_64/bin/protoc
+CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang  CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang++  CFLAGS="-fPIE -fPIC"  LDFLAGS="-pie -llog"  ../configure --host=armv7a-linux-androideabi --prefix=$APPS_DIR/protobuf/release/armv7a --with-protoc=~/apps/protobuf/release/x86_64/bin/protoc
 make -j $NB_CORES
 make install
 make distclean
