@@ -24,7 +24,7 @@ cd build
 ../configure --prefix=$APPS_DIR/protobuf/release/x86_64
 make -j $NB_CORES
 make install
-make distclean
+#make distclean
 
 
 #$ $NDK/build/tools/make_standalone_toolchain.py --arch arm64 --api 28 --stl=libc++ --install-dir=/home/bruel/apps/protobuf/build
@@ -47,10 +47,10 @@ mkdir -p release/arm64
 rm -rf build
 mkdir build
 cd build
-CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android$ANDROID_API-clang  CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android$ANDROID_API-clang++   CFLAGS="-fPIE -fPIC" LDFLAGS="-pie -llog"   ../configure --host=aarch64-linux-android --prefix=$APPS_DIR/protobuf/release/arm64
+CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android$ANDROID_API-clang  CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android$ANDROID_API-clang++   CFLAGS="-fPIE -fPIC" LDFLAGS="-pie -llog"   ../configure --host=aarch64-linux-android --prefix=$APPS_DIR/protobuf/release/arm64 --with-protoc=~/apps/protobuf/release/x86_64/bin/protoc
 make -j $NB_CORES
 make install
-make distclean
+#make distclean
 
 
 # 4.: armv7a-linux-androideabi
@@ -59,11 +59,8 @@ mkdir -p release/armv7a
 rm -rf build
 mkdir build
 cd build
-export CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang
-export CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang++
-export CFLAGS="-fPIE -fPIC"
-export LDFLAGS="-pie -llog"
-../configure --host=armv7a-linux-androideabi --prefix=$APPS_DIR/protobuf/release/armv7a
+CC=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang  CXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi$ANDROID_API-clang++  CFLAGS="-fPIE -fPIC"  LDFLAGS="-pie -llog"
+../configure --host=armv7a-linux-androideabi --prefix=$APPS_DIR/protobuf/release/armv7a --with-protoc=~/apps/protobuf/release/x86_64/bin/protoc
 make -j $NB_CORES
 make install
 make distclean
