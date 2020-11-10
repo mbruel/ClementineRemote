@@ -117,6 +117,11 @@ ClementineRemote::~ClementineRemote()
     close();
 }
 
+void ClementineRemote::cancelDownload() const
+{
+    _connection->cancelDownload();
+}
+
 const QString ClementineRemote::hostname() const
 {
     if (_connection)
@@ -705,6 +710,7 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         break;
     case pb::remote::DOWNLOAD_QUEUE_EMPTY:
         qDebug() << "[MsgType::DOWNLOAD_QUEUE_EMPTY] nothing left to download!";
+        _connection->downloadFinished();
         break;
     case pb::remote::SONG_FILE_CHUNK:
         _connection->downloadSong(msg.response_song_file_chunk());

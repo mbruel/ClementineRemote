@@ -604,7 +604,7 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
     // Song offer is chunk no 0
     if (_downloader.chunkNumber == 0)
     {
-        bool fileExist = false;
+        bool acceptFile = true;
         if (songChunk.has_song_metadata() && songChunk.size() != 0)
         {
             _downloader.song = songChunk.song_metadata();
@@ -623,7 +623,7 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
                 if (_downloader.file->exists() && !_remote->overwriteDownloadedSongs())
                 {
                     _downloader.addError(tr("skipping file %1").arg(_downloader.song.filename));
-                    fileExist = true;
+                    acceptFile = false;
                 }
                 else
                 {
@@ -632,13 +632,20 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
                              << _downloader.song.str()
                              << ", canWrite: " << _downloader.canWrite;
                     if (!_downloader.canWrite)
+                    {
                         _downloader.addError(tr("can't write file %1").arg(_downloader.song.filename));
+                        acceptFile = false;
+                    }
                 }
             }
         }
+
+        if (!acceptFile) // To update progress bar
+            _downloader.dowloadedSize += _downloader.fileSize;
+
         pb::remote::Message msg;
         msg.set_type(pb::remote::SONG_OFFER_RESPONSE);
-        msg.mutable_response_song_offer()->set_accepted(!cancelled && !fileExist);
+        msg.mutable_response_song_offer()->set_accepted(acceptFile && !cancelled);
         sendDataToServer(msg);
     }
     else if (_downloader.canWrite)
@@ -651,12 +658,12 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
                 _downloader.file->remove();
                 delete _downloader.file;
                 _downloader.file = nullptr;
-                _downloader.hasCancelError = true;
+                _downloader.hasCancelError = true;                
             }
-            if (_downloader.chunkNumber == _downloader.chunkCount)
-                emit _remote->downloadComplete(_downloader.downloadedFiles,
-                                               _downloader.nbFiles,
-                                               _downloader.errorByFileNum.values());
+//            if (_downloader.chunkNumber == _downloader.chunkCount)
+//                emit _remote->downloadComplete(_downloader.downloadedFiles,
+//                                               _downloader.nbFiles,
+//                                               _downloader.errorByFileNum.values());
             return;
         }
 
@@ -711,10 +718,18 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
         }
     }
 
-    if (_downloader.fileNumber == _downloader.nbFiles)
-        emit _remote->downloadComplete(_downloader.downloadedFiles,
-                                       _downloader.nbFiles,
-                                       _downloader.errorByFileNum.values());
+    emit _remote->downloadProgress(static_cast<double>(_downloader.dowloadedSize) / _downloader.totalSize);
+//    if (_downloader.fileNumber == _downloader.nbFiles)
+//        emit _remote->downloadComplete(_downloader.downloadedFiles,
+//                                       _downloader.nbFiles,
+//                                       _downloader.errorByFileNum.values());
+}
+
+void ConnectionWorker::downloadFinished()
+{
+    emit _remote->downloadComplete(_downloader.downloadedFiles,
+                                   _downloader.nbFiles,
+                                   _downloader.errorByFileNum.values());
 }
 
 QByteArray ConnectionWorker::sha1Hex(QFile &file)

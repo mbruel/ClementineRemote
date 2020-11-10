@@ -94,6 +94,7 @@ Item {
         function onUpdateRepeat(mode) { updateRepeat(mode); }
 
         function onDownloadComplete(downloadedFiles, totalFiles, errorList){
+            downloadRect.visible = false;
             downloadsDialog.title = qsTr("Download Complete");
             downloadsDialog.text  = qsTr("%1 / %2 file(s) have been downloaded successfully!").arg(
                         downloadedFiles).arg(totalFiles)
@@ -110,6 +111,10 @@ Item {
             downloadsTimer.start();
 
             cppRemote.setIsDownloading(false);
+        }
+
+        function onDownloadProgress(pct){
+            downloadProgressBar.value = pct;
         }
     } // Connections cppRemote
 
@@ -277,6 +282,8 @@ Item {
                 }
             }
             print("downloadPath: "+downloadPath);
+            downloadProgressBar.value = 0;
+            downloadRect.visible = true;
             return true;
         }
         else
@@ -626,6 +633,63 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
         } // volPct
     } // playerBar
 
+
+    Rectangle {
+        id: downloadRect
+        anchors{
+            bottom: playerBar.top
+            left: playerBar.left
+        }
+        width: parent.width/2
+        height: 30
+        radius: 10
+        color: "transparent"
+        border {width: 0; color: "#17a81a"}
+        visible: false
+
+        ProgressBar {
+            id: downloadProgressBar
+            anchors{
+                left: parent.left
+                verticalCenter: parent.verticalCenter;
+            }
+            width: parent.width - cancelDownload.width - toolBarSpacing
+            height: parent.height / 2
+
+            value: 0.5
+            padding: 2
+
+            background: Rectangle {
+                implicitWidth: 200
+                implicitHeight: 6
+                color: "#e6e6e6"
+                radius: 3
+            }
+
+            contentItem: Item {
+                implicitWidth: 200
+                implicitHeight: 4
+
+                Rectangle {
+                    width: downloadProgressBar.visualPosition * parent.width
+                    height: parent.height
+                    radius: 2
+                    color: "#17a81a"
+                }
+            }
+        }
+
+        ImageButton {
+            id: cancelDownload
+            anchors{
+                right: parent.right
+                verticalCenter: parent.verticalCenter;
+            }
+            size     : parent.height
+            source   : "icons/close.png";
+            onClicked: cppRemote.cancelDownload();
+        } // cancelDownload
+    }
 
 
     ////////////////////////////////////////

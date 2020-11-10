@@ -142,6 +142,8 @@ public:
     inline Q_INVOKABLE bool isDownloading() const;
     inline Q_INVOKABLE bool setIsDownloading(bool isDownloading);
     inline Q_INVOKABLE bool downloadsAllowed() const;
+    Q_INVOKABLE void cancelDownload() const;
+
     inline Q_INVOKABLE PlaylistModel *modelOpenedPlaylists() const;
     inline Q_INVOKABLE PlaylistModel *modelClosedPlaylists() const;
 
@@ -305,6 +307,8 @@ signals:
     void updateRemoteFilesPath(QString newRemotePath);
 
     void addRadioToPlaylist(int radioIdx);
+
+    void downloadProgress(double pct);
 
 
     // signals for RemoteSongModel

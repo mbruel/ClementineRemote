@@ -125,6 +125,9 @@ public:
 
     void prepareDownload(const pb::remote::ResponseDownloadTotalSize &downloadSize);
     void downloadSong(const pb::remote::ResponseSongFileChunk &songChunk);
+    void downloadFinished();
+
+    inline void cancelDownload();
 
 signals:
     void connectToServer(const QString &host, ushort port, int auth_code);
@@ -190,6 +193,8 @@ private:
 };
 
 const QString &ConnectionWorker::hostname() const { return _host; }
+void ConnectionWorker::cancelDownload(){ _downloader.cancelDownload(); }
+
 const QString &ConnectionWorker::disconnectReason() const { return _disconnectReason; }
 void ConnectionWorker::setDisconnectReason(const QString &disconnectReason) { _disconnectReason = disconnectReason; }
 
