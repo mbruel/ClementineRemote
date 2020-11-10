@@ -169,6 +169,7 @@ private slots:
     void onAddRadioToPlaylist(int radioIdx);
 
     void onSendSongsToRemove();
+    void onSendSongsToDownload(const QString &dstFolder);
 
     void onDownloadCurrentSong();
     void onDownloadPlaylist(qint32 playlistID, QString playlistName);
@@ -187,6 +188,8 @@ private slots:
 
 private:
     void _doChangeSong(int songIndex, qint32 playlistID);
+
+    bool createDownloadDestinationFolder(const QString &dstFolder);
 
     QByteArray sha1Hex(QFile &file);
 

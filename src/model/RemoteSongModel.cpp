@@ -207,3 +207,14 @@ QList<int> RemoteSongProxyModel::selectedSongsIdexes()
     }
     return selectedIndexes;
 }
+
+QList<int> RemoteSongProxyModel::selectedSongsIDs()
+{
+    QList<int> selectedIDs;
+    for (int i = 0; i < rowCount() ; ++i)
+    {
+        if (data(index(i, 0), RemoteSongModel::selected).toBool())
+            selectedIDs << data(index(i, 0), RemoteSongModel::songId).toInt();
+    }
+    return selectedIDs;
+}

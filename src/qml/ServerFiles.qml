@@ -194,6 +194,18 @@ Rectangle {
 
 
         ImageButton {
+            id:   downSelectedFilesButton
+            size: headerButtonSize
+            anchors {
+                right: appendButton.left
+                rightMargin: 2*headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/nav_downloads.png";
+            onClicked: downloadSelectedFiles();
+        } //  downSelectedFilesButton
+
+        ImageButton {
             id:   appendButton
             size: headerButtonSize
             anchors {
@@ -372,6 +384,22 @@ Rectangle {
         }
 //        else
 //            print("sendSelectedFiles " + nbSelectedFiles);
+        resetSelectionMode();
+    }
+
+    function downloadSelectedFiles(){
+        if (!mainApp.downloadPossible())
+            return;
+        let nbSelectedFiles = cppRemote.downloadSelectedFiles();
+        if (nbSelectedFiles === 0)
+        {
+            print("no selected files to send...");
+            infoDialog.title = "No selected file";
+            infoDialog.text  = "Please select at least one file...";
+            infoDialog.open();
+        }
+        else
+            print("downloadSelectedFiles " + nbSelectedFiles);
         resetSelectionMode();
     }
 }

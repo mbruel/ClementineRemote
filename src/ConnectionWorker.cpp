@@ -69,6 +69,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::openPlaylist,         this, &ConnectionWorker::onOpenPlaylist,         connectionType);
     connect(_remote, &ClementineRemote::downloadCurrentSong,  this, &ConnectionWorker::onDownloadCurrentSong,  connectionType);
     connect(_remote, &ClementineRemote::downloadPlaylist,     this, &ConnectionWorker::onDownloadPlaylist,     connectionType);
+    connect(_remote, &ClementineRemote::sendSongsToDownload,  this, &ConnectionWorker::onSendSongsToDownload,  connectionType);
 
 
     connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
@@ -341,6 +342,16 @@ void ConnectionWorker::onSendSongsToRemove()
     _remote->doSendSongsToRemove();
 }
 
+void ConnectionWorker::onSendSongsToDownload(const QString &dstFolder)
+{
+    if (dstFolder.isEmpty())
+        _downloader.downloadPath = _remote->downloadPath();
+    else if (!createDownloadDestinationFolder(dstFolder))
+        return;
+
+    _remote->doSendSongsToDownload();
+}
+
 void ConnectionWorker::onDownloadCurrentSong()
 {
     _downloader.downloadPath = _remote->downloadPath();
@@ -352,9 +363,9 @@ void ConnectionWorker::onDownloadCurrentSong()
     sendDataToServer(msg);
 }
 
-void ConnectionWorker::onDownloadPlaylist(qint32 playlistID, QString playlistName)
+bool ConnectionWorker::createDownloadDestinationFolder(const QString &dstFolder)
 {
-    QString downloadPath = QString("%1/playlists/%2").arg(_remote->downloadPath()).arg(playlistName);
+    QString downloadPath = QString("%1/%2").arg(_remote->downloadPath()).arg(dstFolder);
     QFileInfo fi(downloadPath);
     if (fi.exists())
     {
@@ -364,23 +375,32 @@ void ConnectionWorker::onDownloadPlaylist(qint32 playlistID, QString playlistNam
                                            tr("%1 already exist but is not a directory...").arg(
                                            downloadPath)
                                        });
-            return;
+            return false;
         }
     }
     else
     {
         QDir dir(_remote->downloadPath());
-        if (!dir.mkpath(QString("playlists/%1").arg(playlistName)))
+        if (!dir.mkpath(dstFolder))
         {
             emit _remote->downloadComplete(0, 0, {
                                                tr("Error creating download folder %1").arg(
                                                downloadPath)
                                            });
-            return;
+            return false;
         }
     }
 
     _downloader.downloadPath = downloadPath;
+    return true;
+}
+
+void ConnectionWorker::onDownloadPlaylist(qint32 playlistID, QString playlistName)
+{
+    QString dstFolder = QString("playlists/%1").arg(playlistName);
+    if (!createDownloadDestinationFolder(dstFolder))
+        return;
+
     pb::remote::Message msg;
     msg.set_type(pb::remote::DOWNLOAD_SONGS);
 

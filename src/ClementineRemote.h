@@ -95,6 +95,7 @@ private:
     RemoteSongModel        *_songsModel;     //!< Model used to expose the songs to the View
     RemoteSongProxyModel   *_songsProxyModel;//!< Proxy model used by QML ListView
     pb::remote::Message     _songsToRemove;
+    pb::remote::Message     _songsToDownload;
 
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
@@ -156,6 +157,8 @@ public:
     Q_INVOKABLE void close();
 
     Q_INVOKABLE int sendSelectedFiles(const QString &newPlaylistName = "");
+    Q_INVOKABLE int downloadSelectedFiles();
+
     Q_INVOKABLE bool allFilesSelected() const;
     void doSendFilesToAppend();
 
@@ -173,7 +176,10 @@ public:
     Q_INVOKABLE bool allSongsSelected();
     Q_INVOKABLE void selectAllSongsFromProxyModel(bool selectAll);
     Q_INVOKABLE void deleteSelectedSongs();
+    Q_INVOKABLE void downloadSelectedSongs();
+
     void doSendSongsToRemove();
+    void doSendSongsToDownload();
 
     inline Q_INVOKABLE QString settingHost() const;
     inline Q_INVOKABLE QString settingPort() const;
@@ -274,6 +280,7 @@ signals:
 
     void sendSongsToRemove();
     void sendFilesToAppend();
+    void sendSongsToDownload(const QString &dstFolder);
 
     void createPlaylist(const QString &newPlaylistName);
     void savePlaylist(qint32 playlistID);

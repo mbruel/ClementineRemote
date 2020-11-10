@@ -206,6 +206,23 @@ Rectangle {
 
 
     ImageButton {
+        id:   downSelectedSongsButton
+        size: buttonSize
+        anchors {
+            bottom: parent.bottom
+            right:  exitSelectModeButton.left
+            rightMargin: headerSpacing
+        }
+        source: "icons/nav_downloads.png";
+        onClicked: {
+            if (mainApp.downloadPossible())
+                cppRemote.downloadSelectedSongs();
+            cppRemote.selectAllSongsFromProxyModel(false);
+            selectionMode = false;
+        }
+        visible: selectionMode
+    }
+    ImageButton {
         id:   exitSelectModeButton
         size: buttonSize
         anchors {
@@ -213,7 +230,7 @@ Rectangle {
             right:  selectAllButton.left
             rightMargin: headerSpacing
         }
-        source: "icons/close.png";
+        source: "icons/click.png";
         onClicked: {
             cppRemote.selectAllSongsFromProxyModel(false);
             selectionMode = false;

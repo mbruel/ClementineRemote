@@ -75,7 +75,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _songsModel(new RemoteSongModel),
     _songsProxyModel(new RemoteSongProxyModel),
-    _songsToRemove(),
+    _songsToRemove(), _songsToDownload(),
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
     _clemFilesSupport(false),
@@ -109,6 +109,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
 
     _filesToAppend.set_type(pb::remote::APPEND_FILES);
     _songsToRemove.set_type(pb::remote::REMOVE_SONGS);
+    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
 }
 
 ClementineRemote::~ClementineRemote()
@@ -209,6 +210,42 @@ int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
     }
 }
 
+int ClementineRemote::downloadSelectedFiles()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    _secureFilesToAppend.lock();
+#endif
+    _songsToDownload.clear_request_download_songs();
+    QStringList selectedFiles;
+    for (const RemoteFile &f : _remoteFiles)
+    {
+        if (!f.isDir && f.selected)
+            selectedFiles << f.filename;
+    }
+    if (selectedFiles.isEmpty())
+    {
+#ifdef __USE_CONNECTION_THREAD__
+        _secureFilesToAppend.unlock();
+#endif
+        return 0;
+    }
+    else
+    {
+        pb::remote::RequestDownloadSongs *files = _songsToDownload.mutable_request_download_songs();
+        files->set_download_item(pb::remote::DownloadItem::Urls);
+        files->set_relative_path(_remoteFilesPath.toStdString());
+        for (const QString &filename : selectedFiles)
+            *files->add_urls() = filename.toStdString();
+
+#ifdef __USE_CONNECTION_THREAD__
+        _secureFilesToAppend.unlock();
+        _secureSongs.lock(); // this one will be unlocked in ClementineRemote::doSendSongsToDownload
+#endif
+        emit sendSongsToDownload(QFileInfo(_remoteFilesPath).fileName());
+        return selectedFiles.size();
+    }
+}
+
 bool ClementineRemote::allFilesSelected() const
 {
     for (const RemoteFile &f : _remoteFiles)
@@ -278,10 +315,45 @@ void ClementineRemote::deleteSelectedSongs()
     }
 }
 
+void ClementineRemote::downloadSelectedSongs()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    _secureSongs.lock();
+#endif
+    _songsToDownload.clear_request_download_songs();
+    QList<int> selectedSongsIDs = _songsProxyModel->selectedSongsIDs();
+    if (selectedSongsIDs.isEmpty())
+    {
+#ifdef __USE_CONNECTION_THREAD__
+        _secureSongs.unlock();
+#endif
+        return ;
+    }
+    else
+    {
+        pb::remote::RequestDownloadSongs *req = _songsToDownload.mutable_request_download_songs();
+        req->set_playlist_id(_dispPlaylistId);
+        req->set_download_item(pb::remote::DownloadItem::APlaylist);
+        for (int songID : selectedSongsIDs)
+            req->add_songs_ids(songID);
+
+        emit sendSongsToDownload(QString());//playlistName());
+    }
+}
+
 void ClementineRemote::doSendSongsToRemove()
 {
     _connection->sendDataToServer(_songsToRemove);
     _songsToRemove.clear_request_append_files();
+#ifdef __USE_CONNECTION_THREAD__
+    _secureSongs.unlock();
+#endif
+}
+
+void ClementineRemote::doSendSongsToDownload()
+{
+    _connection->sendDataToServer(_songsToDownload);
+    _songsToDownload.clear_request_download_songs();
 #ifdef __USE_CONNECTION_THREAD__
     _secureSongs.unlock();
 #endif

@@ -82,6 +82,7 @@ public:
     bool allSongsSelected() const;
     void selectAllSongs(bool selectAll);
     QList<int> selectedSongsIdexes();
+    QList<int> selectedSongsIDs();
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
