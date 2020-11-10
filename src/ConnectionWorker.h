@@ -23,6 +23,7 @@
 #define CONNECTIONWORKER_H
 #include "protobuf/remotecontrolmessages.pb.h"
 #include "player/RemoteSong.h"
+#include "utils/Macro.h"
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QTimer>
@@ -30,17 +31,10 @@ class ClementineRemote;
 class RemotePlaylist;
 class QFile;
 
-using AtomicBool = QAtomicInteger<unsigned short>; // 16 bit only (faster than using 8 bit variable...)
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    #define M_LoadAtomic(atom) atom.load()
-#else
-    #define M_LoadAtomic(atom) atom.loadRelaxed()
-#endif
-
 struct Downloader{
 
     Downloader():
+        downloadPath(),
         nbFiles(0), totalSize(0),
         chunkNumber(0), chunkCount(0),
         fileNumber(0), fileSize(0),
@@ -67,6 +61,8 @@ struct Downloader{
                     fileNumber).arg(nbFiles).arg(err);
     }
 
+    QString downloadPath;
+
     qint32 nbFiles;
     qint32 totalSize;
     qint32 chunkNumber;
@@ -83,7 +79,7 @@ struct Downloader{
 
     QMap<int, QString> errorByFileNum;
     AtomicBool cancel;
-    bool hasCancelError;
+    bool hasCancelError;        
 };
 
 /*!
@@ -172,7 +168,7 @@ private slots:
     void onSendSongsToRemove();
 
     void onDownloadCurrentSong();
-    void onDownloadPlaylist(qint32 playlistID);
+    void onDownloadPlaylist(qint32 playlistID, QString playlistName);
 
 
 

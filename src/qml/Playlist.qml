@@ -102,8 +102,10 @@ Rectangle {
     } // updateCurrentPlaylist
 
     function downloadPlaylist() {
-        if (mainApp.downloadPossible())
-            cppRemote.downloadPlaylist(cppRemote.playlistID());
+        if (mainApp.downloadPossible()) {
+            cppRemote.setIsDownloading(true);
+            cppRemote.downloadPlaylist(cppRemote.playlistID(), cppRemote.playlistName());
+        }
     } // downloadCurrentSong
 
     Rectangle{

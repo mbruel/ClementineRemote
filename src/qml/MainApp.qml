@@ -108,6 +108,8 @@ Item {
             }
             downloadsDialog.open();
             downloadsTimer.start();
+
+            cppRemote.setIsDownloading(false);
         }
     } // Connections cppRemote
 
@@ -250,6 +252,15 @@ Item {
     function downloadPossible() {
         if (cppRemote.downloadsAllowed())
         {
+            if (cppRemote.isDownloading())
+            {
+                downloadsDialog.title = qsTr("Already Downloading...");
+                downloadsDialog.text  = qsTr("There is already a Download in process.") +
+                        "<br/>" + qsTr("Either cancel it or wait its end.");
+                downloadsDialog.open();
+                downloadsTimer.start();
+                return false;
+            }
             let downloadPath = cppRemote.downloadPath();
             if (downloadPath === "")
             {
@@ -261,6 +272,7 @@ Item {
                     downloadsDialog.title = qsTr("Download Error");
                     downloadsDialog.text  = error;
                     downloadsDialog.open();
+                    downloadsTimer.start();
                     return false;
                 }
             }
@@ -273,13 +285,17 @@ Item {
             downloadsDialog.text  = qsTr("Downloads are not allowed on Clementine...<br/><br/>\
 You can change that in:<br/>Tools -> Preferences -> Network Remote");
             downloadsDialog.open();
+            downloadsTimer.start();
             return false;
         }
     } // downloadPossible
 
     function downloadCurrentSong() {
         if (downloadPossible())
+        {
+            cppRemote.setIsDownloading(true);
             cppRemote.downloadCurrentSong();
+        }
     } // downloadCurrentSong
 
 

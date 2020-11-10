@@ -27,6 +27,7 @@
 #include "player/RemoteSong.h"
 #include "player/RemoteFile.h"
 #include "player/Stream.h"
+#include "utils/Macro.h"
 #include <QSettings>
 #ifdef __USE_CONNECTION_THREAD__
 #include <QThread>
@@ -121,6 +122,8 @@ private:
     pb::remote::Message     _radioStreamsData;
 #endif
 
+    AtomicBool _isDownloading;
+
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -133,6 +136,11 @@ public:
     ~ClementineRemote();
 
 
+    // TODO: should be a setting
+    bool overwriteDownloadedSongs() const {return false;}
+
+    inline Q_INVOKABLE bool isDownloading() const;
+    inline Q_INVOKABLE bool setIsDownloading(bool isDownloading);
     inline Q_INVOKABLE bool downloadsAllowed() const;
     inline Q_INVOKABLE PlaylistModel *modelOpenedPlaylists() const;
     inline Q_INVOKABLE PlaylistModel *modelClosedPlaylists() const;
@@ -189,6 +197,7 @@ public:
     inline RemotePlaylist *playlist(int idx, bool closedPlaylists= false) const;
     inline Q_INVOKABLE int playlistIndex() const;
     inline Q_INVOKABLE int playlistID() const;
+    Q_INVOKABLE QString playlistName() const;
     inline int numberOfPlaylists(bool closedPlaylists = false) const;
     Q_INVOKABLE bool isCurrentPlaylistSaved() const;
 
@@ -272,7 +281,7 @@ signals:
     void closePlaylist(qint32 playlistID);
 
     void downloadCurrentSong();
-    void downloadPlaylist(qint32 playlistID);
+    void downloadPlaylist(qint32 playlistID, QString playlistName);
     void downloadComplete(qint32 downloadedFiles, qint32 totalFiles, QStringList errors);
 
     // signals sent from ConnectionWorker to QML
@@ -465,6 +474,9 @@ QString ClementineRemote::disconnectReason(int reason) const
         return tr("Unknown Reason...");
     }
 }
+
+bool ClementineRemote::isDownloading() const { return M_LoadAtomic(_isDownloading); }
+bool ClementineRemote::setIsDownloading(bool isDownloading){ _isDownloading = isDownloading; }
 
 bool ClementineRemote::downloadsAllowed() const { return _downloadsAllowed; }
 

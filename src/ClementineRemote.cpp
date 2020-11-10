@@ -86,10 +86,11 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _secureFilesToAppend(),
 #endif
     _filesToAppend(),
-    _radioStreams()
+    _radioStreams(),
 #ifdef __USE_CONNECTION_THREAD__
-    ,_secureRadioStreams(), _radioStreamsData()
+    _secureRadioStreams(), _radioStreamsData(),
 #endif
+    _isDownloading(0x0)
 {
     setObjectName("ClemRemote");
     _songsModel->setRemote(this);
@@ -279,6 +280,11 @@ void ClementineRemote::doSendSongsToRemove()
 #ifdef __USE_CONNECTION_THREAD__
     _secureSongs.unlock();
 #endif
+}
+
+QString ClementineRemote::playlistName() const
+{
+    return _dispPlaylist ? _dispPlaylist->name : QString("Playlist #%1").arg(_dispPlaylistId);
 }
 
 bool ClementineRemote::isCurrentPlaylistSaved() const

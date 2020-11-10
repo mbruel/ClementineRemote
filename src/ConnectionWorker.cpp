@@ -25,6 +25,8 @@
 #include "player/RemotePlaylist.h"
 
 #include <QFile>
+#include <QDir>
+#include <QFileInfo>
 #include <QCryptographicHash>
 
 ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
@@ -341,6 +343,7 @@ void ConnectionWorker::onSendSongsToRemove()
 
 void ConnectionWorker::onDownloadCurrentSong()
 {
+    _downloader.downloadPath = _remote->downloadPath();
     pb::remote::Message msg;
     msg.set_type(pb::remote::DOWNLOAD_SONGS);
 
@@ -349,8 +352,35 @@ void ConnectionWorker::onDownloadCurrentSong()
     sendDataToServer(msg);
 }
 
-void ConnectionWorker::onDownloadPlaylist(qint32 playlistID)
+void ConnectionWorker::onDownloadPlaylist(qint32 playlistID, QString playlistName)
 {
+    QString downloadPath = QString("%1/playlists/%2").arg(_remote->downloadPath()).arg(playlistName);
+    QFileInfo fi(downloadPath);
+    if (fi.exists())
+    {
+        if (!fi.isDir())
+        {
+            emit _remote->downloadComplete(0, 0, {
+                                           tr("%1 already exist but is not a directory...").arg(
+                                           downloadPath)
+                                       });
+            return;
+        }
+    }
+    else
+    {
+        QDir dir(_remote->downloadPath());
+        if (!dir.mkpath(QString("playlists/%1").arg(playlistName)))
+        {
+            emit _remote->downloadComplete(0, 0, {
+                                               tr("Error creating download folder %1").arg(
+                                               downloadPath)
+                                           });
+            return;
+        }
+    }
+
+    _downloader.downloadPath = downloadPath;
     pb::remote::Message msg;
     msg.set_type(pb::remote::DOWNLOAD_SONGS);
 
@@ -574,6 +604,7 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
     // Song offer is chunk no 0
     if (_downloader.chunkNumber == 0)
     {
+        bool fileExist = false;
         if (songChunk.has_song_metadata() && songChunk.size() != 0)
         {
             _downloader.song = songChunk.song_metadata();
@@ -588,18 +619,26 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
             }
             else
             {
-                _downloader.file = new QFile(QString("%1/%2").arg(_remote->downloadPath()).arg(_downloader.song.filename));
-                _downloader.canWrite = _downloader.file->open(QIODevice::ReadWrite);
-                qDebug() << "rcv ResponseSongFileChunk has SongMeta: "
-                         << _downloader.song.str()
-                         << ", canWrite: " << _downloader.canWrite;
-                if (!_downloader.canWrite)
-                    _downloader.addError(tr("can't write file %1").arg(_downloader.song.filename));
+                _downloader.file = new QFile(QString("%1/%2").arg(_downloader.downloadPath).arg(_downloader.song.filename));
+                if (_downloader.file->exists() && !_remote->overwriteDownloadedSongs())
+                {
+                    _downloader.addError(tr("skipping file %1").arg(_downloader.song.filename));
+                    fileExist = true;
+                }
+                else
+                {
+                    _downloader.canWrite = _downloader.file->open(QIODevice::ReadWrite);
+                    qDebug() << "rcv ResponseSongFileChunk has SongMeta: "
+                             << _downloader.song.str()
+                             << ", canWrite: " << _downloader.canWrite;
+                    if (!_downloader.canWrite)
+                        _downloader.addError(tr("can't write file %1").arg(_downloader.song.filename));
+                }
             }
         }
         pb::remote::Message msg;
         msg.set_type(pb::remote::SONG_OFFER_RESPONSE);
-        msg.mutable_response_song_offer()->set_accepted(!cancelled);
+        msg.mutable_response_song_offer()->set_accepted(!cancelled && !fileExist);
         sendDataToServer(msg);
     }
     else if (_downloader.canWrite)
@@ -704,14 +743,14 @@ Downloader::~Downloader()
 
 void Downloader::init(qint32 nbFiles_, qint32 totalSize_)
 {
-    nbFiles     = nbFiles_;
-    totalSize   = totalSize_;
-    chunkNumber = 0;
-    chunkCount  = 0;
-    fileNumber  = 0;
-    fileSize    = 0;
-    song = RemoteSong();
-    dowloadedSize = 0;
+    nbFiles         = nbFiles_;
+    totalSize       = totalSize_;
+    chunkNumber     = 0;
+    chunkCount      = 0;
+    fileNumber      = 0;
+    fileSize        = 0;
+    song            = RemoteSong();
+    dowloadedSize   = 0;
     downloadedFiles = 0;
     if (file){
         file->remove();

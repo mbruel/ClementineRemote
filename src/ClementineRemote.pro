@@ -111,6 +111,7 @@ HEADERS += \
     player/RemotePlaylist.h \
     player/RemoteSong.h \
     player/Stream.h \
+    utils/Macro.h \
     utils/Singleton.h \
     protobuf/remotecontrolmessages.pb.h
 
