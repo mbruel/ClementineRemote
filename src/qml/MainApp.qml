@@ -23,7 +23,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Item {
-    id: root
+    id: mainApp
 
     visible: true
     width  : 400
@@ -40,7 +40,7 @@ Item {
     property int headerButtonSize   : 30
     property int mainMargin         : 20
 
-    property int downDialogTimeout  : 2000
+    property int downDialogTimeout  : 8000
 
     property int trackLength: cppRemote.currentTrackLength()
 
@@ -93,13 +93,14 @@ Item {
         function onUpdateShuffle(mode){ updateShuffle(mode); }
         function onUpdateRepeat(mode) { updateRepeat(mode); }
 
-        function onDownloadComplete(nbFiles, errorList){
+        function onDownloadComplete(downloadedFiles, totalFiles, errorList){
             downloadsDialog.title = qsTr("Download Complete");
-            if (errorList.length === 0)
-                downloadsDialog.text = "" + nbFiles + qsTr(" file(s) downloaded successfully!");
-            else
+            downloadsDialog.text  = qsTr("%1 / %2 file(s) have been downloaded successfully!").arg(
+                        downloadedFiles).arg(totalFiles)
+
+            if (errorList.length > 0)
             {
-                downloadsDialog.text = "" + errorList.length + qsTr(" error(s) on ") + nbFiles + qsTr(" file(s) :");
+                downloadsDialog.text += "<br/><br/>" +qsTr("There were %1 error(s):").arg(errorList.length);
                 downloadsDialog.text += "<ul>";
                 for (const err of errorList)
                     downloadsDialog.text += "<li>" + err + "</li>";
@@ -246,7 +247,7 @@ Item {
         }
     } // function updateRepeat
 
-    function downloadCurrentSong() {
+    function downloadPossible() {
         if (cppRemote.downloadsAllowed())
         {
             let downloadPath = cppRemote.downloadPath();
@@ -260,10 +261,11 @@ Item {
                     downloadsDialog.title = qsTr("Download Error");
                     downloadsDialog.text  = error;
                     downloadsDialog.open();
+                    return false;
                 }
             }
             print("downloadPath: "+downloadPath);
-            cppRemote.downloadCurrentSong();
+            return true;
         }
         else
         {
@@ -271,7 +273,13 @@ Item {
             downloadsDialog.text  = qsTr("Downloads are not allowed on Clementine...<br/><br/>\
 You can change that in:<br/>Tools -> Preferences -> Network Remote");
             downloadsDialog.open();
+            return false;
         }
+    } // downloadPossible
+
+    function downloadCurrentSong() {
+        if (downloadPossible())
+            cppRemote.downloadCurrentSong();
     } // downloadCurrentSong
 
 
@@ -333,7 +341,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
                 barIndex   : model.index
                 imagePath  : "icons/" + model.name + ".png"
 
-                state      : barIndex === root.toolBarIndex ?  "Selected" : "Inactive"
+                state      : barIndex === mainApp.toolBarIndex ?  "Selected" : "Inactive"
                 onSelected : changeMainMenu(barIndex)
             } // ToolBarButton
         } // Repeater
@@ -637,9 +645,9 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
     Dialog {
         id: todoDialog
 
-        width: root.width *4/5
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        width: mainApp.width *4/5
+        x: (mainApp.width - width) / 2
+        y: (mainApp.height - height) / 2
 
         title: "TODO"
 
@@ -652,12 +660,12 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
 
     Dialog {
         id: downloadsDialog
-        width: root.width *4/5
+        width: mainApp.width *4/5
         property alias text: downloadsDialogLbl.text
 
 
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        x: (mainApp.width - width) / 2
+        y: (mainApp.height - height) / 2
 
         title: qsTr("Downloads forbidden...")
 
@@ -680,7 +688,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
     Menu {
         id: repeatMenu
         x: repeatButton.x - width + mainMargin
-        y: root.height - height
+        y: mainApp.height - height
         transformOrigin: Menu.TopRight
 
         Repeater {
@@ -699,7 +707,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
     Menu {
         id: shuffleMenu
         x: shuffleButton.x - width + mainMargin
-        y: root.height - height
+        y: mainApp.height - height
         transformOrigin: Menu.TopRight
 
         Repeater {

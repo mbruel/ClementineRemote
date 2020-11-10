@@ -30,14 +30,24 @@ class ClementineRemote;
 class RemotePlaylist;
 class QFile;
 
+using AtomicBool = QAtomicInteger<unsigned short>; // 16 bit only (faster than using 8 bit variable...)
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    #define M_LoadAtomic(atom) atom.load()
+#else
+    #define M_LoadAtomic(atom) atom.loadRelaxed()
+#endif
+
 struct Downloader{
 
     Downloader():
         nbFiles(0), totalSize(0),
         chunkNumber(0), chunkCount(0),
         fileNumber(0), fileSize(0),
-        song(), dowloadedSize(0),
-        file(nullptr), canWrite(false)
+        song(), dowloadedSize(0), downloadedFiles(0),
+        file(nullptr), canWrite(false),
+        errorByFileNum(),
+        cancel(0x0), hasCancelError(false)
     {}
 
     ~Downloader();
@@ -45,6 +55,9 @@ struct Downloader{
     Downloader(Downloader&&) = delete;
     Downloader &operator=(const Downloader&) = delete;
     Downloader &operator=(Downloader&&) = delete;
+
+    void cancelDownload() { cancel = 0x1; }
+    bool isCancelled() { return M_LoadAtomic(cancel); }
 
     void init(qint32 nbFiles_, qint32 totalSize_);
 
@@ -62,12 +75,15 @@ struct Downloader{
     qint32 fileSize;
 
     RemoteSong song;
-    int  dowloadedSize;
+    int dowloadedSize;
+    int downloadedFiles;
 
     QFile *file;
     bool   canWrite;
 
     QMap<int, QString> errorByFileNum;
+    AtomicBool cancel;
+    bool hasCancelError;
 };
 
 /*!
@@ -156,6 +172,8 @@ private slots:
     void onSendSongsToRemove();
 
     void onDownloadCurrentSong();
+    void onDownloadPlaylist(qint32 playlistID);
+
 
 
 

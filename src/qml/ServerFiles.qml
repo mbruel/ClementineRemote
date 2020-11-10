@@ -24,7 +24,7 @@ import QtQuick.Controls 2.15
 import RemoteFile 1.0
 
 Rectangle {
-    id: root
+    id: serverFiles
     radius: 10
 
     property int   newPlaylistNameWidth: 100
@@ -253,7 +253,7 @@ Rectangle {
         {
             previousPathButton.visible = false;
             nextPathButton.visible = false;
-            relativePath.width = root.width - 2*(headerButtonSize + headerSpacing + headerSpacing)
+            relativePath.width = serverFiles.width - 2*(headerButtonSize + headerSpacing + headerSpacing)
         }
         filesView.currentIndex = -1; // no default selection
     }
@@ -269,7 +269,7 @@ Rectangle {
         id: remoteFileDelegate
 
         Rectangle {
-            id: rootDelegate
+            id: remoteFileDelegateRect
             property bool isSelected: ListView.isCurrentItem
 
             width: ListView.view.width
@@ -342,9 +342,9 @@ Rectangle {
         id: infoDialog
         property alias text: infoLbl.text
 
-        width: root.width * 2/3
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        width: serverFiles.width * 2/3
+        x: (serverFiles.width - width) / 2
+        y: (serverFiles.height - height) / 2
 
         title: "TODO"
 

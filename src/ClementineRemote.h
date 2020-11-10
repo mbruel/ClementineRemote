@@ -188,6 +188,7 @@ public:
     inline const QList<RemotePlaylist*> &playlists() const;
     inline RemotePlaylist *playlist(int idx, bool closedPlaylists= false) const;
     inline Q_INVOKABLE int playlistIndex() const;
+    inline Q_INVOKABLE int playlistID() const;
     inline int numberOfPlaylists(bool closedPlaylists = false) const;
     Q_INVOKABLE bool isCurrentPlaylistSaved() const;
 
@@ -271,8 +272,8 @@ signals:
     void closePlaylist(qint32 playlistID);
 
     void downloadCurrentSong();
-    void downloadComplete(qint32 nbFiles, QStringList errors);
-
+    void downloadPlaylist(qint32 playlistID);
+    void downloadComplete(qint32 downloadedFiles, qint32 totalFiles, QStringList errors);
 
     // signals sent from ConnectionWorker to QML
     void connected();
@@ -385,6 +386,8 @@ RemotePlaylist *ClementineRemote::playlist(int idx, bool closedPlaylists) const
         return idx < _playlistsOpened.size() ? _playlistsOpened.at(idx) : nullptr;
 }
 int ClementineRemote::playlistIndex() const { return _dispPlaylistIndex; }
+int ClementineRemote::playlistID() const { return _dispPlaylistId; }
+
 int ClementineRemote::numberOfPlaylists(bool closedPlaylists) const
 {
     return closedPlaylists ?  _playlistsClosed.size() : _playlistsOpened.size();

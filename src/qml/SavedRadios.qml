@@ -24,7 +24,7 @@ import QtQuick.Controls 2.15
 import RadioStream 1.0
 
 Rectangle {
-    id: root
+    id: radioStream
     radius: 10
 
     property int   lineSpacing    : 10
@@ -55,7 +55,7 @@ Rectangle {
         id: radioStreamDelegate
 
         Rectangle {
-            id: rootDelegate
+            id: radioStreamDelegateRect
 //            property bool isSelected: ListView.isCurrentItem
 
             width: ListView.view.width

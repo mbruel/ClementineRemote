@@ -26,7 +26,7 @@ import QtQuick.Layouts 1.3
 import PlayList 1.0
 
 Rectangle {
-    id: root
+    id: playlist
     radius: 10
 
 
@@ -92,15 +92,19 @@ Rectangle {
         }
 //        if (idx)
 //            songsView.positionViewAtIndex(idx, ListView.Center)
-    }
+    } // updateCurrentSong
 
     function updateCurrentPlaylist(idx){
 //        print("updateCurrentPlaylist: "+idx);
         playlistIdx = idx;
         if (playlistCombo.currentIndex !== idx)
             playlistCombo.currentIndex = idx;
-    }
+    } // updateCurrentPlaylist
 
+    function downloadPlaylist() {
+        if (mainApp.downloadPossible())
+            cppRemote.downloadPlaylist(cppRemote.playlistID());
+    } // downloadCurrentSong
 
     Rectangle{
         id     : playlistsRow
@@ -248,31 +252,13 @@ Rectangle {
     } // deleteSongsButton
 
 
-
-    Dialog {
-        id: todoDialog
-
-        width: root.width *3/4
-
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
-
-        title: qsTr("TODO")
-
-        Label {
-            width: parent.width - 5
-            text: qsTr("this feature is not implemented yet...")
-            wrapMode: Text.WordWrap
-        }
-    } // todoDialog
-
     Dialog {
         id: noMorePlaylistDialog
 
-        width: root.width *3/4
+        width: playlist.width *3/4
 
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        x: (playlist.width - width) / 2
+        y: (playlist.height - height) / 2
 
         title: qsTr("No more Playlists")
 
@@ -287,10 +273,10 @@ Rectangle {
     Dialog {
         id: playlistDestructionConfirmationDialog
 
-        width: root.width *3/4
+        width: playlist.width *3/4
 
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        x: (playlist.width - width) / 2
+        y: (playlist.height - height) / 2
 
         title: qsTr("Delete Playlist")
 
@@ -311,10 +297,10 @@ Are you sure you want to continue?")
 
         property bool createNewPlaylist: false
 
-        width: root.width *3/4
+        width: playlist.width *3/4
 
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        x: (playlist.width - width) / 2
+        y: (playlist.height - height) / 2
         parent: Overlay.overlay
 
         focus: true
@@ -351,10 +337,10 @@ Are you sure you want to continue?")
 
         property bool createNewPlaylist: false
 
-        width: root.width *3/4
+        width: playlist.width *3/4
 
-        x: (root.width - width) / 2
-        y: (root.height - height) / 2
+        x: (playlist.width - width) / 2
+        y: (playlist.height - height) / 2
         parent: Overlay.overlay
 
         focus: true
@@ -482,7 +468,7 @@ Are you sure you want to continue?")
         id: songDelegate
 
         Rectangle {
-            id: rootDelegate
+            id: songDelegateRect
             property bool isSelected: ListView.isCurrentItem
 
             width: ListView.view.width
@@ -546,14 +532,14 @@ Are you sure you want to continue?")
                     target: txtTitle
                     property: "x"
                     from: 20
-                    to: -rootDelegate.width
+                    to: -songDelegateRect.width
                     duration: 3000
                     loops: Animation.Infinite
                 }
 
                 onTruncatedChanged: {
                     print("onTruncatedChanged for: "+txtTitle.text)
-                    if (truncated && rootDelegate.isSelected)
+                    if (truncated && songDelegateRect.isSelected)
                     {
                         txtTitle.elide = Text.ElideNone;
                         titleAnimation.start();
@@ -589,14 +575,14 @@ Are you sure you want to continue?")
                     target: txtArtistAlbum
                     property: "x"
                     from: 20
-                    to: -rootDelegate.width
+                    to: -songDelegateRect.width
                     duration: 3000
                     loops: Animation.Infinite
                 }
 
                 onTruncatedChanged: {
                     print("onTruncatedChanged for: "+txtArtistAlbum.text)
-                    if (truncated && rootDelegate.isSelected)
+                    if (truncated && songDelegateRect.isSelected)
                     {
                         txtArtistAlbum.elide = Text.ElideNone;
                         artistAnimation.start();
@@ -676,10 +662,7 @@ Are you sure you want to continue?")
         Action {
             icon.source: "icons/nav_downloads.png"
             text: qsTr("Download Playlist")
-            onTriggered: {
-                print("Download playlist");
-                todoDialog.open()
-            }
+            onTriggered: downloadPlaylist();
         }
         MenuSeparator {}
         Action {
