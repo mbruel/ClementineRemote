@@ -45,6 +45,9 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
     static const QString sVersion;  //!< Version of the Application
     static const QString sAppName;  //!< Name of the Application
     static const QString sAppTitle;
+    static const QString sProjectUrl;
+    static const QString sDonateUrl;
+    static const QString sBTCaddress;
     static const int     sSockTimeoutMs = 2000;
 
     static const QMap<pb::remote::RepeatMode,  ushort> sQmlRepeatCodes;
@@ -245,6 +248,8 @@ public:
     Q_INVOKABLE QString setDownloadFolder();
 
 
+    void updateActivePlaylist();
+
 private:
     void dumpCurrentPlaylist();
 
@@ -339,21 +344,26 @@ signals:
 
 #ifdef __USE_CONNECTION_THREAD__
     void playlistsOpenedUpdatedByWorker();
-    void songsUpdatedByWorker();
+    void songsUpdatedByWorker(bool initialized);
     void remoteFilesUpdatedByWorker();
 
 private slots:
     void onPlaylistsOpenedUpdatedByWorker();
-    void onSongsUpdatedByWorker();
+    void onSongsUpdatedByWorker(bool initialized);
     void onRemoteFilesUpdatedByWorker();
 #endif
 
     //static methods
 public:
     inline Q_INVOKABLE static const QString appTitle();
-    inline             static const QString &appName();
-    inline             static const QString &appVersion();
+    inline Q_INVOKABLE static const QString appName();
+    inline Q_INVOKABLE static const QString appVersion();
+    inline Q_INVOKABLE static const QString projectURL();
+    inline Q_INVOKABLE static const QString donateURL();
+    inline Q_INVOKABLE static const QString btcAddress();
+
     inline             static int sockTimeoutMs();
+
 
     inline Q_INVOKABLE static QString prettyLength(qint32 sec);
 
@@ -448,8 +458,11 @@ Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; 
 QString ClementineRemote::downloadPath() const{ return _downloadPath; }
 
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
-const QString &ClementineRemote::appName() { return sAppName; }
-const QString &ClementineRemote::appVersion() { return sVersion; }
+const QString ClementineRemote::appName() { return sAppName; }
+const QString ClementineRemote::appVersion() { return sVersion; }
+const QString ClementineRemote::projectURL() { return sProjectUrl; }
+const QString ClementineRemote::donateURL() { return sDonateUrl; }
+const QString ClementineRemote::btcAddress() { return sBTCaddress; }
 
 int ClementineRemote::sockTimeoutMs() { return sSockTimeoutMs; }
 

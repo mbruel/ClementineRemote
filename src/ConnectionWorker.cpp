@@ -433,6 +433,7 @@ void ConnectionWorker::onChangeToSong(int proxyRow)
     if (modelRow != -1)
     {
         _doChangeSong(modelRow, _remote->currentPlaylistID());
+        _remote->updateActivePlaylist();
 
         // this will play music so we need to update the remote
         _remote->setPlay();

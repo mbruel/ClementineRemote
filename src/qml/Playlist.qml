@@ -80,16 +80,15 @@ Rectangle {
     } // Component.onCompleted
 
 
-    function updateCurrentSong(idx)
-    {
+    function updateCurrentSong(idx) {
 //        print("updateCurrentSong: " + idx);
         songsView.currentIndex = idx;
-        if (cppRemote.isPlaying())
-        {
+//        if (cppRemote.isPlaying())
+//        {
             playingSongIdx    = songsView.currentIndex;
             activePlaylistIdx = cppRemote.playlistIndex();
             print("activePlaylistIdx: "+activePlaylistIdx);
-        }
+//        }
 //        if (idx)
 //            songsView.positionViewAtIndex(idx, ListView.Center)
     } // updateCurrentSong

@@ -56,5 +56,7 @@
         <file>icons/open.png</file>
         <file>icons/tmpFile.png</file>
         <file>icons/playlistFile.png</file>
+        <file>btc_qr.gif</file>
+        <file>icons/donate.gif</file>
     </qresource>
 </RCC>

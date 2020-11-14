@@ -11,5 +11,6 @@
         <file>ServerFiles.qml</file>
         <file>SavedRadios.qml</file>
         <file>NotSupported.qml</file>
+        <file>AboutPopup.qml</file>
     </qresource>
 </RCC>

@@ -30,9 +30,13 @@
 #include <QDataStream>
 #include <QStandardPaths>
 #include <QDir>
-const QString ClementineRemote::sAppName = "ClementineRemote";
-const QString ClementineRemote::sVersion = "0.2";
-const QString ClementineRemote::sAppTitle = tr("Clementine Remote");
+const QString ClementineRemote::sAppName    = "ClemRemote";
+const QString ClementineRemote::sVersion    = "0.2";
+const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
+const QString ClementineRemote::sProjectUrl = "https://github.com/mbruel/ClementineRemote";
+const QString ClementineRemote::sBTCaddress = "3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6";
+const QString ClementineRemote::sDonateUrl  = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W2C236U6JNTUA&item_name=ClementineRemote&currency_code=EUR";
+
 const QPair<ushort, ushort> ClementineRemote::sClemFilesSupportMinVersion = {1, 4};
 
 const QMap<pb::remote::RepeatMode, ushort> ClementineRemote::sQmlRepeatCodes = {
@@ -470,6 +474,31 @@ void ClementineRemote::updateCurrentPlaylist()
     }
 }
 
+void ClementineRemote::updateActivePlaylist()
+{
+    _activePlaylistId = _dispPlaylistId;
+    int row = 0;
+    for (RemotePlaylist *p : _playlistsOpened)
+    {
+        if (p->id == _activePlaylistId)
+        {
+            if (!p->playing)
+            {
+                p->playing = true;
+                QModelIndex index = _plOpenedModel->index(row);
+                emit _plOpenedModel->dataChanged(index, index, {PlaylistModel::iconSrc});
+            }
+        }
+        else if (p->playing)
+        {
+            p->playing = false;
+            QModelIndex index = _plOpenedModel->index(row);
+            emit _plOpenedModel->dataChanged(index, index, {PlaylistModel::iconSrc});
+        }
+        ++row;
+    }
+}
+
 void ClementineRemote::dumpPlaylists()
 {
     for (RemotePlaylist *p : _playlistsOpened)
@@ -569,11 +598,13 @@ void ClementineRemote::onPlaylistsOpenedUpdatedByWorker()
     _playlistData.clear_response_playlists();
     _securePlaylists.unlock();
 }
-void ClementineRemote::onSongsUpdatedByWorker()
+void ClementineRemote::onSongsUpdatedByWorker(bool initialized)
 {
     rcvPlaylistSongs(_songsData.response_playlist_songs());
     _songsData.clear_response_playlist_songs();
     _secureSongs.unlock();
+    if (!initialized)
+        updateActivePlaylist();
 }
 void ClementineRemote::onRemoteFilesUpdatedByWorker()
 {
@@ -587,8 +618,6 @@ void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs 
 {
     _dispPlaylistId = songs.requested_playlist().id();
     qDebug() << "[MsgType::PLAYLIST_SONGS] playlist ID: " << _dispPlaylistId;
-    if (!_initialized)
-        _activePlaylistId = _dispPlaylistId;
     updateCurrentPlaylist();
 
     if (_songs.size())
@@ -713,9 +742,11 @@ void ClementineRemote::parseMessage(const QByteArray &data)
 #ifdef __USE_CONNECTION_THREAD__
         _secureSongs.lock();
         _songsData = std::move(msg);
-        emit songsUpdatedByWorker();
+        emit songsUpdatedByWorker(_initialized);
 #else
         rcvPlaylistSongs(msg.response_playlist_songs());
+        if (!_initialized)
+            updateActivePlaylist();
 #endif
         break;
 
@@ -759,8 +790,8 @@ void ClementineRemote::parseMessage(const QByteArray &data)
     case pb::remote::ACTIVE_PLAYLIST_CHANGED:
         _dispPlaylistId =  msg.response_active_changed().id();
         qDebug() << "[MsgType::ACTIVE_PLAYLIST_CHANGED] id: " << _dispPlaylistId;
-        _activePlaylistId  = _dispPlaylistId;
         updateCurrentPlaylist();
+        updateActivePlaylist();
         break;
 
     case pb::remote::LIST_FILES:

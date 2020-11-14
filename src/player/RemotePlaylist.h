@@ -34,6 +34,7 @@ typedef struct RemotePlaylist
     bool active;
     bool closed;
     bool favorite;
+    bool playing;
 
 public:
     RemotePlaylist() = default;
@@ -42,7 +43,8 @@ public:
 
     RemotePlaylist(const pb::remote::Playlist &p):
         id(p.id()), name(p.name().c_str()), item_count(p.item_count()),
-        active(p.active()), closed(p.closed()), favorite(p.favorite())
+        active(p.active()), closed(p.closed()), favorite(p.favorite()),
+        playing(false)
     {}
 
     RemotePlaylist& operator=(const RemotePlaylist &) = default;

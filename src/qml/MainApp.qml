@@ -765,6 +765,19 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
         }
     } // todoDialog
 
+    AboutPopup {
+        id: aboutDialog
+        bgGradiantStart: mainApp.bgGradiantStart
+        bgGradiantStop: mainApp.bgGradiantStop
+        mainSpacing: mainApp.toolBarSpacing
+
+        x: (mainApp.width - width) / 2
+        y: (mainApp.height - height) / 2
+
+        width: mainApp.width
+        height: mainApp.height/2
+    } // aboutDialog
+
     Menu {
         id: repeatMenu
         x: repeatButton.x - width + mainMargin
@@ -879,25 +892,13 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
                 }
             } // downloads
             ItemDelegate {
-                id: donate
-                width: parent.width
-                text : qsTr("Donate")
-                icon.source: "icons/nav_donate.png"
-                onClicked: {
-                    console.log("onClicked " + donate.text)
-                    drawer.close();
-                    todoDialog.open();
-                }
-            } // donate
-            ItemDelegate {
                 id: about
                 width: parent.width
                 text : qsTr("About")
                 icon.source: "icon.png"
                 onClicked: {
-                    console.log("onClicked " + about.text)
                     drawer.close();
-                    todoDialog.open();
+                    aboutDialog.open();
                 }
             } // about
             ItemDelegate {

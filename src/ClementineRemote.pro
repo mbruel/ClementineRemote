@@ -1,6 +1,7 @@
 QT += core network quick
 
 CONFIG += c++17
+TARGET = ClemRemote
 
 # possible to remove the Connection Thread as Sockets are Async
 # cf https://forum.qt.io/topic/120468/qabstractlistmodel-populated-in-a-worker-thread-not-the-gui-one

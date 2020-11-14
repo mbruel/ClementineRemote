@@ -80,7 +80,7 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const
     case PlaylistModel::name:
         return p->name;
     case PlaylistModel::iconSrc:
-        if (p->id == _remote->activePlaylistID())
+        if (p->playing)
             return "icons/media-playback-start.png";
         else if (p->favorite)
             return "icons/star.png";
