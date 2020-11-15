@@ -89,7 +89,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
     _clemFilesSupport(false),
-    _remoteFilesPath(_settings.value("remotePath", "./").toString()),
+    _remoteFilesPath("./"), _remoteFilesPathPerHost(),
     _remoteFiles(),
 #ifdef __USE_CONNECTION_THREAD__
     _secureRemoteFilesData(), _remoteFilesData(),
@@ -116,6 +116,11 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _thread.start();
     _thread.setObjectName("ConnectionWorkerThread");
 #endif
+
+    _settings.beginGroup("remotePath");
+    for (const QString &host :  _settings.childKeys())
+         _remoteFilesPathPerHost[host] = _settings.value(host).toString();
+    _settings.endGroup();
 
     _filesToAppend.set_type(pb::remote::APPEND_FILES);
     _songsToRemove.set_type(pb::remote::REMOVE_SONGS);
@@ -157,7 +162,10 @@ const QString ClementineRemote::hostname() const
 void ClementineRemote::close()
 {
     qDebug() << "[MB_TRACE] close ClementineRemote";
-    _settings.setValue("remotePath", _remoteFilesPath);
+    _settings.beginGroup("remotePath");
+    for (auto it = _remoteFilesPathPerHost.cbegin(), itEnd = _remoteFilesPathPerHost.cend(); it != itEnd ; ++it)
+        _settings.setValue(it.key(), it.value());
+    _settings.endGroup();
     _settings.sync();
 #ifdef __USE_CONNECTION_THREAD__
     emit _connection->killSocket();
@@ -551,6 +559,7 @@ void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles 
 
 
         _remoteFilesPath = files.relative_path().c_str();
+        _remoteFilesPathPerHost[_connection->hostname()] = _remoteFilesPath;
         emit updateRemoteFilesPath(_remoteFilesPath);
     }
 }

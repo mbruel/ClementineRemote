@@ -103,6 +103,8 @@ void ConnectionWorker::onConnectToServer(const QString &host, ushort port, int a
     _auth_code = auth_code;
     _socket = new QTcpSocket();
 
+    _remote->loadRemotePathForHost(host);
+
 //    _socket->moveToThread(&_thread);
 
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, true);

@@ -110,6 +110,7 @@ private:
 
     bool                    _clemFilesSupport;
     QString                 _remoteFilesPath;
+    QMap<QString, QString>  _remoteFilesPathPerHost;
     QList<RemoteFile>       _remoteFiles;
 #ifdef __USE_CONNECTION_THREAD__
     QMutex                  _secureRemoteFilesData;
@@ -172,6 +173,8 @@ public:
 
     inline const QString &remoteFilesPath() const;
     inline Q_INVOKABLE QString remoteFilesPath_QML() const; //!< can't use refs in QML...
+    inline void loadRemotePathForHost(const QString &host);
+
     inline Q_INVOKABLE const QString clemVersion() const;
     inline static Q_INVOKABLE QString clementineFilesSupportMinVersion();
     inline Q_INVOKABLE bool clementineFilesSupport() const;
@@ -527,6 +530,11 @@ bool ClementineRemote::hideServerFilesPreviousNextNavButtons() const { return tr
 
 const QString &ClementineRemote::remoteFilesPath() const { return _remoteFilesPath; }
 QString ClementineRemote::remoteFilesPath_QML() const{ return _remoteFilesPath; }
+
+void ClementineRemote::loadRemotePathForHost(const QString &host)
+{
+    _remoteFilesPath = _remoteFilesPathPerHost.value(host, "./");
+}
 
 const QString ClementineRemote::clemVersion() const { return _clemVersion; }
 QString ClementineRemote::clementineFilesSupportMinVersion() { return QString("%1.%2").arg(sClemFilesSupportMinVersion.first).arg(sClemFilesSupportMinVersion.second);}
