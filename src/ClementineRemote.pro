@@ -86,7 +86,8 @@ SOURCES += \
         model/RemoteFileModel.cpp \
         model/RemoteSongModel.cpp \
         main.cpp \
-        protobuf/remotecontrolmessages.pb.cc
+        protobuf/remotecontrolmessages.pb.cc \
+        utils/Downloader.cpp
 
 RESOURCES += \
     qml/qml.qrc \
@@ -114,9 +115,11 @@ HEADERS += \
     player/RemotePlaylist.h \
     player/RemoteSong.h \
     player/Stream.h \
+    utils/Downloader.h \
     utils/Macro.h \
     utils/Singleton.h \
     protobuf/remotecontrolmessages.pb.h
 
 DISTFILES += \
+    ios/info.plist \
     protobuf/remotecontrolmessages.proto

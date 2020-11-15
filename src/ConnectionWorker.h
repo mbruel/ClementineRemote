@@ -22,65 +22,12 @@
 #ifndef CONNECTIONWORKER_H
 #define CONNECTIONWORKER_H
 #include "protobuf/remotecontrolmessages.pb.h"
-#include "player/RemoteSong.h"
-#include "utils/Macro.h"
+#include "utils/Downloader.h"
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QTimer>
 class ClementineRemote;
 class RemotePlaylist;
-class QFile;
-
-struct Downloader{
-
-    Downloader():
-        downloadPath(),
-        nbFiles(0), totalSize(0),
-        chunkNumber(0), chunkCount(0),
-        fileNumber(0), fileSize(0),
-        song(), dowloadedSize(0), downloadedFiles(0),
-        file(nullptr), canWrite(false),
-        errorByFileNum(),
-        cancel(0x0), hasCancelError(false)
-    {}
-
-    ~Downloader();
-    Downloader(const Downloader&) = delete;
-    Downloader(Downloader&&) = delete;
-    Downloader &operator=(const Downloader&) = delete;
-    Downloader &operator=(Downloader&&) = delete;
-
-    void cancelDownload() { cancel = 0x1; }
-    bool isCancelled() { return M_LoadAtomic(cancel); }
-
-    void init(qint32 nbFiles_, qint32 totalSize_);
-
-    void addError(const QString &err)
-    {
-        errorByFileNum[fileNumber] = QString("[%1 / %2] %3").arg(
-                    fileNumber).arg(nbFiles).arg(err);
-    }
-
-    QString downloadPath;
-
-    qint32 nbFiles;
-    qint32 totalSize;
-    qint32 chunkNumber;
-    qint32 chunkCount;
-    qint32 fileNumber;
-    qint32 fileSize;
-
-    RemoteSong song;
-    int dowloadedSize;
-    int downloadedFiles;
-
-    QFile *file;
-    bool   canWrite;
-
-    QMap<int, QString> errorByFileNum;
-    AtomicBool cancel;
-    bool hasCancelError;        
-};
 
 /*!
  * \brief manages all the network communications
@@ -107,7 +54,8 @@ private:
     ushort  _port;
     int     _auth_code; //!< -1 <=> no pass
 
-    Downloader _downloader;
+    Downloader      _libraryDL;
+    SongsDownloader _songsDL;
 
 public:
     ConnectionWorker(ClementineRemote *remote, QObject *parent = nullptr);
@@ -127,6 +75,9 @@ public:
     void prepareDownload(const pb::remote::ResponseDownloadTotalSize &downloadSize);
     void downloadSong(const pb::remote::ResponseSongFileChunk &songChunk);
     void downloadFinished();
+
+    void downloadLibrary(const pb::remote::ResponseLibraryChunk &libChunk);
+
 
     inline void cancelDownload();
 
@@ -176,6 +127,8 @@ private slots:
     void onDownloadPlaylist(qint32 playlistID, QString playlistName);
 
 
+    void onGetLibrary();
+
 
 
 
@@ -197,7 +150,7 @@ private:
 };
 
 const QString &ConnectionWorker::hostname() const { return _host; }
-void ConnectionWorker::cancelDownload(){ _downloader.cancelDownload(); }
+void ConnectionWorker::cancelDownload(){ _songsDL.cancelDownload(); }
 
 bool ConnectionWorker::isConnected() const { return _socket != nullptr; }
 

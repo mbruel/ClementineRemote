@@ -130,6 +130,8 @@ private:
 
     AtomicBool _isDownloading;
 
+    const QString _libraryPath;
+
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -256,6 +258,7 @@ public:
     Q_INVOKABLE QString downloadPath();
     Q_INVOKABLE QUrl    downloadPathURL();
 
+    inline const QString &libraryPath() const;
 
     void updateActivePlaylist();
 
@@ -306,6 +309,8 @@ signals:
     void downloadCurrentSong();
     void downloadPlaylist(qint32 playlistID, QString playlistName);
     void downloadComplete(qint32 downloadedFiles, qint32 totalFiles, QStringList errors);
+
+    void getLibrary();
 
     // signals sent from ConnectionWorker to QML
     void connected();
@@ -463,6 +468,8 @@ RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]
 int ClementineRemote::numberOfRadioStreams() const { return _radioStreams.size(); }
 const Stream &ClementineRemote::radioStream(int index) const { return _radioStreams.at(index); }
 Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; }
+
+const QString &ClementineRemote::libraryPath() const{ return _libraryPath; }
 
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString ClementineRemote::appName() { return sAppName; }

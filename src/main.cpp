@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
     app.setApplicationName(ClementineRemote::appName());
     app.setApplicationVersion(ClementineRemote::appVersion());
     app.setApplicationDisplayName(ClementineRemote::appTitle());
+    app.setOrganizationName(ClementineRemote::appName());
+//    QCoreApplication::setOrganizationDomain("clementine-player.org");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

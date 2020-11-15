@@ -35,7 +35,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     _socket(nullptr), _timeout(), _disconnectReason(" "),
     _reading_protobuf(false), _expected_length(0), _buffer(),
     _host(), _port(0), _auth_code(-1),
-    _downloader()
+    _libraryDL(), _songsDL()
 {
     setObjectName("ConnectionWorker");
 
@@ -70,6 +70,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::downloadCurrentSong,  this, &ConnectionWorker::onDownloadCurrentSong,  connectionType);
     connect(_remote, &ClementineRemote::downloadPlaylist,     this, &ConnectionWorker::onDownloadPlaylist,     connectionType);
     connect(_remote, &ClementineRemote::sendSongsToDownload,  this, &ConnectionWorker::onSendSongsToDownload,  connectionType);
+    connect(_remote, &ClementineRemote::getLibrary,           this, &ConnectionWorker::onGetLibrary,           connectionType);
 
 
     connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
@@ -347,7 +348,7 @@ void ConnectionWorker::onSendSongsToRemove()
 void ConnectionWorker::onSendSongsToDownload(const QString &dstFolder)
 {
     if (dstFolder.isEmpty())
-        _downloader.downloadPath = _remote->downloadPath();
+        _songsDL.downloadPath = _remote->downloadPath();
     else if (!createDownloadDestinationFolder(dstFolder))
         return;
 
@@ -356,7 +357,7 @@ void ConnectionWorker::onSendSongsToDownload(const QString &dstFolder)
 
 void ConnectionWorker::onDownloadCurrentSong()
 {
-    _downloader.downloadPath = _remote->downloadPath();
+    _songsDL.downloadPath = _remote->downloadPath();
     pb::remote::Message msg;
     msg.set_type(pb::remote::DOWNLOAD_SONGS);
 
@@ -393,7 +394,7 @@ bool ConnectionWorker::createDownloadDestinationFolder(const QString &dstFolder)
         }
     }
 
-    _downloader.downloadPath = downloadPath;
+    _songsDL.downloadPath = downloadPath;
     return true;
 }
 
@@ -409,6 +410,13 @@ void ConnectionWorker::onDownloadPlaylist(qint32 playlistID, QString playlistNam
     pb::remote::RequestDownloadSongs *req = msg.mutable_request_download_songs();
     req->set_download_item(pb::remote::DownloadItem::APlaylist);
     req->set_playlist_id(playlistID);
+    sendDataToServer(msg);
+}
+
+void ConnectionWorker::onGetLibrary()
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::GET_LIBRARY);
     sendDataToServer(msg);
 }
 
@@ -502,7 +510,7 @@ void ConnectionWorker::onDisconnected()
     _socket->deleteLater();
     _socket = nullptr;
 
-    _downloader.init(0, 0);
+    _songsDL.init(0, 0);
 
     emit _remote->disconnected(_disconnectReason);
 }
@@ -604,59 +612,59 @@ void ConnectionWorker::requestSavedRadios()
 
 void ConnectionWorker::prepareDownload(const pb::remote::ResponseDownloadTotalSize &downloadSize)
 {
-    _downloader.init(downloadSize.file_count(), downloadSize.total_size());
-    qDebug() << "[ConnectionWorker::prepareDownload] nbFiles: " << _downloader.nbFiles
-             << ", total size: " << _downloader.totalSize;
+    _songsDL.init(downloadSize.file_count(), downloadSize.total_size());
+    qDebug() << "[ConnectionWorker::prepareDownload] nbFiles: " << _songsDL.nbFiles
+             << ", total size: " << _songsDL.totalSize;
 }
 
 void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &songChunk)
 {
-    bool cancelled = _downloader.isCancelled();
+    bool cancelled = _songsDL.isCancelled();
 
-    _downloader.chunkNumber = songChunk.chunk_number();
-    _downloader.chunkCount  = songChunk.chunk_count();
-    _downloader.fileNumber  = songChunk.file_number();
-    _downloader.fileSize    = songChunk.size();
+    _songsDL.chunkNumber = songChunk.chunk_number();
+    _songsDL.chunkCount  = songChunk.chunk_count();
+    _songsDL.fileNumber  = songChunk.file_number();
+    _songsDL.fileSize    = songChunk.size();
 
-//    qDebug() << "rcv ResponseSongFileChunk File: " << _downloader.fileNumber
-//             << " / " << _downloader.nbFiles << " size: " << _downloader.fileSize
-//             << " - Chunk " << _downloader.chunkNumber << " / " << _downloader.chunkCount;
-//if (_downloader.fileNumber == 2 && _downloader.chunkNumber == 2)
-//    _downloader.cancelDownload();
+//    qDebug() << "rcv ResponseSongFileChunk File: " << _songsDL.fileNumber
+//             << " / " << _songsDL.nbFiles << " size: " << _songsDL.fileSize
+//             << " - Chunk " << _songsDL.chunkNumber << " / " << _songsDL.chunkCount;
+//if (_songsDL.fileNumber == 2 && _songsDL.chunkNumber == 2)
+//    _songsDL.cancelDownload();
 
     // Song offer is chunk no 0
-    if (_downloader.chunkNumber == 0)
+    if (_songsDL.chunkNumber == 0)
     {
         bool acceptFile = true;
         if (songChunk.has_song_metadata() && songChunk.size() != 0)
         {
-            _downloader.song = songChunk.song_metadata();
+            _songsDL.song = songChunk.song_metadata();
             if (cancelled)
             {
-                qDebug() << "Cancelling: " << _downloader.song.filename;
-                if (!_downloader.hasCancelError)
+                qDebug() << "Cancelling: " << _songsDL.song.filename;
+                if (!_songsDL.hasCancelError)
                 {
-                    _downloader.addError(tr("Download cancelled from %1").arg(_downloader.song.filename));
-                    _downloader.hasCancelError = true;
+                    _songsDL.addError(tr("Download cancelled from %1").arg(_songsDL.song.filename));
+                    _songsDL.hasCancelError = true;
                 }
             }
             else
             {
-                _downloader.file = new QFile(QString("%1/%2").arg(_downloader.downloadPath).arg(_downloader.song.filename));
-                if (_downloader.file->exists() && !_remote->overwriteDownloadedSongs())
+                _songsDL.file = new QFile(QString("%1/%2").arg(_songsDL.downloadPath).arg(_songsDL.song.filename));
+                if (_songsDL.file->exists() && !_remote->overwriteDownloadedSongs())
                 {
-                    _downloader.addError(tr("skipping file %1").arg(_downloader.song.filename));
+                    _songsDL.addError(tr("skipping file %1").arg(_songsDL.song.filename));
                     acceptFile = false;
                 }
                 else
                 {
-                    _downloader.canWrite = _downloader.file->open(QIODevice::ReadWrite);
+                    _songsDL.canWrite = _songsDL.file->open(QIODevice::ReadWrite);
                     qDebug() << "rcv ResponseSongFileChunk has SongMeta: "
-                             << _downloader.song.str()
-                             << ", canWrite: " << _downloader.canWrite;
-                    if (!_downloader.canWrite)
+                             << _songsDL.song.str()
+                             << ", canWrite: " << _songsDL.canWrite;
+                    if (!_songsDL.canWrite)
                     {
-                        _downloader.addError(tr("can't write file %1").arg(_downloader.song.filename));
+                        _songsDL.addError(tr("can't write file %1").arg(_songsDL.song.filename));
                         acceptFile = false;
                     }
                 }
@@ -664,29 +672,29 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
         }
 
         if (!acceptFile) // To update progress bar
-            _downloader.dowloadedSize += _downloader.fileSize;
+            _songsDL.dowloadedSize += _songsDL.fileSize;
 
         pb::remote::Message msg;
         msg.set_type(pb::remote::SONG_OFFER_RESPONSE);
         msg.mutable_response_song_offer()->set_accepted(acceptFile && !cancelled);
         sendDataToServer(msg);
     }
-    else if (_downloader.canWrite)
+    else if (_songsDL.canWrite)
     {
         if (cancelled){
-            if (_downloader.file)
+            if (_songsDL.file)
             {
-                qDebug() << "Deleting: " << _downloader.song.filename;
-                _downloader.addError(tr("Download cancelled from %1").arg(_downloader.song.filename));
-                _downloader.file->remove();
-                delete _downloader.file;
-                _downloader.file = nullptr;
-                _downloader.hasCancelError = true;                
+                qDebug() << "Deleting: " << _songsDL.song.filename;
+                _songsDL.addError(tr("Download cancelled from %1").arg(_songsDL.song.filename));
+                _songsDL.file->remove();
+                delete _songsDL.file;
+                _songsDL.file = nullptr;
+                _songsDL.hasCancelError = true;
             }
-//            if (_downloader.chunkNumber == _downloader.chunkCount)
-//                emit _remote->downloadComplete(_downloader.downloadedFiles,
-//                                               _downloader.nbFiles,
-//                                               _downloader.errorByFileNum.values());
+//            if (_songsDL.chunkNumber == _songsDL.chunkCount)
+//                emit _remote->downloadComplete(_songsDL.downloadedFiles,
+//                                               _songsDL.nbFiles,
+//                                               _songsDL.errorByFileNum.values());
             return;
         }
 
@@ -694,14 +702,14 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
         qint64 bytesWritten = 0, size = static_cast<qint64>(data.size());
         int iterMax = 10, iter = 0;
         do {
-            qint64 bytes = _downloader.file->write(data.c_str(), size);
+            qint64 bytes = _songsDL.file->write(data.c_str(), size);
             if (bytes == -1)
             {
-                _downloader.addError(tr("error writing file %1 (%2)").arg(
-                                         _downloader.song.filename).arg(_downloader.file->errorString()));
+                _songsDL.addError(tr("error writing file %1 (%2)").arg(
+                                         _songsDL.song.filename).arg(_songsDL.file->errorString()));
 
                 qCritical() << tr("error writing file %1 (%2)").arg(
-                                  _downloader.song.filename).arg(_downloader.file->errorString());
+                                  _songsDL.song.filename).arg(_songsDL.file->errorString());
                 break;
             }
             else
@@ -709,50 +717,119 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
 
             if (++iter == iterMax)
             {
-                _downloader.addError(tr("error writing file %1 (iterMax reached %2)").arg(
-                                         _downloader.song.filename).arg(iterMax));
+                _songsDL.addError(tr("error writing file %1 (iterMax reached %2)").arg(
+                                         _songsDL.song.filename).arg(iterMax));
 
-                qCritical() << "Error writting: "  << _downloader.song.filename
+                qCritical() << "Error writting: "  << _songsDL.song.filename
                             << " : iterMax reached " << iterMax;
                 break;
             }
         } while (bytesWritten != size);
 
-        _downloader.dowloadedSize += bytesWritten;
+        _songsDL.dowloadedSize += bytesWritten;
 
-        if (_downloader.chunkNumber == _downloader.chunkCount) {
-            bool sha1Ok = sha1Hex(*_downloader.file) == songChunk.file_hash().c_str();
-            qDebug() << "Dowloaded: "  << _downloader.song.str()
-                     << " sha1Ok : " << sha1Ok << " (fileNumber: " << _downloader.fileNumber;
+        if (_songsDL.chunkNumber == _songsDL.chunkCount) {
+            bool sha1Ok = sha1Hex(*_songsDL.file) == songChunk.file_hash().c_str();
+            qDebug() << "Dowloaded: "  << _songsDL.song.str()
+                     << " sha1Ok : " << sha1Ok << " (fileNumber: " << _songsDL.fileNumber;
             if (!sha1Ok)
             {
-                _downloader.addError(tr("error file %1 (wrong sha1)").arg(
-                                         _downloader.song.filename));
-                _downloader.file->remove();
+                _songsDL.addError(tr("error file %1 (wrong sha1)").arg(
+                                         _songsDL.song.filename));
+                _songsDL.file->remove();
             }
             else
             {
-                ++_downloader.downloadedFiles;
-                _downloader.file->close();
+                ++_songsDL.downloadedFiles;
+                _songsDL.file->close();
             }
 
-            delete _downloader.file;
-            _downloader.file = nullptr;
+            delete _songsDL.file;
+            _songsDL.file = nullptr;
         }
     }
 
-    emit _remote->downloadProgress(static_cast<double>(_downloader.dowloadedSize) / _downloader.totalSize);
-//    if (_downloader.fileNumber == _downloader.nbFiles)
-//        emit _remote->downloadComplete(_downloader.downloadedFiles,
-//                                       _downloader.nbFiles,
-//                                       _downloader.errorByFileNum.values());
+    emit _remote->downloadProgress(
+                static_cast<double>(_songsDL.dowloadedSize) / _songsDL.totalSize);
+//    if (_songsDL.fileNumber == _songsDL.nbFiles)
+//        emit _remote->downloadComplete(_songsDL.downloadedFiles,
+//                                       _songsDL.nbFiles,
+//                                       _songsDL.errorByFileNum.values());
 }
 
 void ConnectionWorker::downloadFinished()
 {
-    emit _remote->downloadComplete(_downloader.downloadedFiles,
-                                   _downloader.nbFiles,
-                                   _downloader.errorByFileNum.values());
+    emit _remote->downloadComplete(_songsDL.downloadedFiles,
+                                   _songsDL.nbFiles,
+                                   _songsDL.errorByFileNum.values());
+}
+
+void ConnectionWorker::downloadLibrary(const pb::remote::ResponseLibraryChunk &libChunk)
+{
+
+    if (libChunk.chunk_number() == 1)
+    {
+        _libraryDL.init();
+        _libraryDL.downloadPath = _remote->libraryPath();
+        _libraryDL.file = new QFile(QString("%1/%2.db").arg(_libraryDL.downloadPath).arg(_host));
+        if (_libraryDL.file->exists())
+        {
+            qDebug() << "overwritting existing Library " << _libraryDL.file->fileName();
+            _libraryDL.file->remove();
+        }
+        _libraryDL.canWrite = _libraryDL.file->open(QIODevice::ReadWrite);
+        if (!_libraryDL.canWrite)
+        {
+            qCritical() << "Can't write library file: " << _libraryDL.file->fileName();
+            // TODO: should send a signal to the GUI
+            return;
+        }
+    }
+    else if (!_libraryDL.canWrite)
+        return; // ignore all the other chunks
+
+    _libraryDL.chunkNumber = libChunk.chunk_number();
+    _libraryDL.chunkCount  = libChunk.chunk_count();
+    _libraryDL.fileSize    = libChunk.size();
+
+    const std::string &data = libChunk.data();
+    qint64 bytesWritten = 0, size = static_cast<qint64>(data.size());
+    int iterMax = 10, iter = 0;
+    do {
+        qint64 bytes = _libraryDL.file->write(data.c_str(), size);
+        if (bytes == -1)
+        {
+            qCritical() << tr("error writing library file: (%1)").arg(_libraryDL.file->errorString());
+            break;
+        }
+        else
+            bytesWritten += bytes;
+
+        if (++iter == iterMax)
+        {
+            qCritical() << "Error writting library : iterMax reached " << iterMax;
+            break;
+        }
+    } while (bytesWritten != size);
+
+    _libraryDL.dowloadedSize += bytesWritten;
+
+    emit _remote->downloadProgress(
+                static_cast<double>(_libraryDL.dowloadedSize) / _libraryDL.fileSize);
+
+    if (_libraryDL.chunkNumber == _libraryDL.chunkCount) {
+        bool sha1Ok = sha1Hex(*_libraryDL.file) == libChunk.file_hash().c_str();
+        qDebug() << "Library Dowloaded, sha1Ok : " << sha1Ok;
+        if (!sha1Ok)
+            _libraryDL.file->remove();
+        else
+            _libraryDL.file->close();
+
+        delete _libraryDL.file;
+        _libraryDL.file = nullptr;
+
+        emit _remote->downloadComplete(1, 1, QStringList());
+    }
 }
 
 QByteArray ConnectionWorker::sha1Hex(QFile &file)
@@ -769,35 +846,4 @@ QByteArray ConnectionWorker::sha1Hex(QFile &file)
 
     return hash.result().toHex();
 }
-
-Downloader::~Downloader()
-{
-    if (file)
-    {
-        file->remove();
-        delete file;
-    }
-}
-
-void Downloader::init(qint32 nbFiles_, qint32 totalSize_)
-{
-    nbFiles         = nbFiles_;
-    totalSize       = totalSize_;
-    chunkNumber     = 0;
-    chunkCount      = 0;
-    fileNumber      = 0;
-    fileSize        = 0;
-    song            = RemoteSong();
-    dowloadedSize   = 0;
-    downloadedFiles = 0;
-    if (file){
-        file->remove();
-        delete file;
-    }
-    canWrite = false;
-    errorByFileNum.clear();
-    cancel = 0x0;
-    hasCancelError = false;
-}
-
 

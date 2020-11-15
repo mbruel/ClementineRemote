@@ -67,7 +67,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     #if defined( Q_OS_WIN )
     _settings("clemRemote.ini", QSettings::Format::IniFormat),
     #else
-    _settings(QSettings::NativeFormat, QSettings::UserScope, sAppName),
+    _settings(QSettings::UserScope),
     #endif
     _clemVersion(), _clemState(pb::remote::Idle), _previousClemState(pb::remote::Idle),
     _musicExtensions(), _volume(0),
@@ -100,7 +100,15 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #ifdef __USE_CONNECTION_THREAD__
     _secureRadioStreams(), _radioStreamsData(),
 #endif
-    _isDownloading(0x0)
+    _isDownloading(0x0),
+#if defined(Q_OS_ANDROID)
+    _libraryPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+#elif defined(Q_OS_IOS)
+    _libraryPath(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+#else
+    _libraryPath(QFileInfo(_settings.fileName()).absolutePath())
+#endif
+
 {
     setObjectName("ClemRemote");
     _songsModel->setRemote(this);
@@ -125,6 +133,9 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _filesToAppend.set_type(pb::remote::APPEND_FILES);
     _songsToRemove.set_type(pb::remote::REMOVE_SONGS);
     _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
+
+    qDebug() << "Settings filename: " << _settings.fileName()
+             << " => libraryPath: " << _libraryPath;
 
 #ifdef Q_OS_IOS
     if (!_settings.contains("verticalVolume"))
@@ -601,12 +612,14 @@ QString ClementineRemote::testDownloadPath()
 
 QString ClementineRemote::downloadPath()
 {
-    qDebug() << "standard writable app loc: " + QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
-    qDebug() << "standard writable doc loc: " + QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    qDebug() << "standard writable music loc: " + QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
-    qDebug() << "standard writable data loc: " + QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    qDebug() << "standard writable down loc: " + QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    qDebug() << "standard writable conf loc: " + QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+    qDebug() << "standard writable app data loc: " << QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    qDebug() << "standard writable app conf loc: "     << QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+
+    qDebug() << "standard writable data loc: "     << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    qDebug() << "standard writable apps loc: "     << QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    qDebug() << "standard writable doc loc: "      << QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    qDebug() << "standard writable music loc: "    << QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    qDebug() << "standard writable down loc: "     << QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
 
 
     if (_settings.contains("downloadPath"))
@@ -830,6 +843,7 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         emit connected();
         if (_clemFilesSupport)
             _connection->requestSavedRadios();
+        emit getLibrary();
         break;
 
     case pb::remote::PLAY:
@@ -880,13 +894,15 @@ void ClementineRemote::parseMessage(const QByteArray &data)
     case pb::remote::SONG_FILE_CHUNK:
         _connection->downloadSong(msg.response_song_file_chunk());
         break;
+    case pb::remote::LIBRARY_CHUNK:
+        _connection->downloadLibrary(msg.response_library_chunk());
+        break;
 
     default:
         qDebug() << "Msg type not yet implemented: " << msgType;
         break;
     }
 }
-
 
 qint32 ClementineRemote::currentPlaylistID() const
 {
