@@ -30,6 +30,8 @@ win32{
 }
 
 android {
+    QT += androidextras
+
 #    include(/home/bruel/android/android_openssl/openssl.pri)
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 

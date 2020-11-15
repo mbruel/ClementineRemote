@@ -83,4 +83,5 @@
     <!-- For adding service(s) please check: https://wiki.qt.io/AndroidServices -->
 
     </application>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 </manifest>

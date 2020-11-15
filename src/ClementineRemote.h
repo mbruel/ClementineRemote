@@ -29,6 +29,7 @@
 #include "player/Stream.h"
 #include "utils/Macro.h"
 #include <QSettings>
+#include <QUrl>
 #ifdef __USE_CONNECTION_THREAD__
 #include <QThread>
 #include <QMutex>
@@ -248,8 +249,9 @@ public:
 
     void parseMessage(const QByteArray& data);
 
-    inline Q_INVOKABLE QString downloadPath() const;
-    Q_INVOKABLE QString setDownloadFolder();
+    Q_INVOKABLE QString testDownloadPath();
+    Q_INVOKABLE QString downloadPath();
+    Q_INVOKABLE QUrl    downloadPathURL();
 
 
     void updateActivePlaylist();
@@ -458,8 +460,6 @@ RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]
 int ClementineRemote::numberOfRadioStreams() const { return _radioStreams.size(); }
 const Stream &ClementineRemote::radioStream(int index) const { return _radioStreams.at(index); }
 Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; }
-
-QString ClementineRemote::downloadPath() const{ return _downloadPath; }
 
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString ClementineRemote::appName() { return sAppName; }

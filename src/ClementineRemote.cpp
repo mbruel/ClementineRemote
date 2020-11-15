@@ -30,6 +30,12 @@
 #include <QDataStream>
 #include <QStandardPaths>
 #include <QDir>
+#include <QUrl>
+
+#if defined(Q_OS_ANDROID)
+#include <QtAndroid>
+#endif
+
 const QString ClementineRemote::sAppName    = "ClemRemote";
 const QString ClementineRemote::sVersion    = "0.2";
 const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
@@ -152,7 +158,6 @@ void ClementineRemote::close()
 {
     qDebug() << "[MB_TRACE] close ClementineRemote";
     _settings.setValue("remotePath", _remoteFilesPath);
-    _settings.setValue("downloadPath", _downloadPath);
     _settings.sync();
 #ifdef __USE_CONNECTION_THREAD__
     emit _connection->killSocket();
@@ -572,13 +577,38 @@ void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &rad
     qDebug() << "[MsgType::REQUEST_SAVED_RADIOS] Nb Radio Streams: " << _radioStreams.size();
 }
 
-QString ClementineRemote::setDownloadFolder()
+QString ClementineRemote::testDownloadPath()
 {
-    _downloadPath = _settings.value("downloadPath", "").toString();
-    if (_downloadPath.isEmpty())
+    downloadPath();
+    qDebug() << "Download path: " << _downloadPath;
+    QFileInfo fi(_downloadPath);
+    if (!fi.isDir())
+        return tr("the download folder '%1' is not a directory...").arg(_downloadPath);
+    else if (!fi.isWritable())
+        return tr("the download folder '%1' is not writable...").arg(_downloadPath);
+    else
+        return QString();
+}
+
+QString ClementineRemote::downloadPath()
+{
+    qDebug() << "standard writable app loc: " + QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    qDebug() << "standard writable doc loc: " + QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    qDebug() << "standard writable music loc: " + QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
+    qDebug() << "standard writable data loc: " + QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    qDebug() << "standard writable down loc: " + QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    qDebug() << "standard writable conf loc: " + QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+
+
+    if (_settings.contains("downloadPath"))
+        _downloadPath = _settings.value("downloadPath").toString();
+    else
     {
 #if defined(Q_OS_ANDROID)
-        _downloadPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        _downloadPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+        QtAndroid::PermissionResultMap res = QtAndroid::requestPermissionsSync({"android.permission.WRITE_EXTERNAL_STORAGE"});
+        if (res["android.permission.WRITE_EXTERNAL_STORAGE"] != QtAndroid::PermissionResult::Granted)
+            return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #elif defined(Q_OS_IOS)
         _downloadPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 #else
@@ -587,22 +617,27 @@ QString ClementineRemote::setDownloadFolder()
         qDebug() << "Download path: " << _downloadPath;
         QFileInfo fi(_downloadPath);
         if (!fi.isDir())
-            return tr("the download folder is not a directory...");
+            qCritical() << tr("the download folder is not a directory...");
         else if (!fi.isWritable())
-            return tr("the download folder is not writable...");
-
-        fi = QFileInfo(QString("%1/ClemRemote").arg(_downloadPath));
-        if (!fi.exists())
-        {
-            QDir dir(_downloadPath);
-            if (!dir.mkdir("ClemRemote"))
-                return tr("error creating default Download folder: %1").arg(fi.absoluteFilePath());
+            qCritical() << tr("the download folder is not writable...");
+        else {
+            fi = QFileInfo(QString("%1/%2").arg(_downloadPath).arg(sAppName));
+            if (!fi.exists())
+            {
+                QDir dir(_downloadPath);
+                if (!dir.mkdir(sAppName))
+                    qCritical() << tr("error creating default Download folder: %1").arg(fi.absoluteFilePath());
+            }
+            _downloadPath = fi.absoluteFilePath();
         }
-        _downloadPath = fi.absoluteFilePath();
     }
-    qDebug() << "Download Path: " << _downloadPath;
-    return QString();
+    _settings.setValue("downloadPath", _downloadPath);
+    _settings.sync();
+    qDebug() << "Download path: " << _downloadPath;
+    return _downloadPath;
 }
+
+QUrl ClementineRemote::downloadPathURL() { return QUrl::fromLocalFile(downloadPath()); }
 
 #ifdef __USE_CONNECTION_THREAD__
 void ClementineRemote::onPlaylistsOpenedUpdatedByWorker()
@@ -837,7 +872,6 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         break;
     }
 }
-
 
 
 qint32 ClementineRemote::currentPlaylistID() const

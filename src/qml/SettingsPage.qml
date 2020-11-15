@@ -21,7 +21,8 @@
 
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-
+//import Qt.labs.platform 1.1
+//import QtQuick.Dialogs 1.3
 
 Page {
     title: qsTr('Settings')
@@ -139,12 +140,12 @@ Page {
 
             } // playerSettings
 
-            MenuSeparator{ width: parent.width;}
+//            MenuSeparator{ width: parent.width;}
 
             Rectangle {
                 id: downSettings
                 width: parent.width
-                height: downTitle.height + switchHeight + 4*sectionMargin
+                height: downTitle.height + 2*switchHeight + 5*sectionMargin
                 color: "transparent"
 
                 radius: 10
@@ -165,6 +166,49 @@ Page {
                     }
                 } // playerTitle
 
+
+                Text {
+                    id: downPathLbl
+                    anchors {
+                        left: parent.left
+                        verticalCenter: downPathEdit.verticalCenter
+                        leftMargin: sectionMargin
+                    }
+                    text: qsTr("Download directory:")
+                } // downPathLbl
+                TextField {
+                    id: downPathEdit
+//                    readOnly: true
+                    anchors {
+                        left: downPathLbl.right
+                        top: downTitle.bottom
+                        topMargin: sectionMargin
+                        leftMargin: sectionMargin
+                    }
+                    width: parent.width - downPathLbl.width - 4*sectionMargin // - downPathButton.width
+                    horizontalAlignment: TextInput.AlignHCenter
+                    color: "black"
+                    background: Rectangle { radius: 8 ; border.width: 0 }
+
+                    text: cppRemote.downloadPath();
+                } // downPathEdit
+//                Button{
+//                    id: downPathButton
+//                    width: 30
+//                    height: switchHeight
+//                    anchors {
+//                        left: downPathEdit.right
+//                        verticalCenter: downPathEdit.verticalCenter
+//                        leftMargin: sectionMargin
+//                    }
+//                    text: "..."
+//                    onClicked: {
+//                        folderDialog.folder = downPathEdit.text
+//                        folderDialog.open();
+//                    }
+//                }
+
+
                 Text {
                     id: overwriteFilesLbl
                     anchors {
@@ -178,7 +222,7 @@ Page {
                     id: overwriteFilesSwitch
                     anchors {
                         right: parent.right
-                        top: downTitle.bottom
+                        top: downPathLbl.bottom
                         topMargin: sectionMargin
                         rightMargin: sectionMargin
                     }
@@ -202,4 +246,27 @@ Page {
         }
     }
 
+/*
+    FileDialog {
+        id: folderDialog
+//        flags: FolderDialog.ShowDirsOnly
+//        folder: 'file://'+downPathEdit.text
+
+        selectFolder : true
+        selectMultiple: false
+        nameFilters: [ "Select a Folder (*)" ]
+
+        onAccepted: {
+//            print("Accepted folder: " + folderDialog.folder)
+            print("nb selected: "+folderDialog.fileUrls.length)
+            print("file selected: "+folderDialog.fileUrl)
+            if (folderDialog.fileUrls.length !== 0)
+            {
+                let path = folderDialog.fileUrls[folderDialog.fileUrls.length-1].toString();//.replace(/^(file:\/{2})/,"");
+                downPathEdit.text = decodeURIComponent(path);
+                print("Selected url: "+folderDialog.fileUrls[0]);
+            }
+        }
+    }
+*/
 }

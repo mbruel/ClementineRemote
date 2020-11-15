@@ -268,7 +268,7 @@ Item {
             let downloadPath = cppRemote.downloadPath();
             if (downloadPath === "")
             {
-                let error = cppRemote.setDownloadFolder();
+                let error = cppRemote.testDownloadPath();
                 if (error === "")
                     downloadPath = cppRemote.downloadPath()
                 else
