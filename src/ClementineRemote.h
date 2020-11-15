@@ -143,6 +143,10 @@ public:
     // TODO: should be a setting
     bool overwriteDownloadedSongs() const {return false;}
 
+    Q_INVOKABLE bool verticalVolumeSlider() const;
+    Q_INVOKABLE void setVerticalVolumeSlider(bool isVertical);
+
+    Q_INVOKABLE bool isConnected() const;
     inline Q_INVOKABLE bool isDownloading() const;
     inline Q_INVOKABLE bool setIsDownloading(bool isDownloading);
     inline Q_INVOKABLE bool downloadsAllowed() const;

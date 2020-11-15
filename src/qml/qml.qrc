@@ -12,5 +12,7 @@
         <file>SavedRadios.qml</file>
         <file>NotSupported.qml</file>
         <file>AboutPopup.qml</file>
+        <file>SettingsPage.qml</file>
+        <file>SettingSwitch.qml</file>
     </qresource>
 </RCC>

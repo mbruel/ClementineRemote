@@ -114,6 +114,11 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _filesToAppend.set_type(pb::remote::APPEND_FILES);
     _songsToRemove.set_type(pb::remote::REMOVE_SONGS);
     _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
+
+#ifdef Q_OS_IOS
+    if (!_settings.contains("verticalVolume"))
+        setVerticalVolumeSlider(true);
+#endif
 }
 
 ClementineRemote::~ClementineRemote()
@@ -122,10 +127,18 @@ ClementineRemote::~ClementineRemote()
     close();
 }
 
-void ClementineRemote::cancelDownload() const
+bool ClementineRemote::verticalVolumeSlider() const
 {
-    _connection->cancelDownload();
+    return _settings.value("verticalVolume", false).toBool();
 }
+
+void ClementineRemote::setVerticalVolumeSlider(bool isVertical)
+{
+    _settings.setValue("verticalVolume", isVertical);
+}
+
+bool ClementineRemote::isConnected() const { return _connection->isConnected(); }
+void ClementineRemote::cancelDownload() const { _connection->cancelDownload(); }
 
 const QString ClementineRemote::hostname() const
 {

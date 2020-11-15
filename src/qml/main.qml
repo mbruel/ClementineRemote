@@ -48,6 +48,7 @@ Window {
     property int headerButtonSize   : 42;
     property int mainMargin         : 20;
 
+    property string disconnectReason: ""
 
 //    Keys.onReleased: {
 //        console.log("Key pressed: "+event.key);
@@ -77,19 +78,38 @@ Window {
     Connections {
         target: cppRemote
 
-        function onConnected() {
-            print("connected");
-            mainArea.sourceComponent = mainApp;
+        function onConnected() { openMainApp(); }
+        function onDisconnected(reason) {
+            disconnectReason = reason;
+            openLoginPage();
         }
-
-        function onDisconnected(reason)
-        {
-            print("disconnected");
-            mainArea.sourceComponent = loginPage;
-            mainArea.item.errMsg.text = reason;
-        }
-
 //        onError: error(txt);
+    }
+
+    function openLoginPage() {
+        mainArea.sourceComponent  = loginPage;
+        mainArea.item.errMsg.text = disconnectReason;
+    }
+
+    function openMainApp() {
+        mainArea.sourceComponent = mainApp;
+        mainArea.item.openSettings.connect(openSettings);
+    }
+
+    function openSettings()
+    {
+        print("openSettings");
+        mainArea.sourceComponent = settingsPage;
+        mainArea.item.exitSettings.connect(closeSettings);
+    }
+
+    function closeSettings()
+    {
+        print("openSettings");
+        if (cppRemote.isConnected())
+            openMainApp();
+        else
+            openLoginPage("");
     }
 
     Component {
@@ -113,6 +133,14 @@ Window {
 
             headerButtonSize   : root.headerButtonSize
             mainMargin         : root.mainMargin
+        }
+    }
+
+    Component {
+        id: settingsPage
+
+        SettingsPage {
+            anchors.fill  : parent
         }
     }
 }

@@ -72,6 +72,7 @@ Item {
         ListElement { text : qsTr("Shuffle Albums")               ; icon: "icons/ab_shuffle_albums.png" }
     }
 
+    signal openSettings
 
     Connections{
         target: cppRemote
@@ -124,10 +125,8 @@ Item {
         updateRepeat(cppRemote.repeatMode());
         updateShuffle(cppRemote.shuffleMode());
 
-        //TODO get the Slider orientation from C++ QSettings
-        // have a Setting page where this can be changed ;)
-        useVolumeButtonWithVerticalSlider(true);
-        useVolumeButtonWithVerticalSlider(false);
+        if (cppRemote.verticalVolumeSlider())
+            useVolumeButtonWithVerticalSlider(true);
     } // Component.onCompleted
 
 
@@ -876,7 +875,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
                 onClicked: {
                     console.log("onClicked " + settings.text);
                     drawer.close();
-                    todoDialog.open();
+                    drawer.goSettings = true;
                 }
 //                highlighted: true;
             } // settings
@@ -916,7 +915,13 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
         // to disconnect we need to wait that the Drawer is completely closed
         // otherwise the Overlay would stay
         property bool disconnect: false
-        onClosed: if (disconnect) cppRemote.disconnectFromServer();
+        property bool goSettings: false
+        onClosed: {
+            if (disconnect)
+                cppRemote.disconnectFromServer();
+            else if (goSettings)
+                openSettings();
+        }
 
 //        Overlay.modal: Rectangle {
 //            color: "red"

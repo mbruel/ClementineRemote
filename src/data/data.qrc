@@ -58,5 +58,6 @@
         <file>icons/playlistFile.png</file>
         <file>btc_qr.gif</file>
         <file>icons/donate.gif</file>
+        <file>icons/backPage.png</file>
     </qresource>
 </RCC>

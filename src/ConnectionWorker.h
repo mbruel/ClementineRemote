@@ -113,6 +113,7 @@ public:
     ConnectionWorker(ClementineRemote *remote, QObject *parent = nullptr);
     ~ConnectionWorker();
 
+    inline bool isConnected() const;
     inline const QString &disconnectReason() const;
     inline void setDisconnectReason(const QString &disconnectReason);
 
@@ -197,6 +198,8 @@ private:
 
 const QString &ConnectionWorker::hostname() const { return _host; }
 void ConnectionWorker::cancelDownload(){ _downloader.cancelDownload(); }
+
+bool ConnectionWorker::isConnected() const { return _socket != nullptr; }
 
 const QString &ConnectionWorker::disconnectReason() const { return _disconnectReason; }
 void ConnectionWorker::setDisconnectReason(const QString &disconnectReason) { _disconnectReason = disconnectReason; }
