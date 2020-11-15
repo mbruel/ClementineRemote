@@ -621,11 +621,16 @@ QString ClementineRemote::downloadPath()
         else if (!fi.isWritable())
             qCritical() << tr("the download folder is not writable...");
         else {
-            fi = QFileInfo(QString("%1/%2").arg(_downloadPath).arg(sAppName));
+#if defined(Q_OS_IOS)
+            QString downFolder = "Downloads"; // using UIFileSharingEnabled, a ClemRemote folder is already visible in Files
+#else
+            QString downFolder = sAppName;
+#endif
+            fi = QFileInfo(QString("%1/%2").arg(_downloadPath).arg(downFolder));
             if (!fi.exists())
             {
                 QDir dir(_downloadPath);
-                if (!dir.mkdir(sAppName))
+                if (!dir.mkdir(downFolder))
                     qCritical() << tr("error creating default Download folder: %1").arg(fi.absoluteFilePath());
             }
             _downloadPath = fi.absoluteFilePath();
