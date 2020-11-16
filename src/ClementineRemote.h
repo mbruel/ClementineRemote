@@ -24,12 +24,14 @@
 
 #include "utils/Singleton.h"
 #include "model/RemoteSongModel.h"
+#include "model/LibraryModel.h"
 #include "player/RemoteSong.h"
 #include "player/RemoteFile.h"
 #include "player/Stream.h"
 #include "utils/Macro.h"
 #include <QSettings>
 #include <QUrl>
+#include <QSqlDatabase>
 #ifdef __USE_CONNECTION_THREAD__
 #include <QThread>
 #include <QMutex>
@@ -56,6 +58,8 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
 
     static const QPair<ushort, ushort> sClemFilesSupportMinVersion;
     static constexpr const char *sClemVersionRegExpStr = "^Clementine (\\d+)\\.(\\d+).*";
+
+    static const QString sLibrarySQL;
 
 private:
 #ifdef __USE_CONNECTION_THREAD__
@@ -131,6 +135,10 @@ private:
     AtomicBool _isDownloading;
 
     const QString _libraryPath;
+    QSqlDatabase _libDB;
+
+    LibraryModel *_libModel;
+    LibraryProxyModel *_libProxyModel;
 
 
 private:
@@ -143,6 +151,10 @@ private:
 public:
     ~ClementineRemote();
 
+    Q_INVOKABLE void setLibraryFilter(const QString &searchTxt);
+
+    inline Q_INVOKABLE bool isLibraryItemTrack(const QModelIndex &index) const;
+    inline Q_INVOKABLE QAbstractItemModel *libraryModel() const;
 
     // TODO: should be a setting
     bool overwriteDownloadedSongs() const {return false;}
@@ -311,6 +323,7 @@ signals:
     void downloadComplete(qint32 downloadedFiles, qint32 totalFiles, QStringList errors);
 
     void getLibrary();
+    void libraryDownloaded();
 
     // signals sent from ConnectionWorker to QML
     void connected();
@@ -366,6 +379,9 @@ private slots:
     void onSongsUpdatedByWorker(bool initialized);
     void onRemoteFilesUpdatedByWorker();
 #endif
+
+private slots:
+    void onLibraryDownloaded();
 
     //static methods
 public:
@@ -512,6 +528,13 @@ QString ClementineRemote::disconnectReason(int reason) const
         return tr("Unknown Reason...");
     }
 }
+
+bool ClementineRemote::isLibraryItemTrack(const QModelIndex &index) const
+{
+    return index.isValid() ? _libProxyModel->isTrack(index) : false;
+}
+
+QAbstractItemModel *ClementineRemote::libraryModel() const{ return _libProxyModel; }
 
 bool ClementineRemote::isDownloading() const { return M_LoadAtomic(_isDownloading); }
 bool ClementineRemote::setIsDownloading(bool isDownloading){ _isDownloading = isDownloading; }

@@ -59,5 +59,7 @@
         <file>btc_qr.gif</file>
         <file>icons/donate.gif</file>
         <file>icons/backPage.png</file>
+        <file>icons/collapse.png</file>
+        <file>icons/expand.png</file>
     </qresource>
 </RCC>

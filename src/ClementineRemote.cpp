@@ -24,6 +24,7 @@
 #include "ConnectionWorker.h"
 #include "model/RemoteSongModel.h"
 #include "model/PlaylistModel.h"
+#include "model/LibraryModel.h"
 #include "player/RemotePlaylist.h"
 
 #include <QTcpSocket>
@@ -32,18 +33,23 @@
 #include <QDir>
 #include <QUrl>
 
+#include <QSqlQuery>
+
 #if defined(Q_OS_ANDROID)
 #include <QtAndroid>
 #endif
 
 const QString ClementineRemote::sAppName    = "ClemRemote";
-const QString ClementineRemote::sVersion    = "0.2";
+const QString ClementineRemote::sVersion    = "0.3";
 const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
 const QString ClementineRemote::sProjectUrl = "https://github.com/mbruel/ClementineRemote";
 const QString ClementineRemote::sBTCaddress = "3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6";
 const QString ClementineRemote::sDonateUrl  = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W2C236U6JNTUA&item_name=ClementineRemote&currency_code=EUR";
 
 const QPair<ushort, ushort> ClementineRemote::sClemFilesSupportMinVersion = {1, 4};
+
+const QString ClementineRemote::sLibrarySQL =
+        "select artist, album, title, track, filename from songs order by artist, album, track, title";
 
 const QMap<pb::remote::RepeatMode, ushort> ClementineRemote::sQmlRepeatCodes = {
     {pb::remote::RepeatMode::Repeat_Off,      0},
@@ -102,17 +108,19 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _isDownloading(0x0),
 #if defined(Q_OS_ANDROID)
-    _libraryPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+    _libraryPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)),
 #elif defined(Q_OS_IOS)
-    _libraryPath(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+    _libraryPath(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)),
 #else
-    _libraryPath(QFileInfo(_settings.fileName()).absolutePath())
+    _libraryPath(QFileInfo(_settings.fileName()).absolutePath()),
 #endif
-
+    _libDB(), _libModel(new LibraryModel), _libProxyModel(new LibraryProxyModel)
 {
     setObjectName("ClemRemote");
     _songsModel->setRemote(this);
     _songsProxyModel->setSourceModel(_songsModel);
+    _libProxyModel->setSourceModel(_libModel);
+
 #ifdef __USE_CONNECTION_THREAD__
     connect(this, &ClementineRemote::playlistsOpenedUpdatedByWorker,
             this, &ClementineRemote::onPlaylistsOpenedUpdatedByWorker, Qt::QueuedConnection);
@@ -136,6 +144,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
 
     qDebug() << "Settings filename: " << _settings.fileName()
              << " => libraryPath: " << _libraryPath;
+
+    connect(this, &ClementineRemote::libraryDownloaded, this, &ClementineRemote::onLibraryDownloaded, Qt::QueuedConnection);
 
 #ifdef Q_OS_IOS
     if (!_settings.contains("verticalVolume"))
@@ -304,6 +314,14 @@ void ClementineRemote::doSendFilesToAppend()
 #ifdef __USE_CONNECTION_THREAD__
     _secureFilesToAppend.unlock();
 #endif
+}
+
+void ClementineRemote::setLibraryFilter(const QString &searchTxt)
+{
+    qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
+    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
+    QRegExp regExp(searchTxt, caseSensitivity);
+    _libProxyModel->setFilterRegExp(regExp);
 }
 
 void ClementineRemote::setSongsFilter(const QString &searchTxt)
@@ -689,6 +707,82 @@ void ClementineRemote::onRemoteFilesUpdatedByWorker()
 }
 #endif
 
+void ClementineRemote::onLibraryDownloaded()
+{
+    QString host = _connection->hostname();
+    _libDB = QSqlDatabase::addDatabase("QSQLITE", host);
+    _libDB.setDatabaseName(QString("%1/%2.db").arg(_libraryPath).arg(host));
+    if(!_libDB.open()){
+        qCritical() << "Can't open sqlite DB... " << _libDB.databaseName();
+        return;
+    }
+
+    emit _libModel->beginReset();
+    _libModel->clear();
+
+    QElapsedTimer timeStart;
+    timeStart.start();
+
+    int nbArtists = 0, nbAlbums = 0, nbTracks = 0;
+    QSqlQuery query(_libDB);
+    if(!query.exec(sLibrarySQL))
+        qDebug() << "Can't Execute Query !";
+    else
+    {
+        QStandardItem *rootItem = _libModel->invisibleRootItem(),
+                *artistItem = nullptr, *albumItem = nullptr;
+        QString currentArtist, currentAlbum;
+        while(query.next())
+        {
+            QString artist   = query.value(0).toString();
+            QString album    = query.value(1).toString();
+            QString title    = query.value(2).toString();
+            int     track    = query.value(3).toInt();
+            QString filename = query.value(4).toString();
+            ++nbTracks;
+
+            if (!artistItem || artist != currentArtist)
+            {
+                artistItem = new QStandardItem();
+                artistItem->setData(artist.isEmpty() ? tr("unset artist") : artist,
+                                    LibraryModel::name);
+                artistItem->setData(LibraryModel::Artist, LibraryModel::type);
+                rootItem->appendRow(artistItem);
+                currentArtist = artist;
+                ++nbArtists;
+            }
+
+            if (!albumItem || album != currentAlbum)
+            {
+                albumItem = new QStandardItem();
+                albumItem->setData(album.isEmpty() ? tr("unset album") : album,
+                                    LibraryModel::name);
+                albumItem->setData(LibraryModel::Album, LibraryModel::type);
+                artistItem->appendRow(albumItem);
+                currentAlbum = album;
+                ++nbAlbums;
+            }
+
+            QStandardItem *trackItem = new QStandardItem();
+            if (track == -1)
+                trackItem->setData(title, LibraryModel::name);
+            else
+                trackItem->setData(QString("%1 - %2").arg(track, 2, 10, QChar('0')).arg(title),
+                                   LibraryModel::name);
+            trackItem->setData(LibraryModel::Track, LibraryModel::type);
+            trackItem->setData(filename, LibraryModel::url);
+            albumItem->appendRow(trackItem);
+        }
+    }
+    emit _libModel->endReset();
+
+    qint64 durationMS = timeStart.elapsed();
+ //   QTime::fromMSecsSinceStartOfDay(static_cast<int>(duration)).toString("hh:mm:ss.zzz"));
+    qDebug() << "Library model loaded in: " << durationMS / 1000 << " sec";
+    qDebug() << "nb Artists: " << nbArtists << ", nb Albums: " << nbAlbums
+             << ", nb Tracks: " << nbTracks;
+}
+
 void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs)
 {
     _dispPlaylistId = songs.requested_playlist().id();
@@ -843,7 +937,10 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         emit connected();
         if (_clemFilesSupport)
             _connection->requestSavedRadios();
-        emit getLibrary();
+        if (QFileInfo(QString("%1/%2.db").arg(_libraryPath).arg(_connection->hostname())).exists())
+            emit libraryDownloaded();
+        else
+            emit getLibrary();
         break;
 
     case pb::remote::PLAY:

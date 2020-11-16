@@ -829,6 +829,7 @@ void ConnectionWorker::downloadLibrary(const pb::remote::ResponseLibraryChunk &l
         _libraryDL.file = nullptr;
 
         emit _remote->downloadComplete(1, 1, QStringList());
+        emit _remote->libraryDownloaded();
     }
 }
 

@@ -1,4 +1,4 @@
-QT += core network quick
+QT += core network quick sql
 
 CONFIG += c++17
 TARGET = ClemRemote
@@ -81,6 +81,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         ClementineRemote.cpp \
         ConnectionWorker.cpp \
+        model/LibraryModel.cpp \
         model/PlaylistModel.cpp \
         model/RadioStreamModel.cpp \
         model/RemoteFileModel.cpp \
@@ -107,6 +108,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     ClementineRemote.h \
     ConnectionWorker.h \
+    model/LibraryModel.h \
     model/PlaylistModel.h \
     model/RadioStreamModel.h \
     model/RemoteFileModel.h \

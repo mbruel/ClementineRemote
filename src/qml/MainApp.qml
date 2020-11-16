@@ -159,6 +159,10 @@ Item {
             cppRemote.getServerFiles(cppRemote.remoteFilesPath_QML());
             mainArea.sourceComponent = radiosPage;
         }
+        else if (selectedMenu === 3)
+        {
+            mainArea.sourceComponent = libraryPage;
+        }
         else
         {
             mainArea.setSource("SimpleMainArea.qml");
@@ -720,6 +724,14 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
             anchors.fill  : parent
         }
     } // radiosPage
+
+    Component {
+        id: libraryPage
+
+        Library {
+            anchors.fill  : parent
+        }
+    } // libraryPage
 
     Dialog {
         id: todoDialog

@@ -7,6 +7,7 @@
 #include "model/PlaylistModel.h"
 #include "model/RemoteFileModel.h"
 #include "model/RadioStreamModel.h"
+#include "model/LibraryModel.h"
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -35,6 +36,11 @@ int main(int argc, char *argv[])
     qmlRegisterType<RemoteFileModel>( "RemoteFile", 1, 0, "RemoteFileModel");
     qmlRegisterType<RadioStreamModel>("RadioStream", 1, 0, "RadioStreamModel");
 
+    qmlRegisterType<LibraryModel>("Library", 1, 0, "LibraryModel");
+    qmlRegisterType<LibraryProxyModel>("Library", 1, 0, "LibraryProxyModel");
+    qmlRegisterInterface<QAbstractItemModel>("Library", 1);
+
+
     qmlRegisterUncreatableType<ClementineRemote>("PlayList",    1, 0, "ClementineRemote",
         QStringLiteral("ClementineRemote should not be created in QML"));
     qmlRegisterUncreatableType<ClementineRemote>("RemoteFile",  1, 0, "ClementineRemote",
@@ -52,6 +58,7 @@ int main(int argc, char *argv[])
     engine.setObjectOwnership(remote->modelOpenedPlaylists(), QQmlEngine::CppOwnership);
     engine.setObjectOwnership(remote->modelClosedPlaylists(), QQmlEngine::CppOwnership);
     engine.setObjectOwnership(remote->modelRemoteSongs(), QQmlEngine::CppOwnership);
+    engine.setObjectOwnership(remote->libraryModel(), QQmlEngine::CppOwnership);
 
     engine.load(url);
 
