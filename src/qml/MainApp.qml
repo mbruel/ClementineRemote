@@ -308,6 +308,15 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
         }
     } // downloadCurrentSong
 
+    function info(title, text) {
+        infoDialog.title = title;
+        infoDialog.text  = text;
+        infoDialog.open();
+    } // info
+
+    function todo() {
+        info("TODO", qsTr("this feature is not implemented yet..."));
+    } // todo
 
     ////////////////////////////////////////
     //            QML Items               //
@@ -734,20 +743,22 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
     } // libraryPage
 
     Dialog {
-        id: todoDialog
+        id: infoDialog
+        property alias text: infoLbl.text
 
         width: mainApp.width *4/5
         x: (mainApp.width - width) / 2
         y: (mainApp.height - height) / 2
 
-        title: "TODO"
+        title: "none"
 
         Label {
+            id: infoLbl
             width: parent.width - 5
             wrapMode: Text.WordWrap
-            text: qsTr("this feature is not implemented yet...")
+            text: "to set..."
         }
-    } // todoDialog
+    } // infoDialog
 
     Dialog {
         id: downloadsDialog
@@ -774,7 +785,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
             repeat: false
             onTriggered: downloadsDialog.close()
         }
-    } // todoDialog
+    } // downloadsDialog
 
     AboutPopup {
         id: aboutDialog
@@ -899,7 +910,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
                 onClicked: {
                     console.log("onClicked " + downloads.text);
                     drawer.close();
-                    todoDialog.open();
+                    todo();
                 }
             } // downloads
             ItemDelegate {

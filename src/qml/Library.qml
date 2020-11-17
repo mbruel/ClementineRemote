@@ -19,7 +19,7 @@
 //
 //========================================================================
 import QtQuick 2.0
-import QtQuick.Controls 2.15
+import QtQuick.Controls 2.15 as QQC
 import QtQuick.Controls 1.4 as QQC1
 import QtQuick.Controls.Styles 1.4 as QQCS1
 import Library 1.0
@@ -32,6 +32,8 @@ Rectangle {
     property int   lineSpacing    : 10
     property int   lineHeigth     : 45
     property color colorSelected  : "lightblue"
+
+    property int   headerButtonSize    : 30
 
     property int   headerHeight      : 50;
     property int   headerSpacing     : 10;
@@ -56,20 +58,23 @@ Rectangle {
         border.color: headerBorderColor
         border.width: headerBorderWidth
 
-        TextField {
+        QQC.TextField {
             id: searchField
-            width: parent.width
+            width: parent.width - 4*headerButtonSize - 2*headerSpacing - newPlaylistNameField.width - 10
+            anchors {
+                left: parent.left
+                leftMargin: 5
+                verticalCenter: parent.verticalCenter
+            }
+
 //                Layout.fillWidth: true
             placeholderText: qsTr("search")
 
             inputMethodHints: Qt.ImhNoPredictiveText;
 
-            onTextChanged: {
-                cppRemote.setLibraryFilter(text);
-//                playingSongIdx = cppRemote.activeSongIndex();
-            }
+            onTextChanged: cppRemote.setLibraryFilter(text);
 
-            Button {
+            QQC.Button {
                 id: clearSearch
                 Text {
                     text: "x"
@@ -88,10 +93,82 @@ Rectangle {
                 onClicked: searchField.text = ""
             } //clearSearch
         } // searchField
+
+
+        ImageButton {
+            id:   downButton
+            size: headerButtonSize
+            anchors {
+                right: appendButton.left
+                rightMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/nav_downloads.png";
+            onClicked: mainApp.todo();
+        } //  downButton
+
+        ImageButton {
+            id:   appendButton
+            size: headerButtonSize
+            anchors {
+                right: newPlaylistNameField.left
+                rightMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/addToPlayList.png";
+            onClicked: {
+                cppRemote.libraryItemActivated(libView.currentIndex, "");
+                mainApp.info(qsTr("Tracks added"),
+                             qsTr("The tracks have been added to the current playlist."));
+            }
+        }
+
+
+        QQC.TextField {
+            id: newPlaylistNameField
+            placeholderText: qsTr("new playlist")
+            horizontalAlignment: TextInput.AlignHCenter
+            height: searchField.height
+//            width: newPlaylistNameWidth
+
+            anchors {
+                right: newPlaylistButton.left
+                rightMargin: headerSpacing / 2
+                verticalCenter: parent.verticalCenter
+            }
+
+            color: "black"
+            background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
+        }
+
+
+        ImageButton {
+            id:   newPlaylistButton
+            size: headerButtonSize
+            anchors {
+                right: parent.right
+                rightMargin: 5
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/newDoc.png";
+            onClicked: {
+                if (newPlaylistNameField.text === "")
+                    mainApp.info(qsTr("No playlist name"),
+                                 qsTr("Please enter a name for the new playlist if you wish to create one..."));
+                else {
+                    cppRemote.libraryItemActivated(libView.currentIndex, newPlaylistNameField.text);
+                    mainApp.info(qsTr("New Playlist created"),
+                                 qsTr("The new playlist '%1' has been created<br/>It is now the current playlist.").arg(
+                                     newPlaylistNameField.text));
+                    newPlaylistNameField.text = "";
+                }
+            }
+        }
+
     }
 
     QQC1.TreeView {
-        id: filesView
+        id: libView
         focus: true
         clip: true
 
@@ -112,6 +189,15 @@ Rectangle {
 //        }
 
         model: cppRemote.libraryModel();
+
+        onDoubleClicked: {
+            let expandableIndexes = cppRemote.getExpandableIndexes(index);
+            let currentExpanded = isExpanded(index);
+            for(let i = 0; i < expandableIndexes.length ; ++i)
+                 currentExpanded ? collapse(expandableIndexes[i]) : expand(expandableIndexes[i]);
+
+//            cppRemote.libraryItemActivated(index);
+        }
 
         style: QQCS1.TreeViewStyle {
             rowDelegate: Rectangle {
@@ -136,7 +222,7 @@ Rectangle {
 //            title: qsTr("Artists")
             role: "name"
             delegate: Rectangle {
-                height: library.rowHeight
+                height: rowHeight
 //                implicitHeight: height
 //                implicitWidth: width
                 color: styleData.selected ? colorSelected : "white"
@@ -146,8 +232,8 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 20
                     width: 20
-                    source: "icons/music.png"
-                    visible: cppRemote.isLibraryItemTrack(styleData.index)
+                    source: cppRemote.libraryItemIcon(styleData.index);
+//                    visible: cppRemote.isLibraryItemTrack(styleData.index)
                 }
                 Text{
                     width: parent.width - (disc.visible ? disc.width : 0)

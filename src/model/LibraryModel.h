@@ -36,7 +36,8 @@ public:
     enum ItemType {
         Artist = 0,
         Album,
-        Track
+        Track,
+        Playlist
     };
 
     enum ItemRole {
@@ -60,7 +61,8 @@ class LibraryProxyModel : public QSortFilterProxyModel {
 public:
     explicit LibraryProxyModel(QObject *parent = nullptr);
 
-    Q_INVOKABLE bool isTrack(const QModelIndex &index) const;
+    bool isTrack(const QModelIndex &index) const;
+    QVariantList getExpandableIndexes(const QModelIndex &currentIndex) const;
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;

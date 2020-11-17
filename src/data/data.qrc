@@ -61,5 +61,7 @@
         <file>icons/backPage.png</file>
         <file>icons/collapse.png</file>
         <file>icons/expand.png</file>
+        <file>icons/nocover.png</file>
+        <file>icons/x-clementine-artist.png</file>
     </qresource>
 </RCC>

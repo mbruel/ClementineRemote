@@ -247,12 +247,8 @@ Rectangle {
             source: "icons/newDoc.png";
             onClicked: {
                 if (newPlaylistNameField.text === "")
-                {
-                    infoDialog.title = "No playlist name";
-                    infoDialog.text  = "Please enter a name for the new playlist\
- if you wish to create one...";
-                    infoDialog.open();
-                }
+                    mainApp.info(qsTr("No playlist name"),
+                                 qsTr("Please enter a name for the new playlist if you wish to create one..."));
                 else
                     sendSelectedFiles(newPlaylistNameField.text);
             }
@@ -350,24 +346,6 @@ Rectangle {
         }
     }
 
-    Dialog {
-        id: infoDialog
-        property alias text: infoLbl.text
-
-        width: serverFiles.width * 2/3
-        x: (serverFiles.width - width) / 2
-        y: (serverFiles.height - height) / 2
-
-        title: "TODO"
-
-        Label {
-            id: infoLbl
-            width: parent.width
-            text: "to be set..."
-            wrapMode: Text.WordWrap
-        }
-    }
-
     function resetSelectionMode(){
         selectionMode = false;
         filesView.selectAllFiles(false);
@@ -376,12 +354,7 @@ Rectangle {
     function sendSelectedFiles(newPlaylist){
         let nbSelectedFiles = cppRemote.sendSelectedFiles(newPlaylist);
         if (nbSelectedFiles === 0)
-        {
-//            print("no selected files to send...");
-            infoDialog.title = "No selected file";
-            infoDialog.text  = "Please select at least one file...";
-            infoDialog.open();
-        }
+            mainApp.info(qsTr("No selected file"),  qsTr("Please select at least one file..."));
 //        else
 //            print("sendSelectedFiles " + nbSelectedFiles);
         resetSelectionMode();
@@ -392,12 +365,7 @@ Rectangle {
             return;
         let nbSelectedFiles = cppRemote.downloadSelectedFiles();
         if (nbSelectedFiles === 0)
-        {
-            print("no selected files to send...");
-            infoDialog.title = "No selected file";
-            infoDialog.text  = "Please select at least one file...";
-            infoDialog.open();
-        }
+            mainApp.info(qsTr("No selected file"), qsTr("Please select at least one file..."));
         else
             print("downloadSelectedFiles " + nbSelectedFiles);
         resetSelectionMode();

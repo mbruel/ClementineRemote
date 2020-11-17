@@ -71,6 +71,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::downloadPlaylist,     this, &ConnectionWorker::onDownloadPlaylist,     connectionType);
     connect(_remote, &ClementineRemote::sendSongsToDownload,  this, &ConnectionWorker::onSendSongsToDownload,  connectionType);
     connect(_remote, &ClementineRemote::getLibrary,           this, &ConnectionWorker::onGetLibrary,           connectionType);
+    connect(_remote, &ClementineRemote::insertUrls,           this, &ConnectionWorker::onInsertUrls,           connectionType);
 
 
     connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
@@ -417,6 +418,20 @@ void ConnectionWorker::onGetLibrary()
 {
     pb::remote::Message msg;
     msg.set_type(pb::remote::GET_LIBRARY);
+    sendDataToServer(msg);
+}
+
+void ConnectionWorker::onInsertUrls(qint32 playlistID, const QStringList &urls, const QString &newPlaylistName)
+{
+    pb::remote::Message msg;
+    msg.set_type(pb::remote::INSERT_URLS);
+    pb::remote::RequestInsertUrls *req = msg.mutable_request_insert_urls();
+    if (newPlaylistName.isEmpty())
+        req->set_playlist_id(playlistID);
+    else
+        req->set_new_playlist_name(newPlaylistName.toStdString());
+    for (const QString &url : urls)
+        *req->add_urls() = url.toStdString();
     sendDataToServer(msg);
 }
 

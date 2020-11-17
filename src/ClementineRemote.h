@@ -151,9 +151,13 @@ private:
 public:
     ~ClementineRemote();
 
+    Q_INVOKABLE void libraryItemActivated(const QModelIndex &proxyIndex, const QString &newPlaylistName);
     Q_INVOKABLE void setLibraryFilter(const QString &searchTxt);
+    inline Q_INVOKABLE QVariantList getExpandableIndexes(const QModelIndex &currentIndex) const;
+
 
     inline Q_INVOKABLE bool isLibraryItemTrack(const QModelIndex &index) const;
+    inline Q_INVOKABLE QString libraryItemIcon(const QModelIndex &index) const;
     inline Q_INVOKABLE QAbstractItemModel *libraryModel() const;
 
     // TODO: should be a setting
@@ -324,6 +328,8 @@ signals:
 
     void getLibrary();
     void libraryDownloaded();
+
+    void insertUrls(qint32 playlistID, const QStringList &urls, const QString &newPlaylistName);
 
     // signals sent from ConnectionWorker to QML
     void connected();
@@ -529,9 +535,36 @@ QString ClementineRemote::disconnectReason(int reason) const
     }
 }
 
+QVariantList ClementineRemote::getExpandableIndexes(const QModelIndex &currentIndex) const
+{
+    return _libProxyModel->getExpandableIndexes(currentIndex);
+}
+
 bool ClementineRemote::isLibraryItemTrack(const QModelIndex &index) const
 {
-    return index.isValid() ? _libProxyModel->isTrack(index) : false;
+    // Track and Playlists ;)
+    return index.isValid()?
+                _libProxyModel->data(index, LibraryModel::type).toInt() >= LibraryModel::Track
+              : false;
+}
+
+QString ClementineRemote::libraryItemIcon(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return QString();
+    int itemType = _libProxyModel->data(index, LibraryModel::type).toInt();
+    switch (itemType){
+    case LibraryModel::Artist:
+        return "icons/x-clementine-artist.png";
+    case LibraryModel::Album:
+        return "icons/nocover.png";
+    case LibraryModel::Track:
+        return "icons/music.png";
+    case LibraryModel::Playlist:
+        return "icons/playlistFile.png";
+    default:
+        return QString();
+    }
 }
 
 QAbstractItemModel *ClementineRemote::libraryModel() const{ return _libProxyModel; }

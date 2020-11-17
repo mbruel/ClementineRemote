@@ -128,6 +128,7 @@ private slots:
 
 
     void onGetLibrary();
+    void onInsertUrls(qint32 playlistID, const QStringList &urls, const QString &newPlaylistName);
 
 
 

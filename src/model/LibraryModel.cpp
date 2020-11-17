@@ -38,7 +38,26 @@ LibraryProxyModel::LibraryProxyModel(QObject *parent) : QSortFilterProxyModel(pa
 
 bool LibraryProxyModel::isTrack(const QModelIndex &index) const
 {
-    return data(index, LibraryModel::type).toInt() == LibraryModel::Track;
+    if (index.isValid())
+        // Track and Playlists ;)
+        return data(index, LibraryModel::type).toInt() >= LibraryModel::Track;
+    else
+        return false;
+}
+
+QVariantList LibraryProxyModel::getExpandableIndexes(const QModelIndex &currentIndex) const
+{
+    if (!currentIndex.isValid() || !rowCount(currentIndex))
+        return QVariantList();
+
+    QVariantList expandableIndexes = {currentIndex};
+    if (data(currentIndex, LibraryModel::type).toInt() == LibraryModel::Artist)
+    { // Albums have only Tracks under them which are not expendable ;)
+        int childCount = rowCount(currentIndex);
+        for (int i = 0; i < childCount ; ++i)
+            expandableIndexes << index(i, 0, currentIndex);
+    }
+    return expandableIndexes;
 }
 
 bool LibraryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const

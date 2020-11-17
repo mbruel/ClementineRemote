@@ -159,6 +159,42 @@ ClementineRemote::~ClementineRemote()
     close();
 }
 
+void ClementineRemote::libraryItemActivated(const QModelIndex &proxyIndex, const QString &newPlaylistName)
+{
+//TODO: add a setting to add items in playlist on double click
+    if (!proxyIndex.isValid())
+    {
+        qCritical() << "Wrong library index...";
+        return;
+    }
+    int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
+    if (itemType == LibraryModel::Album)
+    {
+        qDebug() << "Library album activated: " << _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
+        int childCount = _libProxyModel->rowCount(proxyIndex);
+        if (childCount == 0)
+        {
+            qDebug() << "no tracks for the Library album: " << _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
+            return;
+        }
+        QStringList urls;
+        for (int i = 0; i < childCount; ++i)
+        {
+            QModelIndex childIndex = _libProxyModel->index(i, 0, proxyIndex);
+            QString url = _libProxyModel->data(childIndex, LibraryModel::url).toString();
+            qDebug() << "Adding Library track from album: " << url;
+            urls << url;
+        }
+        emit insertUrls(_dispPlaylistId, urls, newPlaylistName);
+    }
+    else if (itemType == LibraryModel::Track)
+    {
+        QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
+        qDebug() << "Library track activated: " << url;
+        emit insertUrls(_dispPlaylistId, {url}, newPlaylistName);
+    }
+}
+
 bool ClementineRemote::verticalVolumeSlider() const
 {
     return _settings.value("verticalVolume", false).toBool();
@@ -769,7 +805,8 @@ void ClementineRemote::onLibraryDownloaded()
             else
                 trackItem->setData(QString("%1 - %2").arg(track, 2, 10, QChar('0')).arg(title),
                                    LibraryModel::name);
-            trackItem->setData(LibraryModel::Track, LibraryModel::type);
+            trackItem->setData(filename.toLower().endsWith("m3u")?LibraryModel::Playlist:LibraryModel::Track,
+                               LibraryModel::type);
             trackItem->setData(filename, LibraryModel::url);
             albumItem->appendRow(trackItem);
         }
