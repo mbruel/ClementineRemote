@@ -306,7 +306,7 @@ int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
     }
 }
 
-int ClementineRemote::downloadSelectedFiles()
+void ClementineRemote::downloadSelectedFiles()
 {
 #ifdef __USE_CONNECTION_THREAD__
     _secureFilesToAppend.lock();
@@ -323,7 +323,8 @@ int ClementineRemote::downloadSelectedFiles()
 #ifdef __USE_CONNECTION_THREAD__
         _secureFilesToAppend.unlock();
 #endif
-        return 0;
+        sendError("No selected files",
+                  tr("You should at least select one music file to download..."));
     }
     else
     {
@@ -338,7 +339,6 @@ int ClementineRemote::downloadSelectedFiles()
         _secureSongs.lock(); // this one will be unlocked in ClementineRemote::doSendSongsToDownload
 #endif
         emit sendSongsToDownload(QFileInfo(_remoteFilesPath).fileName());
-        return selectedFiles.size();
     }
 }
 

@@ -184,7 +184,7 @@ public:
     Q_INVOKABLE void close();
 
     Q_INVOKABLE int sendSelectedFiles(const QString &newPlaylistName = "");
-    Q_INVOKABLE int downloadSelectedFiles();
+    Q_INVOKABLE void downloadSelectedFiles();
 
     Q_INVOKABLE bool allFilesSelected() const;
     void doSendFilesToAppend();

@@ -27,6 +27,7 @@ Rectangle {
     property int size: 24
     property color colorHovered: 'blue'
     property color colorDefault: 'transparent'
+    property bool hovered: false // in case we want to use tooltips on hovered
 
     signal clicked;
     height: size
@@ -42,8 +43,8 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onEntered: parent.color = colorHovered
-        onExited:  parent.color = colorDefault
+        onEntered: {hovered = true;  parent.color = colorHovered; }
+        onExited:  {hovered = false; parent.color = colorDefault; }
         onClicked: parent.clicked();
     }
 }

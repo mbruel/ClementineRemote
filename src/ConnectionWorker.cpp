@@ -353,6 +353,7 @@ void ConnectionWorker::onSendSongsToDownload(const QString &dstFolder)
     else if (!createDownloadDestinationFolder(dstFolder))
         return;
 
+    emit _remote->downloadProgress(0); // let's make the progress bar visible ;)
     _remote->doSendSongsToDownload();
 }
 
@@ -404,6 +405,8 @@ void ConnectionWorker::onDownloadPlaylist(qint32 playlistID, QString playlistNam
     QString dstFolder = QString("playlists/%1").arg(playlistName);
     if (!createDownloadDestinationFolder(dstFolder))
         return;
+
+    emit _remote->downloadProgress(0); // let's make the progress bar visible ;)
 
     pb::remote::Message msg;
     msg.set_type(pb::remote::DOWNLOAD_SONGS);
@@ -630,6 +633,9 @@ void ConnectionWorker::prepareDownload(const pb::remote::ResponseDownloadTotalSi
     _songsDL.init(downloadSize.file_count(), downloadSize.total_size());
     qDebug() << "[ConnectionWorker::prepareDownload] nbFiles: " << _songsDL.nbFiles
              << ", total size: " << _songsDL.totalSize;
+
+    if (_songsDL.nbFiles) // let's make the progress bar visible ;)
+        emit _remote->downloadProgress(0);
 }
 
 void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &songChunk)

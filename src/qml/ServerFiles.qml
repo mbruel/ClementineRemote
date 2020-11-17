@@ -36,6 +36,45 @@ Rectangle {
     // private properties
     property bool  selectionMode       : false
 
+    Connections{
+        target: cppRemote
+        function onUpdateRemoteFilesPath(newRemotePath){
+            relativePath.text = newRemotePath;
+        }
+    } // Connections cppRemote
+
+    Component.onCompleted: {
+        if (cppRemote.hideServerFilesPreviousNextNavButtons())
+        {
+            previousPathButton.visible = false;
+            nextPathButton.visible = false;
+            relativePath.width = serverFiles.width - 2*(headerButtonSize + headerSpacing + headerSpacing)
+        }
+        filesView.currentIndex = -1; // no default selection
+    } // Component.onCompleted
+
+
+    function resetSelectionMode(){
+        selectionMode = false;
+        filesView.selectAllFiles(false);
+    } // resetSelectionMode
+
+    function sendSelectedFiles(newPlaylist){
+        cppRemote.sendSelectedFiles(newPlaylist);
+        resetSelectionMode();
+    } // sendSelectedFiles
+
+    function downloadSelectedFiles(){
+        if (!mainApp.downloadPossible())
+            return;
+        cppRemote.downloadSelectedFiles();
+        resetSelectionMode();
+    } // downloadSelectedFiles
+
+
+    ////////////////////////////////////////
+    //            QML Items               //
+    ////////////////////////////////////////
 
     Rectangle{
         id: pathRect
@@ -48,7 +87,7 @@ Rectangle {
         color: "white"
         border.color: "black"
 
-        Row{
+        Row {
             width: parent.width
             spacing: headerSpacing
             anchors {
@@ -56,23 +95,18 @@ Rectangle {
                 leftMargin: headerSpacing;
                 verticalCenter: parent.verticalCenter
             }
-
             ImageButton {
                 id:   previousPathButton
                 size: headerButtonSize
                 source: "icons/go-previous.png";
-                onClicked: {
-                    print("[ServerFiles] previousPathButton! TODO...")
-                }
-            }
+                onClicked: mainApp.todo();
+            } // previousPathButton
             ImageButton {
                 id:   nextPathButton
                 size: headerButtonSize
                 source: "icons/go-next.png";
-                onClicked: {
-                    print("[ServerFiles] nextPathButton! TODO...")
-                }
-            }
+                onClicked: mainApp.todo();
+            } // nextPathButton
             ImageButton {
                 id:   parentPathButton
                 size: headerButtonSize
@@ -82,7 +116,7 @@ Rectangle {
                     print("[ServerFiles] parentPathButton!")
                     cppRemote.getServerFiles(relativePath.text, "..");
                 }
-            }
+            } // parentPathButton
             ImageButton {
                 id:   homePathButton
                 size: headerButtonSize
@@ -92,8 +126,7 @@ Rectangle {
                     print("[ServerFiles] homePathButton!")
                     cppRemote.getServerFiles("./", "");
                 }
-            }
-
+            } // homePathButton
             Text {
                 id: relativePath
                 width: parent.width - 4*(headerButtonSize + headerSpacing) - 2*headerSpacing
@@ -101,19 +134,13 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
 //                font.pointSize: 20;
                 elide: Text.ElideLeft
-            }
-
-        }
-    }
+            } // relativePath
+        } // Row
+    } // pathRect
 
     ListView {
         id: filesView
         focus: true
-
-        model: RemoteFileModel {
-            remote: cppRemote
-        }
-        delegate: remoteFileDelegate
 
         anchors{
             top: pathRect.bottom
@@ -123,6 +150,9 @@ Rectangle {
         implicitHeight: parent.height - pathRect.height - actionRect.height
 
         clip: true
+
+        model: RemoteFileModel { remote: cppRemote }
+        delegate: remoteFileDelegate
 
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior    : Flickable.DragOverBounds
@@ -139,10 +169,7 @@ Rectangle {
         function selectCurrentFile(select){
             model.select(filesView.currentIndex, select);
         }
-    }
-
-
-
+    } // filesView
 
     Rectangle{
         id: actionRect
@@ -154,8 +181,6 @@ Rectangle {
         }
         color: "white"
         border.color: "black"
-
-
 
         ImageButton {
             id:   selectModeButton
@@ -174,8 +199,7 @@ Rectangle {
                     filesView.selectAllFiles(false);
 //                print("[ServerFiles] change selection mode: " + selectionMode)
             }
-        }
-
+        } // selectModeButton
         ImageButton {
             id:   selectAllButton
             size: headerButtonSize
@@ -190,9 +214,7 @@ Rectangle {
                 filesView.selectAllFiles(selectionMode);
 //                print("[ServerFiles] selectAll: " + selectionMode);
             }
-        }
-
-
+        } // selectAllButton
         ImageButton {
             id:   downSelectedFilesButton
             size: headerButtonSize
@@ -215,27 +237,21 @@ Rectangle {
             }
             source: "icons/addToPlayList.png";
             onClicked: sendSelectedFiles("");
-        }
-
-
+        } // appendButton
         TextField {
             id: newPlaylistNameField
             placeholderText: qsTr("new playlist")
             horizontalAlignment: TextInput.AlignHCenter
             height: parent.height - 4
             width: newPlaylistNameWidth
-
             anchors {
                 right: newPlaylistButton.left
                 rightMargin: headerSpacing / 2
                 verticalCenter: parent.verticalCenter
             }
-
             color: "black"
             background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
-        }
-
-
+        } // newPlaylistNameField
         ImageButton {
             id:   newPlaylistButton
             size: headerButtonSize
@@ -260,26 +276,13 @@ Rectangle {
                     newPlaylistNameField.text = "";
                 }
             }
-        }
+        } // newPlaylistButton
+    } // actionRect
 
-    }
 
-    Component.onCompleted: {
-        if (cppRemote.hideServerFilesPreviousNextNavButtons())
-        {
-            previousPathButton.visible = false;
-            nextPathButton.visible = false;
-            relativePath.width = serverFiles.width - 2*(headerButtonSize + headerSpacing + headerSpacing)
-        }
-        filesView.currentIndex = -1; // no default selection
-    }
-
-    Connections{
-        target: cppRemote
-        function onUpdateRemoteFilesPath(newRemotePath){
-            relativePath.text = newRemotePath;
-        }
-    }
+    ////////////////////////////////////////
+    //      Components and Popups         //
+    ////////////////////////////////////////
 
     Component {
         id: remoteFileDelegate
@@ -354,28 +357,4 @@ Rectangle {
         }
     }
 
-    function resetSelectionMode(){
-        selectionMode = false;
-        filesView.selectAllFiles(false);
-    }
-
-    function sendSelectedFiles(newPlaylist){
-        let nbSelectedFiles = cppRemote.sendSelectedFiles(newPlaylist);
-        if (nbSelectedFiles === 0)
-            mainApp.info(qsTr("No selected file"),  qsTr("Please select at least one file..."));
-//        else
-//            print("sendSelectedFiles " + nbSelectedFiles);
-        resetSelectionMode();
-    }
-
-    function downloadSelectedFiles(){
-        if (!mainApp.downloadPossible())
-            return;
-        let nbSelectedFiles = cppRemote.downloadSelectedFiles();
-        if (nbSelectedFiles === 0)
-            mainApp.info(qsTr("No selected file"), qsTr("Please select at least one file..."));
-        else
-            print("downloadSelectedFiles " + nbSelectedFiles);
-        resetSelectionMode();
-    }
 }

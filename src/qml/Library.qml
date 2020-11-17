@@ -42,7 +42,6 @@ Rectangle {
     property color headerBorderColor : "black"
     property int   headerBorderWidth : 1
 
-
     property int rowHeight: 30
     property int indent: 20
 
@@ -117,7 +116,7 @@ Rectangle {
             left: parent.left
         }
         implicitWidth: parent.width
-        implicitHeight: parent.height - headerRow.height
+        implicitHeight: parent.height - headerRow.height - actionRect.height
 
         headerVisible: false;
 

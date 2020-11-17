@@ -69,7 +69,10 @@ Rectangle {
     } // Connections cppRemote
 
 
-    Component.onCompleted : {
+    Component.onCompleted : goToCurrentPlaylistAndTrack();
+
+
+    function goToCurrentPlaylistAndTrack() {
         updateCurrentPlaylist(cppRemote.playlistIndex());
 
 //        print("songsView.size: "+songsView.count);
@@ -77,8 +80,7 @@ Rectangle {
         updateCurrentSong(songIdx);
         if (songIdx)
             songsView.positionViewAtIndex(songsView.currentIndex, ListView.Center);
-    } // Component.onCompleted
-
+    } // goToCurrentPlaylistAndTrack
 
     function updateCurrentSong(idx) {
 //        print("updateCurrentSong: " + idx);
@@ -107,6 +109,12 @@ Rectangle {
         }
     } // downloadCurrentSong
 
+
+
+    ////////////////////////////////////////
+    //            QML Items               //
+    ////////////////////////////////////////
+
     Rectangle{
         id     : playlistsRow
         width  : parent.width
@@ -134,21 +142,18 @@ Rectangle {
                 model   : cppRemote.modelOpenedPlaylists()
                 delegate: playlistDelegate
                 textRole: "name"
-            }
-
+            } // playlistCombo
             TextField {
                 id: searchField
                 width: playlistsRow.width - playlistCombo.width - moreOptions.width - 3*parent.spacing
 //                Layout.fillWidth: true
                 placeholderText: qsTr("search")
-
                 inputMethodHints: Qt.ImhNoPredictiveText;
 
                 onTextChanged: {
                     cppRemote.setSongsFilter(text);                    
                     playingSongIdx = cppRemote.activeSongIndex();
                 }
-
                 Button {
                     id: clearSearch
                     Text {
@@ -168,7 +173,6 @@ Rectangle {
                     onClicked: searchField.text = ""
                 } //clearSearch
             } // searchField
-
             ImageButton {
                 id: moreOptions
                 size  : buttonSize
@@ -199,7 +203,6 @@ Rectangle {
         boundsBehavior    : Flickable.DragOverBounds
         boundsMovement    : Flickable.FollowBoundsBehavior
         ScrollBar.vertical: ScrollBar {}
-
 //        onCurrentItemChanged: console.log("songsView current index: "+songsView.currentIndex)
     } // songsView
 
@@ -222,7 +225,7 @@ Rectangle {
             selectionMode = false;
         }
         visible: selectionMode
-    }
+    } // downSelectedSongsButton
     ImageButton {
         id:   exitSelectModeButton
         size: buttonSize
@@ -237,7 +240,7 @@ Rectangle {
             selectionMode = false;
         }
         visible: selectionMode
-    }
+    } // exitSelectModeButton
     ImageButton {
         id:   selectAllButton
         size: buttonSize
@@ -254,7 +257,7 @@ Rectangle {
                 songsView.currentIndex = -1;
         }
         visible: selectionMode
-    }
+    } // selectAllButton
     ImageButton {
         id: deleteSongsButton
         size  : buttonSize
@@ -289,6 +292,224 @@ Rectangle {
         }
     } // noMorePlaylistDialog
 
+
+    ////////////////////////////////////////
+    //      Components and Popups         //
+    ////////////////////////////////////////
+
+    // Delegates
+    Component {
+        id: playlistDelegate
+
+        ItemDelegate {
+            width: ListView.view.width
+            height: comboLineHeight
+
+            Image {
+                id: icon
+                x : comboLineSpacing
+                width : comboIconSize
+                height: comboIconSize
+                source: iconSrc
+
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text{
+                id: txtName
+                text: name
+                x: comboLineHeight + 2*comboLineSpacing
+
+                anchors.verticalCenter: icon.verticalCenter
+
+                elide: Text.ElideRight
+                width: parent.width - icon.width - 3*comboLineSpacing
+            }
+
+            highlighted: ListView.isCurrentItem
+            onClicked: {
+                playlistCombo.popup.close()
+                playlistCombo.currentIndex = index;
+                if (index != playlistIdx)
+                {
+                    print("Playlist clicked: #" + index+ " : " +name )
+                    cppRemote.changePlaylist(index)
+                }
+            }
+        }
+/*
+        Rectangle {
+            width: ListView.view.width
+            height: comboLineHeight
+
+//            color: ListView.isCurrentItem ? colorSongSelected : "white"
+
+            Image {
+                id: icon
+                x : combolineSpacing
+                width : comboIconSize
+                height: comboIconSize
+                source: iconSrc
+
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text{
+                id: txtName
+                text: name
+                x: comboLineHeight + 2*combolineSpacing
+
+                anchors.verticalCenter: icon.verticalCenter
+
+                elide: Text.ElideRight
+                width: parent.width - icon.width - 3*combolineSpacing
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled : true
+                onClicked: {
+                    playlistCombo.popup.close()
+                    playlistCombo.currentIndex = index;
+                    if (index != playlistIdx)
+                    {
+                        print("Playlist clicked: #" + index+ " : " +name )
+                        cppRemote.changePlaylist(index)
+                    }
+                }
+
+                onEntered: color = "lightgray"
+                onExited: color = "white"
+            }
+        }
+*/
+    } // Component playlistDelegate
+
+    Component {
+        id: songDelegate
+
+        Rectangle {
+            id: songDelegateRect
+            property bool isSelected: ListView.isCurrentItem
+
+            width: ListView.view.width
+            height: 50
+
+            color: {
+                if (selectionMode){
+                    if (selected)
+                        return colorSongSelected;
+                } else {
+                    if (activePlaylistIdx === playlistIdx && index === playingSongIdx)
+                        return colorSongPlaying
+                    else if (ListView.isCurrentItem)
+                        return colorSongSelected;
+                }
+                return "white";
+            } // color
+
+            onIsSelectedChanged: {
+                if (isSelected) {
+                    if (txtTitle.truncated) {
+                        txtTitle.elide = Text.ElideNone;
+                        titleAnimation.start();
+                    }
+                    if (txtArtistAlbum.truncated) {
+                        txtArtistAlbum.elide = Text.ElideNone;
+                        artistAnimation.start();
+                    }
+                } else {
+                    if (titleAnimation.running) {
+                        titleAnimation.stop();
+                        txtTitle.elide = Text.ElideRight;
+                        txtTitle.x = 0;
+                    }
+                    if (artistAnimation.running) {
+                        artistAnimation.stop();
+                        txtArtistAlbum.elide = Text.ElideRight;
+                        txtArtistAlbum.x = 0;
+                    }
+                }
+            } // onIsSelectedChanged
+
+            Text{
+                id: txtTitle
+                text: (track !== -1 ? String(track).padStart(2, '0')+" - " : "") + title
+//                anchors.left: parent.left
+                elide: Text.ElideRight
+                width: parent.width - txtLength.width
+                NumberAnimation {
+                    id: titleAnimation
+                    target: txtTitle
+                    property: "x"
+                    from: 20
+                    to: -songDelegateRect.width
+                    duration: 3000
+                    loops: Animation.Infinite
+                } // titleAnimation
+                onTruncatedChanged: {
+//                    print("onTruncatedChanged for: "+txtTitle.text)
+                    if (truncated && songDelegateRect.isSelected) {
+                        txtTitle.elide = Text.ElideNone;
+                        titleAnimation.start();
+                    }
+                }
+            } // txtTitle
+            Text{
+                id: txtLength
+                text: pretty_length
+                horizontalAlignment: Text.AlignRight
+                anchors.right: parent.right
+            } // txtLength
+            Text{
+                id: txtArtistAlbum
+                x: 0
+                width: parent.width
+                elide: Text.ElideRight
+                text: (artist !== "" || album !== "") ? artist + " / " + album : ""
+                color: "blue"
+                anchors.top: txtTitle.bottom
+
+                NumberAnimation {
+                    id: artistAnimation
+                    target: txtArtistAlbum
+                    property: "x"
+                    from: 20
+                    to: -songDelegateRect.width
+                    duration: 3000
+                    loops: Animation.Infinite
+                } // artistAnimation
+                onTruncatedChanged: {
+//                    print("onTruncatedChanged for: "+txtArtistAlbum.text)
+                    if (truncated && songDelegateRect.isSelected) {
+                        txtArtistAlbum.elide = Text.ElideNone;
+                        artistAnimation.start();
+                    }
+                }
+            } // txtArtistAlbum
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+//                    print("Clicked #" + index + ": " + title)
+                    songsView.currentIndex = index
+                    if (selectionMode)
+                        selected = !selected;
+                }
+                onDoubleClicked: {
+//                    print("onDoubleClicked #" + index + ": " + title )
+                    songsView.currentIndex = index
+                    cppRemote.changeToSong(index)
+                }
+                onPressAndHold: {
+                    songsView.currentIndex = index
+                    selectionMode = true
+                    selected = true;
+//                    print("onPressAndHold #" + index + ": " + title)
+                }
+            } // MouseArea
+        } // songDelegateRect
+    } // Component songDelegate
 
     Dialog {
         id: playlistDestructionConfirmationDialog
@@ -393,249 +614,6 @@ Are you sure you want to continue?")
             }
         }
     } // renPlaylistDialog
-
-
-
-    // Delegates
-    Component {
-        id: playlistDelegate
-
-        ItemDelegate {
-            width: ListView.view.width
-            height: comboLineHeight
-
-            Image {
-                id: icon
-                x : comboLineSpacing
-                width : comboIconSize
-                height: comboIconSize
-                source: iconSrc
-
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text{
-                id: txtName
-                text: name
-                x: comboLineHeight + 2*comboLineSpacing
-
-                anchors.verticalCenter: icon.verticalCenter
-
-                elide: Text.ElideRight
-                width: parent.width - icon.width - 3*comboLineSpacing
-            }
-
-            highlighted: ListView.isCurrentItem
-            onClicked: {
-                playlistCombo.popup.close()
-                playlistCombo.currentIndex = index;
-                if (index != playlistIdx)
-                {
-                    print("Playlist clicked: #" + index+ " : " +name )
-                    cppRemote.changePlaylist(index)
-                }
-            }
-        }
-/*
-        Rectangle {
-            width: ListView.view.width
-            height: comboLineHeight
-
-//            color: ListView.isCurrentItem ? colorSongSelected : "white"
-
-            Image {
-                id: icon
-                x : combolineSpacing
-                width : comboIconSize
-                height: comboIconSize
-                source: iconSrc
-
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text{
-                id: txtName
-                text: name
-                x: comboLineHeight + 2*combolineSpacing
-
-                anchors.verticalCenter: icon.verticalCenter
-
-                elide: Text.ElideRight
-                width: parent.width - icon.width - 3*combolineSpacing
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled : true
-                onClicked: {
-                    playlistCombo.popup.close()
-                    playlistCombo.currentIndex = index;
-                    if (index != playlistIdx)
-                    {
-                        print("Playlist clicked: #" + index+ " : " +name )
-                        cppRemote.changePlaylist(index)
-                    }
-                }
-
-                onEntered: color = "lightgray"
-                onExited: color = "white"
-            }
-        }
-*/
-    } // Component playlistDelegate
-
-    Component {
-        id: songDelegate
-
-        Rectangle {
-            id: songDelegateRect
-            property bool isSelected: ListView.isCurrentItem
-
-            width: ListView.view.width
-            height: 50
-
-            color: {
-                if (selectionMode){
-                    if (selected)
-                        return colorSongSelected;
-                }
-                else {
-                    if (activePlaylistIdx === playlistIdx && index === playingSongIdx)
-                        return colorSongPlaying
-                    else if (ListView.isCurrentItem)
-                        return colorSongSelected;
-                }
-                return "white";
-            }
-
-            onIsSelectedChanged: {
-                if (isSelected)
-                {
-                    if (txtTitle.truncated)
-                    {
-                        txtTitle.elide = Text.ElideNone;
-                        titleAnimation.start();
-                    }
-                    if (txtArtistAlbum.truncated)
-                    {
-                        txtArtistAlbum.elide = Text.ElideNone;
-                        artistAnimation.start();
-                    }
-                }
-                else
-                {
-                    if (titleAnimation.running)
-                    {
-                        titleAnimation.stop();
-                        txtTitle.elide = Text.ElideRight;
-                        txtTitle.x = 0;
-                    }
-
-                    if (artistAnimation.running)
-                    {
-                        artistAnimation.stop();
-                        txtArtistAlbum.elide = Text.ElideRight;
-                        txtArtistAlbum.x = 0;
-                    }
-                }
-            }
-
-            Text{
-                id: txtTitle
-                text: (track !== -1 ? String(track).padStart(2, '0')+" - " : "") + title
-//                anchors.left: parent.left
-                elide: Text.ElideRight
-                width: parent.width - txtLength.width
-
-                NumberAnimation {
-                    id: titleAnimation
-                    target: txtTitle
-                    property: "x"
-                    from: 20
-                    to: -songDelegateRect.width
-                    duration: 3000
-                    loops: Animation.Infinite
-                }
-
-                onTruncatedChanged: {
-                    print("onTruncatedChanged for: "+txtTitle.text)
-                    if (truncated && songDelegateRect.isSelected)
-                    {
-                        txtTitle.elide = Text.ElideNone;
-                        titleAnimation.start();
-                    }
-                }
-            }
-            Text{
-                id: txtLength
-                text: pretty_length
-                horizontalAlignment: Text.AlignRight
-                anchors.right: parent.right
-            }
-            Text{
-                id: txtArtistAlbum
-                width: parent.width
-                elide: Text.ElideRight
-                text: {
-                    if (artist !== "" || album !== "")
-                        return artist + " / " + album;
-                    else
-                        return "";
-                }
-                color: "blue"
-                anchors{
-                    top: txtTitle.bottom
-//                    topMargin: 2
-//                    left: txtTitle.left
-                }
-                x: 0
-
-                NumberAnimation {
-                    id: artistAnimation
-                    target: txtArtistAlbum
-                    property: "x"
-                    from: 20
-                    to: -songDelegateRect.width
-                    duration: 3000
-                    loops: Animation.Infinite
-                }
-
-                onTruncatedChanged: {
-                    print("onTruncatedChanged for: "+txtArtistAlbum.text)
-                    if (truncated && songDelegateRect.isSelected)
-                    {
-                        txtArtistAlbum.elide = Text.ElideNone;
-                        artistAnimation.start();
-                    }
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    print("Clicked #" + index + ": " + title)
-                    songsView.currentIndex = index
-                    if (selectionMode)
-                        selected = !selected;
-                }
-
-                onDoubleClicked: {
-                    print("onDoubleClicked #" + index + ": " + title )
-                    songsView.currentIndex = index
-                    cppRemote.changeToSong(index)
-                }
-
-                onPressAndHold: {
-                    songsView.currentIndex = index
-                    selectionMode = true
-                    selected = true;
-                    print("onPressAndHold #" + index + ": " + title)
-                }
-            }
-        }
-    } // Component songDelegate
-
-
 
     Menu {
         id: playlistMenu

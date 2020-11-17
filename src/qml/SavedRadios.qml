@@ -31,14 +31,11 @@ Rectangle {
     property int   lineHeigth     : 45
     property color colorSelected  : "lightblue"
 
-
     ListView {
         id: filesView
         focus: true
 
-        model: RadioStreamModel {
-            remote: cppRemote
-        }
+        model: RadioStreamModel { remote: cppRemote }
         delegate: radioStreamDelegate
 
         anchors{
@@ -49,18 +46,15 @@ Rectangle {
         implicitHeight: parent.height
 
         clip: true
-    }
+    } // filesView
 
     Component {
         id: radioStreamDelegate
 
         Rectangle {
             id: radioStreamDelegateRect
-//            property bool isSelected: ListView.isCurrentItem
-
             width: ListView.view.width
             height: lineHeigth
-
             color: ListView.isCurrentItem ? colorSelected : "white"
 
             Image {
@@ -69,8 +63,7 @@ Rectangle {
                 width: lineHeigth
                 height: lineHeigth - 4
                 source: logoUrl
-            }
-
+            }// icon
             Text{
                 id: txtRadio
                 text: name
@@ -80,17 +73,16 @@ Rectangle {
 
                 elide: Text.ElideRight
                 width: parent.width - icon.width - 3*lineSpacing
-            }
+            } // txtRadio
 
             MouseArea {
                 anchors.fill: parent
                 onClicked: filesView.currentIndex = index;
-
                 onDoubleClicked: {
                     filesView.currentIndex = index;
                     cppRemote.addRadioToPlaylist(index);
                 }
-            }
-        }
-    }
+            } // MouseArea
+        } // radioStreamDelegateRect
+    } // radioStreamDelegate
 }

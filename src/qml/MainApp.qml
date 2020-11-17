@@ -114,6 +114,8 @@ Item {
         }
 
         function onDownloadProgress(pct){
+            if (!downloadRect.visible)
+                downloadRect.visible = true;
             downloadProgressBar.value = pct;
         }
     } // Connections cppRemote
@@ -161,7 +163,8 @@ Item {
     } // checkClementineVersion
 
     function changeMainMenu(selectedMenu){
-        console.log("New idx: "+selectedMenu);
+        console.log("New idx: "+selectedMenu );
+        toolBarIndex = selectedMenu;
 
         // make previous ToolBarButton Inactive
         for (var i = 0; i < toolBar.children.length; ++i)
@@ -249,19 +252,19 @@ Item {
         switch(mode)
         {
         case 0:
-            shuffleButton.source = "icons/ab_shuffle_off.png";
+            shuffleImg.source = "icons/ab_shuffle_off.png";
             break;
         case 1:
-            shuffleButton.source = "icons/ab_shuffle.png";
+            shuffleImg.source = "icons/ab_shuffle.png";
             break;
         case 2:
-            shuffleButton.source = "icons/ab_shuffle_album.png";
+            shuffleImg.source = "icons/ab_shuffle_album.png";
             break;
         case 3:
-            shuffleButton.source = "icons/ab_shuffle_albums.png";
+            shuffleImg.source = "icons/ab_shuffle_albums.png";
             break;
         default:
-            shuffleButton.source = "icons/ab_shuffle_off.png";
+            shuffleImg.source = "icons/ab_shuffle_off.png";
             break;
         }
     } // function updateShuffle
@@ -270,19 +273,19 @@ Item {
         switch(mode)
         {
         case 0:
-            repeatButton.source = "icons/ab_repeat_off.png";
+            repeatImg.source = "icons/ab_repeat_off.png";
             break;
         case 1:
-            repeatButton.source = "icons/ab_repeat_track.png";
+            repeatImg.source = "icons/ab_repeat_track.png";
             break;
         case 2:
-            repeatButton.source = "icons/ab_repeat_album.png";
+            repeatImg.source = "icons/ab_repeat_album.png";
             break;
         case 3:
-            repeatButton.source = "icons/ab_repeat_playlist.png";
+            repeatImg.source = "icons/ab_repeat_playlist.png";
             break;
         default:
-            repeatButton.source = "icons/ab_repeat_off.png";
+            repeatImg.source = "icons/ab_repeat_off.png";
             break;
         }
     } // function updateRepeat
@@ -311,7 +314,6 @@ Item {
             }
             print("downloadPath: "+downloadPath);
             downloadProgressBar.value = 0;
-            downloadRect.visible = true;
             return true;
         }
         else
@@ -330,6 +332,15 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
         }
     } // downloadCurrentSong
 
+    function jumpToCurrentSong() {
+        // Go to playlist
+        if (toolBarIndex != 0) {
+            toolBar.children[0].state = "Selected";
+            changeMainMenu(0);
+        }
+        else
+            mainArea.item.goToCurrentPlaylistAndTrack();
+    } // jumpToCurrentSong
 
 
     ////////////////////////////////////////
@@ -432,11 +443,11 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
             width: parent.width
 
             ImageButton {
-                id: downSong
-                size     : headerButtonSize
-                source   : "icons/nav_downloads.png";
-                onClicked: downloadCurrentSong()
-            } // downSong
+                id: jumpToSong
+                size     : headerButtonSize - 5
+                source   : "icons/jumpTo.png";
+                onClicked: jumpToCurrentSong();
+            } // jumpToSong
 
             Slider {
                 id: trackSlider
@@ -448,7 +459,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
 //                    horizontalCenter: parent.horizontalCenter
 //                }
 
-                width: parent.width - 3*headerButtonSize
+                width: parent.width - 2.5*headerButtonSize
 
                 background: Rectangle {
                     x: trackSlider.leftPadding
@@ -490,20 +501,62 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
 //                }
             } // trackSlider
 
-            ImageButton {
-                id: repeatButton
-                size     : headerButtonSize
-                source   : "icons/ab_repeat_off.png";
-                onClicked: repeatMenu.open()
-            } // repeatButton
+            Rectangle {
+                id: playOptionsRect
+                height: headerButtonSize
+                width:  headerButtonSize / 2
+                color: 'transparent'
+                Image {
+                    id: repeatImg
+                    source: "icons/ab_repeat_off.png"
+                    width: headerButtonSize / 2
+                    height: headerButtonSize / 2
+                    fillMode: Image.PreserveAspectFit;
+                    anchors {
+                        horizontalCenter: playOptionsRect.horizontalCenter
+                        top: playOptionsRect.top
+                    }
+                }
+                Image {
+                    id: shuffleImg
+                    source: "icons/ab_shuffle_off.png"
+                    width: headerButtonSize / 2
+                    height: headerButtonSize / 2
+                    fillMode: Image.PreserveAspectFit;
+                    anchors {
+                        horizontalCenter: playOptionsRect.horizontalCenter
+                        bottom: playOptionsRect.bottom
+                    }
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: parent.color = 'blue'
+                    onExited:  parent.color = 'transparent'
+                    onClicked: playOptionMenu.open();
+                }
+            } // playOptionsRect
 
             ImageButton {
-                id: shuffleButton
+                id: downSong
                 size     : headerButtonSize
-                source   : "icons/ab_shuffle_off.png";
-                onClicked: shuffleMenu.open();
+                source   : "icons/nav_downloads.png";
+                onClicked: downloadCurrentSong();
+            } // downSong
 
-            }
+//            ImageButton {
+//                id: repeatButton
+//                size     : headerButtonSize
+//                source   : "icons/ab_repeat_off.png";
+//                onClicked: repeatMenu.open()
+//            } // repeatButton
+
+//            ImageButton {
+//                id: shuffleButton
+//                size     : headerButtonSize
+//                source   : "icons/ab_shuffle_off.png";
+//                onClicked: shuffleMenu.open();
+//            }
         } // trackRow
 
 
@@ -523,7 +576,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
             anchors{
                 top: trackRow.top
                 right: trackRow.right
-                rightMargin: 2*headerButtonSize + toolBarMargin
+                rightMargin: 1.5*headerButtonSize + toolBarMargin
                 topMargin: -5
             }
             text: cppRemote.currentTrackDuration()
@@ -703,8 +756,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                     color: "#17a81a"
                 }
             }
-        }
-
+        } // downloadProgressBar
         ImageButton {
             id: cancelDownload
             anchors{
@@ -715,7 +767,8 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
             source   : "icons/close.png";
             onClicked: cppRemote.cancelDownload();
         } // cancelDownload
-    }
+    } // downloadRect
+
 
 
     ////////////////////////////////////////
@@ -795,11 +848,14 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
         height: mainApp.height/2
     } // aboutDialog
 
+
+
     Menu {
-        id: repeatMenu
-        x: repeatButton.x - width + mainMargin
+        id: playOptionMenu
+        x: playOptionsRect.x - width + mainMargin
         y: mainApp.height - height
         transformOrigin: Menu.TopRight
+        width: parent.width - 3*headerButtonSize
 
         Repeater {
             model: repeatModel;
@@ -811,14 +867,9 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                     updateRepeat(model.index);
                 }
             }
-        } // Repeater
-    } // repeatMenu
+        } // Repeater on repeatModel
 
-    Menu {
-        id: shuffleMenu
-        x: shuffleButton.x - width + mainMargin
-        y: mainApp.height - height
-        transformOrigin: Menu.TopRight
+        MenuSeparator{}
 
         Repeater {
             model: shuffleModel;
@@ -826,12 +877,50 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 text       : model.text
                 icon.source: model.icon;
                 onTriggered: {
-                    cppRemote.repeat(model.index);
-                    updateRepeat(model.index);
+                    cppRemote.shuffle(model.index);
+                    updateShuffle(model.index);
                 }
             }
-        } // Repeater
-    } // shuffleMenu
+        } // Repeater on  shuffleModel
+    } // playOptionMenu
+
+//    Menu {
+//        id: repeatMenu
+//        x: repeatButton.x - width + mainMargin
+//        y: mainApp.height - height
+//        transformOrigin: Menu.TopRight
+
+//        Repeater {
+//            model: repeatModel;
+//            MenuItem {
+//                text       : model.text
+//                icon.source: model.icon;
+//                onTriggered: {
+//                    cppRemote.repeat(model.index);
+//                    updateRepeat(model.index);
+//                }
+//            }
+//        } // Repeater
+//    } // repeatMenu
+
+//    Menu {
+//        id: shuffleMenu
+//        x: shuffleButton.x - width + mainMargin
+//        y: mainApp.height - height
+//        transformOrigin: Menu.TopRight
+
+//        Repeater {
+//            model: shuffleModel;
+//            MenuItem {
+//                text       : model.text
+//                icon.source: model.icon;
+//                onTriggered: {
+//                    cppRemote.shuffle(model.index);
+//                    updateShuffle(model.index);
+//                }
+//            }
+//        } // Repeater
+//    } // shuffleMenu
 
     Drawer {
         id: drawer

@@ -63,5 +63,6 @@
         <file>icons/expand.png</file>
         <file>icons/nocover.png</file>
         <file>icons/x-clementine-artist.png</file>
+        <file>icons/jumpTo.png</file>
     </qresource>
 </RCC>
