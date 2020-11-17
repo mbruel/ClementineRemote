@@ -246,11 +246,19 @@ Rectangle {
             }
             source: "icons/newDoc.png";
             onClicked: {
+                if (!mainApp.checkClementineVersion())
+                    return
                 if (newPlaylistNameField.text === "")
-                    mainApp.info(qsTr("No playlist name"),
+                    mainApp.error(qsTr("No playlist name"),
                                  qsTr("Please enter a name for the new playlist if you wish to create one..."));
                 else
+                {
                     sendSelectedFiles(newPlaylistNameField.text);
+                    mainApp.info(qsTr("New Playlist created"),
+                                 qsTr("The new playlist '%1' has been created<br/>It is now the current playlist.").arg(
+                                     newPlaylistNameField.text));
+                    newPlaylistNameField.text = "";
+                }
             }
         }
 

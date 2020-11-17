@@ -214,6 +214,8 @@ Rectangle {
         }
         source: "icons/nav_downloads.png";
         onClicked: {
+            if (!mainApp.checkClementineVersion())
+                return
             if (mainApp.downloadPossible())
                 cppRemote.downloadSelectedSongs();
             cppRemote.selectAllSongsFromProxyModel(false);

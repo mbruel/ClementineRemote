@@ -40,7 +40,7 @@ Item {
     property int headerButtonSize   : 30
     property int mainMargin         : 20
 
-    property int downDialogTimeout  : 8000
+    property int popupTimeout       : 8000
 
     property int trackLength: cppRemote.currentTrackLength()
 
@@ -77,6 +77,9 @@ Item {
     Connections{
         target: cppRemote
 
+        function onInfo(title, msg)  { info(title, msg); }
+        function onError(title, msg) { error(title, msg); }
+
         function onCurrentSongLength(length, pretty_length){
             print("new track duration: "+pretty_length + " ("+length+")");
             trackLength = length;
@@ -96,21 +99,17 @@ Item {
 
         function onDownloadComplete(downloadedFiles, totalFiles, errorList){
             downloadRect.visible = false;
-            downloadsDialog.title = qsTr("Download Complete");
-            downloadsDialog.text  = qsTr("%1 / %2 file(s) have been downloaded successfully!").arg(
-                        downloadedFiles).arg(totalFiles)
-
+            let msg = qsTr("%1 / %2 file(s) have been downloaded successfully!").arg(
+                    downloadedFiles).arg(totalFiles);
             if (errorList.length > 0)
             {
-                downloadsDialog.text += "<br/><br/>" +qsTr("There were %1 error(s):").arg(errorList.length);
-                downloadsDialog.text += "<ul>";
+                msg += "<br/><br/>" +qsTr("There were %1 error(s):").arg(errorList.length);
+                msg += "<ul>";
                 for (const err of errorList)
-                    downloadsDialog.text += "<li>" + err + "</li>";
-                downloadsDialog.text += "</ul>";
+                    msg += "<li>" + err + "</li>";
+                msg += "</ul>";
             }
-            downloadsDialog.open();
-            downloadsTimer.start();
-
+            info(qsTr("Download Complete"), msg);
             cppRemote.setIsDownloading(false);
         }
 
@@ -129,6 +128,37 @@ Item {
             useVolumeButtonWithVerticalSlider(true);
     } // Component.onCompleted
 
+    function info(title, text) {
+        infoDialog.title = title;
+        infoDialog.text  = text;
+        infoDialog.open();
+        popupTimer.start();
+    } // info
+
+    function error(title, text) {
+        infoDialog.title = title;
+        infoDialog.text  = '<font color="darkred"><b>Error: </b>'+text+'</font>';
+        infoDialog.open();
+        popupTimer.start();
+    } // error
+
+    function todo() {
+        info("TODO", qsTr("this feature is not implemented yet..."));
+    } // todo
+
+    function checkClementineVersion(){
+        if (cppRemote.clementineFilesSupport())
+            return true;
+        else
+        {
+            let msg = qsTr("This feature is not supported by your version of Clementine...")
+                + '<br/>' + qsTr('The server is running: ')+ cppRemote.clemVersion()
+                + '<br/>' + qsTr('it should at least be ')
+                + '<b>v' + cppRemote.clementineFilesSupportMinVersion() +'</b>'
+            error(qsTr("Need Clementine update..."), msg);
+            return false;
+        }
+    } // checkClementineVersion
 
     function changeMainMenu(selectedMenu){
         console.log("New idx: "+selectedMenu);
@@ -262,25 +292,20 @@ Item {
         {
             if (cppRemote.isDownloading())
             {
-                downloadsDialog.title = qsTr("Already Downloading...");
-                downloadsDialog.text  = qsTr("There is already a Download in process.") +
-                        "<br/>" + qsTr("Either cancel it or wait its end.");
-                downloadsDialog.open();
-                downloadsTimer.start();
+                error(qsTr("Already Downloading..."),
+                      qsTr("There is already a Download in process.") +
+                      "<br/>" + qsTr("Either cancel it or wait its end."));
                 return false;
             }
             let downloadPath = cppRemote.downloadPath();
             if (downloadPath === "")
             {
-                let error = cppRemote.testDownloadPath();
-                if (error === "")
+                let err = cppRemote.testDownloadPath();
+                if (err === "")
                     downloadPath = cppRemote.downloadPath()
                 else
                 {
-                    downloadsDialog.title = qsTr("Download Error");
-                    downloadsDialog.text  = error;
-                    downloadsDialog.open();
-                    downloadsTimer.start();
+                    error(qsTr("Download Error"), err);
                     return false;
                 }
             }
@@ -291,11 +316,8 @@ Item {
         }
         else
         {
-            downloadsDialog.title = qsTr("Downloads forbidden...");
-            downloadsDialog.text  = qsTr("Downloads are not allowed on Clementine...<br/><br/>\
-You can change that in:<br/>Tools -> Preferences -> Network Remote");
-            downloadsDialog.open();
-            downloadsTimer.start();
+            error(qsTr("Downloads forbidden..."), qsTr("Downloads are not allowed on Clementine...<br/><br/>\
+You can change that in:<br/>Tools -> Preferences -> Network Remote"));
             return false;
         }
     } // downloadPossible
@@ -308,15 +330,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
         }
     } // downloadCurrentSong
 
-    function info(title, text) {
-        infoDialog.title = title;
-        infoDialog.text  = text;
-        infoDialog.open();
-    } // info
 
-    function todo() {
-        info("TODO", qsTr("this feature is not implemented yet..."));
-    } // todo
 
     ////////////////////////////////////////
     //            QML Items               //
@@ -758,34 +772,15 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote");
             wrapMode: Text.WordWrap
             text: "to set..."
         }
-    } // infoDialog
-
-    Dialog {
-        id: downloadsDialog
-        width: mainApp.width *4/5
-        property alias text: downloadsDialogLbl.text
-
-
-        x: (mainApp.width - width) / 2
-        y: (mainApp.height - height) / 2
-
-        title: qsTr("Downloads forbidden...")
-
-        Label {
-            id: downloadsDialogLbl
-            width: downloadsDialog.width - 5
-            wrapMode: Text.WordWrap
-            text: "to be set"
-        }
 
         Timer {
-            id: downloadsTimer
-            interval: downDialogTimeout;
+            id: popupTimer
+            interval: popupTimeout;
             running: false;
             repeat: false
-            onTriggered: downloadsDialog.close()
+            onTriggered: infoDialog.close()
         }
-    } // downloadsDialog
+    } // infoDialog
 
     AboutPopup {
         id: aboutDialog

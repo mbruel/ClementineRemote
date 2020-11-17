@@ -161,10 +161,9 @@ ClementineRemote::~ClementineRemote()
 
 void ClementineRemote::libraryItemActivated(const QModelIndex &proxyIndex, const QString &newPlaylistName)
 {
-//TODO: add a setting to add items in playlist on double click
     if (!proxyIndex.isValid())
     {
-        qCritical() << "Wrong library index...";
+        sendError(tr("Nothing selected"), tr("Select either a single Track or an Album"));
         return;
     }
     int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
@@ -174,7 +173,8 @@ void ClementineRemote::libraryItemActivated(const QModelIndex &proxyIndex, const
         int childCount = _libProxyModel->rowCount(proxyIndex);
         if (childCount == 0)
         {
-            qDebug() << "no tracks for the Library album: " << _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
+            sendError("", tr("No tracks in the selected album %1").arg(
+                          _libProxyModel->data(proxyIndex, LibraryModel::name).toString()));
             return;
         }
         QStringList urls;
@@ -186,12 +186,21 @@ void ClementineRemote::libraryItemActivated(const QModelIndex &proxyIndex, const
             urls << url;
         }
         emit insertUrls(_dispPlaylistId, urls, newPlaylistName);
+        sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
+                     childCount).arg(
+                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
     }
     else if (itemType == LibraryModel::Track)
     {
         QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
         qDebug() << "Library track activated: " << url;
         emit insertUrls(_dispPlaylistId, {url}, newPlaylistName);
+        sendInfo("", tr("the track %1 has been added to the playlist %2").arg(
+                     _libProxyModel->data(proxyIndex, LibraryModel::name).toString()).arg(
+                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+    }
+    else {
+        sendError(tr("Artist not supported..."), tr("Select either a single Track or an Album"));
     }
 }
 
@@ -600,7 +609,7 @@ void ClementineRemote::dumpPlaylists()
 void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files)
 {
     if (files.has_error() && files.error() != pb::remote::ResponseListFiles::NONE)
-        qDebug() << "[MsgType::LIST_FILES] ERROR: " << files.error();
+        sendError("", _remoteFilesListError(files.error(), files.relative_path()));
     else
     {
         if (_remoteFiles.size())
@@ -814,10 +823,10 @@ void ClementineRemote::onLibraryDownloaded()
     emit _libModel->endReset();
 
     qint64 durationMS = timeStart.elapsed();
- //   QTime::fromMSecsSinceStartOfDay(static_cast<int>(duration)).toString("hh:mm:ss.zzz"));
-    qDebug() << "Library model loaded in: " << durationMS / 1000 << " sec";
-    qDebug() << "nb Artists: " << nbArtists << ", nb Albums: " << nbAlbums
-             << ", nb Tracks: " << nbTracks;
+//   QTime::fromMSecsSinceStartOfDay(static_cast<int>(duration)).toString("hh:mm:ss.zzz"));
+    sendInfo(tr("Library loaded in %1 ms").arg(durationMS),
+             tr("<ul><li>Number of Artists: %1</li><li>Number of Albums: %2</li><li>Number of Tracks: %3</li></ul>").arg(
+                 nbArtists).arg(nbAlbums).arg(nbTracks));
 }
 
 void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs)

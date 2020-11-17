@@ -60,7 +60,7 @@ Rectangle {
 
         QQC.TextField {
             id: searchField
-            width: parent.width - 4*headerButtonSize - 2*headerSpacing - newPlaylistNameField.width - 10
+            width: parent.width - headerButtonSize - 2*headerSpacing
             anchors {
                 left: parent.left
                 leftMargin: 5
@@ -94,78 +94,18 @@ Rectangle {
             } //clearSearch
         } // searchField
 
-
         ImageButton {
-            id:   downButton
-            size: headerButtonSize
-            anchors {
-                right: appendButton.left
-                rightMargin: headerSpacing
-                verticalCenter: parent.verticalCenter
-            }
-            source: "icons/nav_downloads.png";
-            onClicked: mainApp.todo();
-        } //  downButton
-
-        ImageButton {
-            id:   appendButton
-            size: headerButtonSize
-            anchors {
-                right: newPlaylistNameField.left
-                rightMargin: headerSpacing
-                verticalCenter: parent.verticalCenter
-            }
-            source: "icons/addToPlayList.png";
-            onClicked: {
-                cppRemote.libraryItemActivated(libView.currentIndex, "");
-                mainApp.info(qsTr("Tracks added"),
-                             qsTr("The tracks have been added to the current playlist."));
-            }
-        }
-
-
-        QQC.TextField {
-            id: newPlaylistNameField
-            placeholderText: qsTr("new playlist")
-            horizontalAlignment: TextInput.AlignHCenter
-            height: searchField.height
-//            width: newPlaylistNameWidth
-
-            anchors {
-                right: newPlaylistButton.left
-                rightMargin: headerSpacing / 2
-                verticalCenter: parent.verticalCenter
-            }
-
-            color: "black"
-            background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
-        }
-
-
-        ImageButton {
-            id:   newPlaylistButton
+            id:   refreshLibButton
             size: headerButtonSize
             anchors {
                 right: parent.right
-                rightMargin: 5
+                rightMargin: headerSpacing
                 verticalCenter: parent.verticalCenter
             }
-            source: "icons/newDoc.png";
-            onClicked: {
-                if (newPlaylistNameField.text === "")
-                    mainApp.info(qsTr("No playlist name"),
-                                 qsTr("Please enter a name for the new playlist if you wish to create one..."));
-                else {
-                    cppRemote.libraryItemActivated(libView.currentIndex, newPlaylistNameField.text);
-                    mainApp.info(qsTr("New Playlist created"),
-                                 qsTr("The new playlist '%1' has been created<br/>It is now the current playlist.").arg(
-                                     newPlaylistNameField.text));
-                    newPlaylistNameField.text = "";
-                }
-            }
-        }
-
-    }
+            source: "icons/refresh.png";
+            onClicked: cppRemote.getLibrary();
+        } // refreshLibButton
+    } // headerRow
 
     QQC1.TreeView {
         id: libView
@@ -196,8 +136,9 @@ Rectangle {
             for(let i = 0; i < expandableIndexes.length ; ++i)
                  currentExpanded ? collapse(expandableIndexes[i]) : expand(expandableIndexes[i]);
 
+// TODO: shall we add a Setting to send tracks to playlist on double click?
 //            cppRemote.libraryItemActivated(index);
-        }
+        } // onDoubleClicked
 
         style: QQCS1.TreeViewStyle {
             rowDelegate: Rectangle {
@@ -215,7 +156,7 @@ Rectangle {
 //                color: styleData.isExpanded ? "green" : "red"
 //            }
             indentation: indent
-        }
+        } // TreeViewStyle
 
         QQC1.TableViewColumn {
             id: column
@@ -227,23 +168,100 @@ Rectangle {
 //                implicitWidth: width
                 color: styleData.selected ? colorSelected : "white"
                 Image {
-                    id: disc
+                    id: itemIcon
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     height: 20
                     width: 20
                     source: cppRemote.libraryItemIcon(styleData.index);
 //                    visible: cppRemote.isLibraryItemTrack(styleData.index)
-                }
+                } // itemIcon
                 Text{
-                    width: parent.width - (disc.visible ? disc.width : 0)
-                    anchors.left: disc.visible ? disc.right : parent.left
-                    anchors.leftMargin: disc.visible ? 5 : 2
+//                    width: parent.width - (itemIcon.visible ? itemIcon.width : 0)
+//                    anchors.left: itemIcon.visible ? itemIcon.right : parent.left
+//                    anchors.leftMargin: itemIcon.visible ? 5 : 2
+                    width: parent.width - itemIcon.width
+                    anchors.left: itemIcon.right
+                    anchors.leftMargin: 5
                     anchors.verticalCenter: parent.verticalCenter
                     text: styleData.value
                     elide: Text.ElideRight
                 }
             }
+        } // column (TableViewColumn)
+    } // libView
+
+
+    Rectangle{
+        id: actionRect
+        width: parent.width
+        height:headerButtonSize
+        anchors {
+            bottom: parent.bottom
+            left: parent.left
         }
-    }
+        color: "white"
+        border.color: "black"
+
+        ImageButton {
+            id:   downButton
+            size: headerButtonSize
+            anchors {
+                right: appendButton.left
+                rightMargin: 3*headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/nav_downloads.png";
+            onClicked: mainApp.todo();
+        } //  downButton
+        ImageButton {
+            id:   appendButton
+            size: headerButtonSize
+            anchors {
+                right: newPlaylistNameField.left
+                rightMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/addToPlayList.png";
+            onClicked: cppRemote.libraryItemActivated(libView.currentIndex, "");
+        } // appendButton
+        QQC.TextField {
+            id: newPlaylistNameField
+            placeholderText: qsTr("new playlist")
+            horizontalAlignment: TextInput.AlignHCenter
+            height: parent.height - 4
+//            width: newPlaylistNameWidth
+            anchors {
+                right: newPlaylistButton.left
+                rightMargin: headerSpacing / 2
+                verticalCenter: parent.verticalCenter
+            }
+            color: "black"
+            background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
+        } // newPlaylistNameField
+        ImageButton {
+            id:   newPlaylistButton
+            size: headerButtonSize
+            anchors {
+                right: parent.right
+                rightMargin: 5
+                verticalCenter: parent.verticalCenter
+            }
+            source: "icons/newDoc.png";
+            onClicked: {
+                if (!mainApp.checkClementineVersion())
+                    return
+                if (newPlaylistNameField.text === "")
+                    mainApp.error(qsTr("No playlist name"),
+                                 qsTr("Please enter a name for the new playlist if you wish to create one..."));
+                else {
+                    cppRemote.libraryItemActivated(libView.currentIndex, newPlaylistNameField.text);
+                    mainApp.info(qsTr("New Playlist created"),
+                                 qsTr("The new playlist '%1' has been created<br/>It is now the current playlist.").arg(
+                                     newPlaylistNameField.text));
+                    newPlaylistNameField.text = "";
+                }
+            } // onClicked
+        } // newPlaylistButton
+    } // actionRect
 }

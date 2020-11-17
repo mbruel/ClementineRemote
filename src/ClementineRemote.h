@@ -290,6 +290,9 @@ private:
     void rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files);
     void rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios);
 
+    inline QString _remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath);
+    inline void sendInfo(const QString &title, const QString &msg);
+    inline void sendError(const QString &title, const QString &msg);
 
 signals:
     // signals sent from QML to ConnectionWorker
@@ -332,6 +335,9 @@ signals:
     void insertUrls(qint32 playlistID, const QStringList &urls, const QString &newPlaylistName);
 
     // signals sent from ConnectionWorker to QML
+    void info(const QString &title, const QString &msg);
+    void error(const QString &title, const QString &msg);
+
     void connected();
     void disconnected(QString reason);
     void connectionError(const QString &err);
@@ -628,5 +634,39 @@ void ClementineRemote::saveSettings(const QString &host, const QString &port, co
     _settings.sync();
 }
 
+QString ClementineRemote::_remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath)
+{
+    switch (errCode) {
+    case pb::remote::ResponseListFiles::ROOT_DIR_NOT_SET:
+        return tr("The root directory is not set on Clementine server...");
+    case pb::remote::ResponseListFiles::DIR_NOT_ACCESSIBLE:
+        return tr("The directory %1 is not accessible on Clementine server...").arg(relativePath.c_str());
+    case pb::remote::ResponseListFiles::DIR_NOT_EXIST:
+        return tr("The directory %1 doesn't exist on Clementine server...").arg(relativePath.c_str());
+    case pb::remote::ResponseListFiles::UNKNOWN:
+        return tr("Clementine sent back an UNKNOWN error...");
+    case pb::remote::ResponseListFiles::NONE:
+        return tr("All good \\o/");
+    }
+}
+
+#ifdef __DEBUG__
+#include <QDebug>
+#endif
+void ClementineRemote::sendInfo(const QString &title, const QString &msg)
+{
+#ifdef __DEBUG__
+    qDebug() << "INFO " << title << " : " << msg;
+#endif
+    emit info(title, msg);
+}
+
+void ClementineRemote::sendError(const QString &title, const QString &msg)
+{
+#ifdef __DEBUG__
+    qCritical() << "ERROR " << title << " : " << msg;
+#endif
+    emit error(title, msg);
+}
 
 #endif // CLEMENTINEREMOTE_H
