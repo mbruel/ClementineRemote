@@ -37,15 +37,13 @@ Rectangle {
         clip: true
         width: parent.width
         height: parent.height
-        contentHeight: gsText.height + gsTitle.height + 150 + 60
-
+        contentHeight: gsText.height + gsTitle.height + qrBtcSize + 60
 
         ScrollIndicator.vertical: ScrollIndicator {
-            parent: gsRect.contentItem
+            parent: gsRect
             anchors.top: flickable.top
             anchors.bottom: flickable.bottom
             anchors.right: parent.right
-            anchors.rightMargin: -gsRect.rightPadding + 1
         }
 
         Text {
