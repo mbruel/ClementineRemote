@@ -1,10 +1,10 @@
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/icon.png" alt="ClementineRemote">
 
-# ClementineRemote v1.0-rc1
+# ClemRemote v1.0-rc1
 Remote for Clementine Music Player developped in C++/QT5/QML to be available on any OS. <br/>
 Its main goal was to add the Files View missing in the Android Remote.<br/>
 I've also made it like a player, so you always see the running track, can pause or go next..<br/>
-I've build the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1_win64.zip). I'll publish it soon on iOS and Android once I've got some feedback.
+I've built the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1_win64.zip). I'll publish it soon on iOS and Android once I've got some feedback.
 <br/><br/>
 The modification needed in Clementine can be found on [my fork](https://github.com/mbruel/Clementine). I've asked 4 pull requests that are not yet merged so I've build the release myself for Linux, MacOS and Windows (using the Clementine workflow on my branch)<br/>
 **You can download and try [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote)**
