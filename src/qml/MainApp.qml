@@ -53,8 +53,8 @@ Item {
 
         ListElement { name : "playlist" ; color: "white" }
         ListElement { name : "file"     ; color: "lightgray" }
-        ListElement { name : "internet" ; color: "ivory" }
         ListElement { name : "library"  ; color: "lightblue" }
+        ListElement { name : "internet" ; color: "ivory" }
         ListElement { name : "search"   ; color: "lightgreen" }
     }
     ListModel { // ListModel for repeatMenu
@@ -113,6 +113,8 @@ Item {
             cppRemote.setIsDownloading(false);
         }
 
+        function onLibraryDownloaded() {downloadRect.visible = false;}
+
         function onDownloadProgress(pct){
             if (!downloadRect.visible)
                 downloadRect.visible = true;
@@ -138,8 +140,8 @@ Item {
     } // info
 
     function error(title, text) {
-        infoDialog.title = title;
-        infoDialog.text  = '<font color="darkred"><b>Error: </b>'+text+'</font>';
+        infoDialog.title = '<font color="darkred">'+title+'</font>';
+        infoDialog.text  = '<font color="darkred">'+text+'</font>';
         infoDialog.open();
         popupTimer.start();
     } // error
@@ -174,7 +176,7 @@ Item {
         }
 
         // is there not supported Menus?
-        if ([1, 2].includes(selectedMenu) && !cppRemote.clementineFilesSupport() ){
+        if ([1, 3].includes(selectedMenu) && !cppRemote.clementineFilesSupport() ){
             mainArea.setSource("NotSupported.qml");
             mainArea.item.title = (selectedMenu === 1 ? qsTr("Files") : qsTr("Radios"));
             return;
@@ -188,14 +190,14 @@ Item {
             mainArea.sourceComponent = filesPage;
         }
         else if (selectedMenu === 2)
+            mainArea.sourceComponent = libraryPage;
+        else if (selectedMenu === 3)
         {
             cppRemote.getServerFiles(cppRemote.remoteFilesPath_QML());
             mainArea.sourceComponent = radiosPage;
         }
-        else if (selectedMenu === 3)
-        {
-            mainArea.sourceComponent = libraryPage;
-        }
+        else if (selectedMenu === 4)
+            mainArea.sourceComponent = globalSearchPage;
         else
         {
             mainArea.setSource("SimpleMainArea.qml");
@@ -809,6 +811,16 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
         }
     } // libraryPage
 
+    Component {
+        id: globalSearchPage
+
+        GlobalSearch {
+            anchors.fill  : parent
+            color: "lightgray"
+
+        }
+    } // libraryPage
+
     Dialog {
         id: infoDialog
         property alias text: infoLbl.text
@@ -994,7 +1006,9 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 onClicked: {
                     console.log("onClicked " + downloads.text);
                     drawer.close();
-                    todo();
+                    info(qsTr("Feature not implemented..."),
+                         qsTr("Please use the File explorer of your System to see/manage your downloads...")
+                         +'<br/>'+qsTr("The download folder is: %1").arg(cppRemote.downloadPath()));
                 }
             } // downloads
             ItemDelegate {

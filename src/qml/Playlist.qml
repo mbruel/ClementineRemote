@@ -628,12 +628,18 @@ Are you sure you want to continue?")
         Action {
             icon.source: "icons/star.png"
             text: qsTr("Save Playlist")
-            onTriggered: cppRemote.savePlaylist(cppRemote.currentPlaylistID());
+            onTriggered: {
+                if (!mainApp.checkClementineVersion())
+                    return
+                cppRemote.savePlaylist(cppRemote.currentPlaylistID());
+            }
         }
         Action {
             icon.source: "icons/renamePlaylist.png"
             text: qsTr("Rename Playlist")
             onTriggered: {
+                if (!mainApp.checkClementineVersion())
+                    return
                 renPlaylistDialog.title = qsTr("Rename Playlist ") + playlistCombo.currentText;
                 renPlaylistDialog.createNewPlaylist = false;
                 renPlaylistDialog.open();
@@ -642,7 +648,11 @@ Are you sure you want to continue?")
         Action {
             icon.source: "icons/clear.png"
             text: qsTr("Clear Playlist")
-            onTriggered: cppRemote.clearPlaylist(cppRemote.currentPlaylistID());
+            onTriggered: {
+                if (!mainApp.checkClementineVersion())
+                    return
+                cppRemote.clearPlaylist(cppRemote.currentPlaylistID());
+            }
         }
         Action {
             icon.source: "icons/close.png"
@@ -651,8 +661,12 @@ Are you sure you want to continue?")
                 // Won't allow removing the last playlist
                 if (playlistCombo.count <= 1)
                     return;
-                if (!cppRemote.isCurrentPlaylistSaved())
-                    playlistDestructionConfirmationDialog.open();
+                if (cppRemote.clementineFilesSupport()) {
+                    if (!cppRemote.isCurrentPlaylistSaved())
+                        playlistDestructionConfirmationDialog.open();
+                    else
+                        cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+                }
                 else
                     cppRemote.closePlaylist(cppRemote.currentPlaylistID());
             }
@@ -666,12 +680,18 @@ Are you sure you want to continue?")
         Action {
             icon.source: "icons/open.png"
             text: qsTr("Open a Playlist")
-            onTriggered: cppRemote.getAllPlaylists();
+            onTriggered: {
+                if (!mainApp.checkClementineVersion())
+                    return
+                cppRemote.getAllPlaylists();
+            }
         }
         Action {
             icon.source: "icons/newFile.png"
             text: qsTr("Create new Playlist")
             onTriggered: {
+                if (!mainApp.checkClementineVersion())
+                    return
                 renPlaylistDialog.title = qsTr("Create New Playlist ");
                 renPlaylistDialog.createNewPlaylist = true;
                 renPlaylistDialog.open();

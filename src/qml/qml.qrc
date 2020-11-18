@@ -15,5 +15,6 @@
         <file>SettingsPage.qml</file>
         <file>SettingSwitch.qml</file>
         <file>Library.qml</file>
+        <file>GlobalSearch.qml</file>
     </qresource>
 </RCC>

@@ -39,17 +39,19 @@
 #include <QtAndroid>
 #endif
 
-const QString ClementineRemote::sAppName    = "ClemRemote";
-const QString ClementineRemote::sVersion    = "0.3";
+const QString ClementineRemote::sAppName    = QStringLiteral("ClemRemote");
+const QString ClementineRemote::sVersion    = "1.0-rc1";
 const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
-const QString ClementineRemote::sProjectUrl = "https://github.com/mbruel/ClementineRemote";
-const QString ClementineRemote::sBTCaddress = "3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6";
-const QString ClementineRemote::sDonateUrl  = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W2C236U6JNTUA&item_name=ClementineRemote&currency_code=EUR";
+const QString ClementineRemote::sProjectUrl = QStringLiteral("https://github.com/mbruel/ClementineRemote");
+const QString ClementineRemote::sBTCaddress = QStringLiteral("3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6");
+const QString ClementineRemote::sDonateUrl  = QStringLiteral("https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W2C236U6JNTUA&item_name=ClementineRemote&currency_code=EUR");
+const QString ClementineRemote::sClementineReleaseURL = QStringLiteral("https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote");
+
 
 const QPair<ushort, ushort> ClementineRemote::sClemFilesSupportMinVersion = {1, 4};
 
 const QString ClementineRemote::sLibrarySQL =
-        "select artist, album, title, track, filename from songs order by artist, album, track, title";
+        QStringLiteral("select artist, album, title, track, filename from songs order by artist, album, track, title");
 
 const QMap<pb::remote::RepeatMode, ushort> ClementineRemote::sQmlRepeatCodes = {
     {pb::remote::RepeatMode::Repeat_Off,      0},
@@ -116,7 +118,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _libDB(), _libModel(new LibraryModel), _libProxyModel(new LibraryProxyModel)
 {
-    setObjectName("ClemRemote");
+    setObjectName(sAppName);
     _songsModel->setRemote(this);
     _songsProxyModel->setSourceModel(_songsModel);
     _libProxyModel->setSourceModel(_libModel);
@@ -159,7 +161,7 @@ ClementineRemote::~ClementineRemote()
     close();
 }
 
-void ClementineRemote::libraryItemActivated(const QModelIndex &proxyIndex, const QString &newPlaylistName)
+void ClementineRemote::appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName)
 {
     if (!proxyIndex.isValid())
     {
@@ -199,8 +201,59 @@ void ClementineRemote::libraryItemActivated(const QModelIndex &proxyIndex, const
                      _libProxyModel->data(proxyIndex, LibraryModel::name).toString()).arg(
                      newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
     }
-    else {
-        sendError(tr("Artist not supported..."), tr("Select either a single Track or an Album"));
+    else
+        sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
+}
+
+void ClementineRemote::downloadLibraryItem(const QModelIndex &proxyIndex)
+{
+    if (!proxyIndex.isValid())
+    {
+        sendError(tr("Nothing selected"), tr("Select either a single Track or an Album"));
+        return;
+    }
+    int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
+    if (itemType == LibraryModel::Artist)
+    {
+        sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
+        return;
+    }
+
+#ifdef __USE_CONNECTION_THREAD__
+    _secureSongs.lock();
+#endif
+    _songsToDownload.Clear();
+    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
+    pb::remote::RequestDownloadSongs *req = _songsToDownload.mutable_request_download_songs();
+    req->set_download_item(pb::remote::DownloadItem::Urls);
+    if (itemType == LibraryModel::Album)
+    {
+        QString albumName = _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
+        qDebug() << "Library album to download: " << albumName;
+        int childCount = _libProxyModel->rowCount(proxyIndex);
+        if (childCount == 0)
+        {
+            sendError("", tr("No tracks in the selected album %1").arg(albumName));
+#ifdef __USE_CONNECTION_THREAD__
+            _secureSongs.unlock();
+#endif
+            return;
+        }
+        for (int i = 0; i < childCount; ++i)
+        {
+            QModelIndex childIndex = _libProxyModel->index(i, 0, proxyIndex);
+            QString url = _libProxyModel->data(childIndex, LibraryModel::url).toString();
+            qDebug() << "Adding Library track from album: " << url;
+            *req->add_urls() = url.toStdString();
+        }
+        emit sendSongsToDownload(albumName);
+    }
+    else if (itemType == LibraryModel::Track)
+    {
+        QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
+        qDebug() << "Library track to download: " << url;
+        *req->add_urls() = url.toStdString();
+        emit sendSongsToDownload(QString());
     }
 }
 
@@ -287,6 +340,9 @@ int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
 #ifdef __USE_CONNECTION_THREAD__
         _secureFilesToAppend.unlock();
 #endif
+        sendError(tr("No track selected"),
+                  tr("Please select at least one Track<br/>You need to be in <b>selection mode</b>.<br/>\
+For that either do a long press an a Track or use one of the 2 bottoms on the right hand."));
         return 0;
     }
     else
@@ -301,6 +357,9 @@ int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
         for (const QString &filename : selectedFiles)
             *files->add_files() = filename.toStdString();
 
+        sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
+                     selectedFiles.size()).arg(
+                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
         emit sendFilesToAppend();
         return selectedFiles.size();
     }
@@ -311,7 +370,8 @@ void ClementineRemote::downloadSelectedFiles()
 #ifdef __USE_CONNECTION_THREAD__
     _secureFilesToAppend.lock();
 #endif
-    _songsToDownload.clear_request_download_songs();
+    _songsToDownload.Clear();
+    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
     QStringList selectedFiles;
     for (const RemoteFile &f : _remoteFiles)
     {
@@ -424,7 +484,8 @@ void ClementineRemote::downloadSelectedSongs()
 #ifdef __USE_CONNECTION_THREAD__
     _secureSongs.lock();
 #endif
-    _songsToDownload.clear_request_download_songs();
+    _songsToDownload.Clear();
+    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
     QList<int> selectedSongsIDs = _songsProxyModel->selectedSongsIDs();
     if (selectedSongsIDs.isEmpty())
     {

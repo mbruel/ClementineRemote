@@ -23,7 +23,7 @@ import QtQuick.Controls 2.15 as QQC
 import QtQuick.Controls 1.4 as QQC1
 import QtQuick.Controls.Styles 1.4 as QQCS1
 import Library 1.0
-//import QtQml.Models 2.15 // for SelectionModel
+import QtQml.Models 2.15 // needed on iOS for TreeView... (otherwise for SelectionModel)
 
 Rectangle {
     id: library
@@ -136,7 +136,7 @@ Rectangle {
                  currentExpanded ? collapse(expandableIndexes[i]) : expand(expandableIndexes[i]);
 
 // TODO: shall we add a Setting to send tracks to playlist on double click?
-//            cppRemote.libraryItemActivated(index);
+//            cppRemote.appendLibraryItem(index);
         } // onDoubleClicked
 
         style: QQCS1.TreeViewStyle {
@@ -211,7 +211,7 @@ Rectangle {
                 verticalCenter: parent.verticalCenter
             }
             source: "icons/nav_downloads.png";
-            onClicked: mainApp.todo();
+            onClicked: cppRemote.downloadLibraryItem(libView.currentIndex);
         } //  downButton
         ImageButton {
             id:   appendButton
@@ -222,7 +222,7 @@ Rectangle {
                 verticalCenter: parent.verticalCenter
             }
             source: "icons/addToPlayList.png";
-            onClicked: cppRemote.libraryItemActivated(libView.currentIndex, "");
+            onClicked: cppRemote.appendLibraryItem(libView.currentIndex, "");
         } // appendButton
         QQC.TextField {
             id: newPlaylistNameField
@@ -254,7 +254,7 @@ Rectangle {
                     mainApp.error(qsTr("No playlist name"),
                                  qsTr("Please enter a name for the new playlist if you wish to create one..."));
                 else {
-                    cppRemote.libraryItemActivated(libView.currentIndex, newPlaylistNameField.text);
+                    cppRemote.appendLibraryItem(libView.currentIndex, newPlaylistNameField.text);
                     mainApp.info(qsTr("New Playlist created"),
                                  qsTr("The new playlist '%1' has been created<br/>It is now the current playlist.").arg(
                                      newPlaylistNameField.text));

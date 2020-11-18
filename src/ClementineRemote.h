@@ -51,6 +51,7 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
     static const QString sProjectUrl;
     static const QString sDonateUrl;
     static const QString sBTCaddress;
+    static const QString sClementineReleaseURL;
     static const int     sSockTimeoutMs = 2000;
 
     static const QMap<pb::remote::RepeatMode,  ushort> sQmlRepeatCodes;
@@ -151,7 +152,8 @@ private:
 public:
     ~ClementineRemote();
 
-    Q_INVOKABLE void libraryItemActivated(const QModelIndex &proxyIndex, const QString &newPlaylistName);
+    Q_INVOKABLE void appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName);
+    Q_INVOKABLE void downloadLibraryItem(const QModelIndex &proxyIndex);
     Q_INVOKABLE void setLibraryFilter(const QString &searchTxt);
     inline Q_INVOKABLE QVariantList getExpandableIndexes(const QModelIndex &currentIndex) const;
 
@@ -403,6 +405,7 @@ public:
     inline Q_INVOKABLE static const QString projectURL();
     inline Q_INVOKABLE static const QString donateURL();
     inline Q_INVOKABLE static const QString btcAddress();
+    inline Q_INVOKABLE static const QString clementineReleaseURL();
 
     inline             static int sockTimeoutMs();
 
@@ -505,6 +508,7 @@ const QString ClementineRemote::appVersion() { return sVersion; }
 const QString ClementineRemote::projectURL() { return sProjectUrl; }
 const QString ClementineRemote::donateURL() { return sDonateUrl; }
 const QString ClementineRemote::btcAddress() { return sBTCaddress; }
+const QString ClementineRemote::clementineReleaseURL() { return sClementineReleaseURL; }
 
 int ClementineRemote::sockTimeoutMs() { return sSockTimeoutMs; }
 
