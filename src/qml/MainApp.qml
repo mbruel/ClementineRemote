@@ -36,12 +36,12 @@ Item {
     property int toolBarSpacing     : 15
     property int toolBarMargin      : 20
     property int toolBarButtonWidth : 50
-
-    property int headerButtonSize   : 30
     property int mainMargin         : 20
 
     property int popupTimeout       : 8000
 
+
+    property int headerButtonSize   : cppRemote.iconSize();
     property int trackLength: cppRemote.currentTrackLength()
 
     property color bgGradiantStart: "#8b008b" // darkmagenta (https://doc.qt.io/qt-5/qml-color.html)

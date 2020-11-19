@@ -44,8 +44,6 @@ Window {
     property int toolBarSpacing     : 15;
     property int toolBarMargin      : 10;
     property int toolBarButtonWidth : width/10;
-
-    property int headerButtonSize   : 42;
     property int mainMargin         : 20;
 
     property string disconnectReason: ""
@@ -130,8 +128,6 @@ Window {
             toolBarSpacing     : root.toolBarSpacing
             toolBarMargin      : root.toolBarMargin
             toolBarButtonWidth : root.toolBarButtonWidth
-
-            headerButtonSize   : root.headerButtonSize
             mainMargin         : root.mainMargin
         }
     }

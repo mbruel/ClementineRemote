@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion(ClementineRemote::appVersion());
     app.setApplicationDisplayName(ClementineRemote::appTitle());
     app.setOrganizationName(ClementineRemote::appName());
+    app.setWindowIcon(QIcon(":/icon.png"));
 //    QCoreApplication::setOrganizationDomain("clementine-player.org");
 
     QQmlApplicationEngine engine;

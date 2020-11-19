@@ -93,7 +93,7 @@ Page {
             Rectangle {
                 id: playerSettings
                 width: parent.width
-                height: playerTitle.height + switchHeight + 4*sectionMargin
+                height: playerTitle.height + switchHeight + iconSizeSB.height + 6*sectionMargin
                 color: "transparent"
 
                 radius: 10
@@ -137,6 +137,32 @@ Page {
                     checked: cppRemote.verticalVolumeSlider()
                     onToggled: cppRemote.setVerticalVolumeSlider(vSliderSwitch.checked);
                 } // vSliderSwitch
+
+                Text {
+                    id: iconSizeLbl
+                    anchors {
+                        left: parent.left
+                        verticalCenter: iconSizeSB.verticalCenter
+                        leftMargin: sectionMargin
+                    }
+                    text: qsTr("Player Icons size")
+                } // iconSizeLbl
+                SpinBox {
+                    id: iconSizeSB
+                    height: switchHeight+10
+//                    width: switchWidth
+                    anchors {
+                        right: parent.right
+                        top: vSliderSwitch.bottom
+                        topMargin: sectionMargin
+                        rightMargin: sectionMargin
+                    }
+                    from: 10
+                    to:   99
+                    stepSize: 1
+                    value: cppRemote.iconSize()
+                    onValueChanged: cppRemote.setIconSize(value);
+                } // iconSizeSB
 
             } // playerSettings
 

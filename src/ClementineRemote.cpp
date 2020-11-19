@@ -66,6 +66,16 @@ const QMap<pb::remote::ShuffleMode, ushort> ClementineRemote::sQmlShuffleCodes =
     {pb::remote::ShuffleMode::Shuffle_Albums,      3}
 };
 
+const QMap<ClementineRemote::Settings, QString> ClementineRemote::sSettings = {
+    {Settings::host,           QStringLiteral("host")},
+    {Settings::port,           QStringLiteral("port")},
+    {Settings::pass,           QStringLiteral("pass")},
+    {Settings::downloadPath,   QStringLiteral("downloadPath")},
+    {Settings::remotePath,     QStringLiteral("remotePath")},
+    {Settings::verticalVolume, QStringLiteral("verticalVolume")},
+    {Settings::iconSize,       QStringLiteral("iconSize")}
+};
+
 ClementineRemote::ClementineRemote(QObject *parent):
     QObject(parent), Singleton<ClementineRemote>(),
 #ifdef __USE_CONNECTION_THREAD__
@@ -119,6 +129,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _libDB(), _libModel(new LibraryModel), _libProxyModel(new LibraryProxyModel)
 {
     setObjectName(sAppName);
+
     _songsModel->setRemote(this);
     _songsProxyModel->setSourceModel(_songsModel);
     _libProxyModel->setSourceModel(_libModel);
@@ -135,7 +146,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _thread.setObjectName("ConnectionWorkerThread");
 #endif
 
-    _settings.beginGroup("remotePath");
+    _settings.beginGroup(sSettings[Settings::remotePath]);
     for (const QString &host :  _settings.childKeys())
          _remoteFilesPathPerHost[host] = _settings.value(host).toString();
     _settings.endGroup();
@@ -150,7 +161,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     connect(this, &ClementineRemote::libraryDownloaded, this, &ClementineRemote::onLibraryDownloaded, Qt::QueuedConnection);
 
 #ifdef Q_OS_IOS
-    if (!_settings.contains("verticalVolume"))
+    if (!_settings.contains(sSettings[Settings::verticalVolume]))
         setVerticalVolumeSlider(true);
 #endif
 }
@@ -257,16 +268,6 @@ void ClementineRemote::downloadLibraryItem(const QModelIndex &proxyIndex)
     }
 }
 
-bool ClementineRemote::verticalVolumeSlider() const
-{
-    return _settings.value("verticalVolume", false).toBool();
-}
-
-void ClementineRemote::setVerticalVolumeSlider(bool isVertical)
-{
-    _settings.setValue("verticalVolume", isVertical);
-}
-
 bool ClementineRemote::isConnected() const { return _connection->isConnected(); }
 void ClementineRemote::cancelDownload() const { _connection->cancelDownload(); }
 
@@ -281,7 +282,7 @@ const QString ClementineRemote::hostname() const
 void ClementineRemote::close()
 {
     qDebug() << "[MB_TRACE] close ClementineRemote";
-    _settings.beginGroup("remotePath");
+    _settings.beginGroup(sSettings[Settings::remotePath]);
     for (auto it = _remoteFilesPathPerHost.cbegin(), itEnd = _remoteFilesPathPerHost.cend(); it != itEnd ; ++it)
         _settings.setValue(it.key(), it.value());
     _settings.endGroup();
@@ -746,8 +747,8 @@ QString ClementineRemote::downloadPath()
     qDebug() << "standard writable down loc: "     << QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
 
 
-    if (_settings.contains("downloadPath"))
-        _downloadPath = _settings.value("downloadPath").toString();
+    if (_settings.contains(sSettings[Settings::downloadPath]))
+        _downloadPath = _settings.value(sSettings[Settings::downloadPath]).toString();
     else
     {
 #if defined(Q_OS_ANDROID)
@@ -782,7 +783,7 @@ QString ClementineRemote::downloadPath()
             _downloadPath = fi.absoluteFilePath();
         }
     }
-    _settings.setValue("downloadPath", _downloadPath);
+    _settings.setValue(sSettings[Settings::downloadPath], _downloadPath);
     _settings.sync();
     qDebug() << "Download path: " << _downloadPath;
     return _downloadPath;

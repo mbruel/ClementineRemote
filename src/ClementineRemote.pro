@@ -20,13 +20,20 @@ linux {
 }
 
 macx{
+    ICON = ngPost.icns
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/macx/ -lprotobuf
 
     PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/macx/libprotobuf.a
 }
 
 win32{
+    RC_ICONS += Clementine.ico
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/win64/ -lprotobuf
+}
+
+ios {
+    ios_icon.files = $$files($$PWD/ios/Icon*.png)
+    QMAKE_BUNDLE_DATA += ios_icon
 }
 
 android {

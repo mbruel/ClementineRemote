@@ -496,7 +496,7 @@ void ConnectionWorker::onConnected()
 {
     _timeout.stop();
 
-    _remote->saveSettings(_host, QString::number(_port), QString::number(_auth_code));
+    _remote->saveConnectionInSettings(_host, QString::number(_port), QString::number(_auth_code));
 
     qDebug() << "[ConnectionWorker::onConnected] to server " << _host << ":" << _port;
     // Create the general message and set the message type

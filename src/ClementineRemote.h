@@ -53,6 +53,14 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
     static const QString sBTCaddress;
     static const QString sClementineReleaseURL;
     static const int     sSockTimeoutMs = 2000;
+    static const uint    sDefaultIconSize = 42;
+
+    enum class Settings {
+        host, port, pass,
+        downloadPath, remotePath,
+        verticalVolume, iconSize
+    };
+    static const QMap<Settings, QString> sSettings;
 
     static const QMap<pb::remote::RepeatMode,  ushort> sQmlRepeatCodes;
     static const QMap<pb::remote::ShuffleMode, ushort> sQmlShuffleCodes;
@@ -165,8 +173,12 @@ public:
     // TODO: should be a setting
     bool overwriteDownloadedSongs() const {return false;}
 
-    Q_INVOKABLE bool verticalVolumeSlider() const;
-    Q_INVOKABLE void setVerticalVolumeSlider(bool isVertical);
+    inline Q_INVOKABLE bool verticalVolumeSlider() const;
+    inline Q_INVOKABLE void setVerticalVolumeSlider(bool isVertical);
+
+    inline Q_INVOKABLE uint iconSize() const;
+    inline Q_INVOKABLE void setIconSize(uint size);
+
 
     Q_INVOKABLE bool isConnected() const;
     inline Q_INVOKABLE bool isDownloading() const;
@@ -215,7 +227,7 @@ public:
     inline Q_INVOKABLE QString settingHost() const;
     inline Q_INVOKABLE QString settingPort() const;
     inline Q_INVOKABLE QString settingPass() const;
-    inline Q_INVOKABLE void saveSettings(const QString &host, const QString &port, const QString &pass);
+    inline Q_INVOKABLE void saveConnectionInSettings(const QString &host, const QString &port, const QString &pass);
 
     inline Q_INVOKABLE qint32 playerState() const;
     inline qint32 playerPreviousState() const;
@@ -626,17 +638,25 @@ int ClementineRemote::activeSongIndex() const
     return -1;
 }
 
-QString ClementineRemote::settingHost() const { return _settings.value("host", "").toString(); }
-QString ClementineRemote::settingPort() const { return _settings.value("port", "").toString(); }
-QString ClementineRemote::settingPass() const { return _settings.value("pass", "").toString(); }
+QString ClementineRemote::settingHost() const { return _settings.value(sSettings[Settings::host], "").toString(); }
+QString ClementineRemote::settingPort() const { return _settings.value(sSettings[Settings::port], "").toString(); }
+QString ClementineRemote::settingPass() const { return _settings.value(sSettings[Settings::pass], "").toString(); }
 
-void ClementineRemote::saveSettings(const QString &host, const QString &port, const QString &pass)
+void ClementineRemote::saveConnectionInSettings(const QString &host, const QString &port, const QString &pass)
 {
-    _settings.setValue("host", host);
-    _settings.setValue("port", port);
-    _settings.setValue("pass", pass);
+    _settings.setValue(sSettings[Settings::host], host);
+    _settings.setValue(sSettings[Settings::port], port);
+    _settings.setValue(sSettings[Settings::pass], pass);
     _settings.sync();
 }
+
+bool ClementineRemote::verticalVolumeSlider() const { return _settings.value(sSettings[Settings::verticalVolume], false).toBool(); }
+void ClementineRemote::setVerticalVolumeSlider(bool isVertical) { _settings.setValue(sSettings[Settings::verticalVolume], isVertical); }
+
+uint ClementineRemote::iconSize() const { return _settings.value(sSettings[Settings::iconSize], sDefaultIconSize).toUInt(); }
+void ClementineRemote::setIconSize(uint size) { _settings.setValue(sSettings[Settings::iconSize], size); }
+
+
 
 QString ClementineRemote::_remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath)
 {
