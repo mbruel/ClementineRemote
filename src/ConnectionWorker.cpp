@@ -424,18 +424,9 @@ void ConnectionWorker::onGetLibrary()
     sendDataToServer(msg);
 }
 
-void ConnectionWorker::onInsertUrls(qint32 playlistID, const QStringList &urls, const QString &newPlaylistName)
+void ConnectionWorker::onInsertUrls(qint32 playlistID, const QString &newPlaylistName)
 {
-    pb::remote::Message msg;
-    msg.set_type(pb::remote::INSERT_URLS);
-    pb::remote::RequestInsertUrls *req = msg.mutable_request_insert_urls();
-    if (newPlaylistName.isEmpty())
-        req->set_playlist_id(playlistID);
-    else
-        req->set_new_playlist_name(newPlaylistName.toStdString());
-    for (const QString &url : urls)
-        *req->add_urls() = url.toStdString();
-    sendDataToServer(msg);
+    _remote->doSendInsertUrls(playlistID, newPlaylistName);
 }
 
 void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)

@@ -33,6 +33,7 @@ const QHash<int, QByteArray> RemoteSongModel::sRoleNames = {
     {SongRole::selected,      "selected"},
     {SongRole::songIndex,     "songIndex"},
     {SongRole::songId,        "songId"},
+    {SongRole::url,           "url"}
 };
 
 RemoteSongModel::RemoteSongModel(QObject *parent):
@@ -76,6 +77,8 @@ QVariant RemoteSongModel::data(const QModelIndex &index, int role) const
         return song.index;
     case SongRole::songId:
         return song.id;
+    case SongRole::url:
+        return song.url;
     }
 
     return QVariant();
@@ -217,4 +220,15 @@ QList<int> RemoteSongProxyModel::selectedSongsIDs()
             selectedIDs << data(index(i, 0), RemoteSongModel::songId).toInt();
     }
     return selectedIDs;
+}
+
+QStringList RemoteSongProxyModel::selectedSongsURLs()
+{
+    QStringList selectedURLs;
+    for (int i = 0; i < rowCount() ; ++i)
+    {
+        if (data(index(i, 0), RemoteSongModel::selected).toBool())
+            selectedURLs << data(index(i, 0), RemoteSongModel::url).toString();
+    }
+    return selectedURLs;
 }

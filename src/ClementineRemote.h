@@ -111,9 +111,6 @@ private:
 #endif
     RemoteSongModel        *_songsModel;     //!< Model used to expose the songs to the View
     RemoteSongProxyModel   *_songsProxyModel;//!< Proxy model used by QML ListView
-    pb::remote::Message     _songsToRemove;
-    pb::remote::Message     _songsToDownload;
-
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
 
@@ -130,11 +127,6 @@ private:
     pb::remote::Message     _remoteFilesData;
 #endif
 
-#ifdef __USE_CONNECTION_THREAD__
-    QMutex                  _secureFilesToAppend;
-#endif
-    pb::remote::Message     _filesToAppend;
-
     QList<Stream>           _radioStreams;
 #ifdef __USE_CONNECTION_THREAD__
     QMutex                  _secureRadioStreams;
@@ -149,80 +141,66 @@ private:
     LibraryModel *_libModel;
     LibraryProxyModel *_libProxyModel;
 
+#ifdef __USE_CONNECTION_THREAD__
+    QMutex _secureUserMsg;
+#endif
+    pb::remote::Message _userMsg;
+
 
 private:
     ClementineRemote(QObject *parent = nullptr);
 
     inline QString disconnectReason(int reason) const;
-
     void checkClementineVersion();
 
 public:
     ~ClementineRemote();
 
+    Q_INVOKABLE void close();
+
+    Q_INVOKABLE QString testDownloadPath();
+    Q_INVOKABLE QString downloadPath();
+    Q_INVOKABLE QUrl    downloadPathURL();
+
+    void parseMessage(const QByteArray& data);
+
+
+
+    ////////////////////////////////
+    /// Library methods
+    ////////////////////////////////
+
+    inline const QString &libraryPath() const;
+    inline Q_INVOKABLE QAbstractItemModel *libraryModel() const;
+    inline Q_INVOKABLE bool isLibraryItemTrack(const QModelIndex &index) const;
+    inline Q_INVOKABLE QVariantList getExpandableIndexes(const QModelIndex &currentIndex) const;
+    inline Q_INVOKABLE QString libraryItemIcon(const QModelIndex &index) const;
+
+    Q_INVOKABLE void setLibraryFilter(const QString &searchTxt);
     Q_INVOKABLE void appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName);
     Q_INVOKABLE void downloadLibraryItem(const QModelIndex &proxyIndex);
-    Q_INVOKABLE void setLibraryFilter(const QString &searchTxt);
-    inline Q_INVOKABLE QVariantList getExpandableIndexes(const QModelIndex &currentIndex) const;
 
 
-    inline Q_INVOKABLE bool isLibraryItemTrack(const QModelIndex &index) const;
-    inline Q_INVOKABLE QString libraryItemIcon(const QModelIndex &index) const;
-    inline Q_INVOKABLE QAbstractItemModel *libraryModel() const;
 
-    // TODO: should be a setting
-    bool overwriteDownloadedSongs() const {return false;}
+    ////////////////////////////////
+    /// QML getter/setters
+    ////////////////////////////////
+
+    inline Q_INVOKABLE const QString clemVersion() const;
+    inline Q_INVOKABLE bool clementineFilesSupport() const;
+
+    inline bool overwriteDownloadedSongs() const; // TODO: should be a setting
 
     inline Q_INVOKABLE bool verticalVolumeSlider() const;
     inline Q_INVOKABLE void setVerticalVolumeSlider(bool isVertical);
 
     inline Q_INVOKABLE uint iconSize() const;
-    inline Q_INVOKABLE void setIconSize(uint size);
-
-
-    Q_INVOKABLE bool isConnected() const;
-    inline Q_INVOKABLE bool isDownloading() const;
-    inline Q_INVOKABLE bool setIsDownloading(bool isDownloading);
-    inline Q_INVOKABLE bool downloadsAllowed() const;
-    Q_INVOKABLE void cancelDownload() const;
-
-    inline Q_INVOKABLE PlaylistModel *modelOpenedPlaylists() const;
-    inline Q_INVOKABLE PlaylistModel *modelClosedPlaylists() const;
-
-    Q_INVOKABLE const QString hostname() const;
-
-    inline int modelRowFromProxyRow(int proxyRow) const;
-
+    inline Q_INVOKABLE void setIconSize(uint size);        
     inline Q_INVOKABLE bool hideServerFilesPreviousNextNavButtons() const;
 
-    Q_INVOKABLE void close();
-
-    Q_INVOKABLE int sendSelectedFiles(const QString &newPlaylistName = "");
-    Q_INVOKABLE void downloadSelectedFiles();
-
-    Q_INVOKABLE bool allFilesSelected() const;
-    void doSendFilesToAppend();
-
-    inline const QString &remoteFilesPath() const;
-    inline Q_INVOKABLE QString remoteFilesPath_QML() const; //!< can't use refs in QML...
-    inline void loadRemotePathForHost(const QString &host);
-
-    inline Q_INVOKABLE const QString clemVersion() const;
-    inline static Q_INVOKABLE QString clementineFilesSupportMinVersion();
-    inline Q_INVOKABLE bool clementineFilesSupport() const;
-
-    inline Q_INVOKABLE int activeSongIndex() const;
-
-    inline Q_INVOKABLE QAbstractItemModel *modelRemoteSongs() const;
-    inline int nbSongs() const;
-    Q_INVOKABLE void setSongsFilter(const QString &searchTxt);
-    Q_INVOKABLE bool allSongsSelected();
-    Q_INVOKABLE void selectAllSongsFromProxyModel(bool selectAll);
-    Q_INVOKABLE void deleteSelectedSongs();
-    Q_INVOKABLE void downloadSelectedSongs();
-
-    void doSendSongsToRemove();
-    void doSendSongsToDownload();
+    inline Q_INVOKABLE bool isDownloading() const;
+    inline Q_INVOKABLE void setIsDownloading(bool isDownloading);
+    inline Q_INVOKABLE bool downloadsAllowed() const;
 
     inline Q_INVOKABLE QString settingHost() const;
     inline Q_INVOKABLE QString settingPort() const;
@@ -240,25 +218,74 @@ public:
 
     inline Q_INVOKABLE void playpause();
     inline Q_INVOKABLE void stop();
+    inline void setPlay();
+
 
     inline Q_INVOKABLE ushort repeatMode() const;
     inline Q_INVOKABLE ushort shuffleMode()const;
+
+    Q_INVOKABLE bool isConnected() const;
+    Q_INVOKABLE void cancelDownload() const;
+
+    Q_INVOKABLE const QString hostname() const;
+
+
+
+
+    ////////////////////////////////
+    /// Playlist methods
+    ////////////////////////////////
+
+    inline Q_INVOKABLE PlaylistModel *modelOpenedPlaylists() const;
+    inline Q_INVOKABLE PlaylistModel *modelClosedPlaylists() const;
+
+    inline int modelRowFromProxyRow(int proxyRow) const;
 
     inline const QList<RemotePlaylist*> &playlists() const;
     inline RemotePlaylist *playlist(int idx, bool closedPlaylists= false) const;
     inline Q_INVOKABLE int playlistIndex() const;
     inline Q_INVOKABLE int playlistID() const;
-    Q_INVOKABLE QString playlistName() const;
     inline int numberOfPlaylists(bool closedPlaylists = false) const;
+
+    Q_INVOKABLE QString playlistName() const;
     Q_INVOKABLE bool isCurrentPlaylistSaved() const;
+    Q_INVOKABLE int activePlaylistIndex();
+
+    Q_INVOKABLE qint32 currentPlaylistID() const;
+    qint32 activePlaylistID() const;
+    void closingPlaylist(qint32 playlistID);
+    void updateActivePlaylist();
 
 
-    inline void setPlay();
+    ////////////////////////////////
+    /// RemoteFile methods
+    ////////////////////////////////
+
+    inline const QString &remoteFilesPath() const;
+    inline Q_INVOKABLE QString remoteFilesPath_QML() const; //!< can't use refs in QML...
+
+    inline void loadRemotePathForHost(const QString &host);
+
+    inline Q_INVOKABLE bool allFilesSelected() const;
+
+    inline int numberOfRemoteFiles() const;
+    inline const RemoteFile &remoteFile(int index) const;
+    inline RemoteFile &remoteFile(int index);
+
+    Q_INVOKABLE int sendSelectedFiles(const QString &newPlaylistName = "");
+    Q_INVOKABLE void downloadSelectedFiles();
+    void doSendFilesToAppend();
 
 
-    inline const RemoteSong & currentSong() const;
-    inline Q_INVOKABLE int currentSongIndex() const;
-    void updateCurrentSongIdx(qint32 currentSongIndex);
+    ////////////////////////////////
+    /// RemoteSong methods
+    ////////////////////////////////
+
+    inline Q_INVOKABLE QAbstractItemModel *modelRemoteSongs() const;
+    inline int nbSongs() const;
+    inline Q_INVOKABLE bool allSongsSelected() const;
+    inline Q_INVOKABLE void selectAllSongsFromProxyModel(bool selectAll);
+    inline Q_INVOKABLE int activeSongIndex() const;
 
     inline int numberOfPlaylistSongs() const;
     inline const RemoteSong &playlistSong(int index) const;
@@ -267,46 +294,48 @@ public:
     inline Q_INVOKABLE const QString currentTrackDuration() const;
     inline Q_INVOKABLE qint32 currentTrackLength() const;
 
+    inline const RemoteSong & currentSong() const;
+    inline Q_INVOKABLE int currentSongIndex() const;
+    void updateCurrentSongIdx(qint32 currentSongIndex);
 
-    inline int numberOfRemoteFiles() const;
-    inline const RemoteFile &remoteFile(int index) const;
-    inline RemoteFile &remoteFile(int index);
+    Q_INVOKABLE void setSongsFilter(const QString &searchTxt);
+
+    Q_INVOKABLE void deleteSelectedSongs();
+    Q_INVOKABLE void downloadSelectedSongs();
+    Q_INVOKABLE bool appendSongsToOtherPlaylist();
+
+    void doSendSongsToRemove();
+    void doSendSongsToDownload();
+    void doSendInsertUrls(qint32 playlistID, const QString &newPlaylistName);
+
+
+
+    ////////////////////////////////
+    /// Radio methods
+    ////////////////////////////////
 
     inline int numberOfRadioStreams() const;
     inline const Stream &radioStream(int index) const;
     inline Stream &radioStream(int index);
 
-
-    Q_INVOKABLE qint32 currentPlaylistID() const;
-    qint32 activePlaylistID() const;
-
-    void closingPlaylist(qint32 playlistID);
-
-    void parseMessage(const QByteArray& data);
-
-    Q_INVOKABLE QString testDownloadPath();
-    Q_INVOKABLE QString downloadPath();
-    Q_INVOKABLE QUrl    downloadPathURL();
-
-    inline const QString &libraryPath() const;
-
-    void updateActivePlaylist();
+    inline Q_INVOKABLE void releaseUserMutex();
 
 private:
-    void dumpCurrentPlaylist();
+    inline void lockUserMutex();
+    inline void sendInfo(const QString &title, const QString &msg);
+    inline void sendError(const QString &title, const QString &msg);
+    inline QString _remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath);
 
+    void updateCurrentPlaylist();
 
     void rcvPlaylists(const pb::remote::ResponsePlaylists &playlists);
-    void updateCurrentPlaylist();
-    void dumpPlaylists();
-
     void rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs);
     void rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files);
     void rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios);
 
-    inline QString _remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath);
-    inline void sendInfo(const QString &title, const QString &msg);
-    inline void sendError(const QString &title, const QString &msg);
+    void dumpPlaylists();
+    void dumpCurrentPlaylist();
+
 
 signals:
     // signals sent from QML to ConnectionWorker
@@ -331,6 +360,7 @@ signals:
     void sendSongsToRemove();
     void sendFilesToAppend();
     void sendSongsToDownload(const QString &dstFolder);
+    void askPlaylistDestID();
 
     void createPlaylist(const QString &newPlaylistName);
     void savePlaylist(qint32 playlistID);
@@ -346,7 +376,8 @@ signals:
     void getLibrary();
     void libraryDownloaded();
 
-    void insertUrls(qint32 playlistID, const QStringList &urls, const QString &newPlaylistName);
+    void insertUrls(qint32 playlistID, const QString &newPlaylistName);
+
 
     // signals sent from ConnectionWorker to QML
     void info(const QString &title, const QString &msg);
@@ -409,8 +440,13 @@ private slots:
 private slots:
     void onLibraryDownloaded();
 
-    //static methods
+
+
+    ////////////////////////////////
+    /// static methods
+    ////////////////////////////////
 public:
+    inline Q_INVOKABLE static const QString clementineFilesSupportMinVersion();
     inline Q_INVOKABLE static const QString appTitle();
     inline Q_INVOKABLE static const QString appName();
     inline Q_INVOKABLE static const QString appVersion();
@@ -418,101 +454,13 @@ public:
     inline Q_INVOKABLE static const QString donateURL();
     inline Q_INVOKABLE static const QString btcAddress();
     inline Q_INVOKABLE static const QString clementineReleaseURL();
-
-    inline             static int sockTimeoutMs();
-
+    inline Q_INVOKABLE static const QString iconClick();
 
     inline Q_INVOKABLE static QString prettyLength(qint32 sec);
+    inline             static int sockTimeoutMs();
 
 };
 
-QAbstractItemModel *ClementineRemote::modelRemoteSongs() const { return _songsProxyModel; }
-
-int ClementineRemote::nbSongs() const { return _songs.size(); }
-
-
-qint32 ClementineRemote::playerState() const { return _clemState; }
-qint32 ClementineRemote::playerPreviousState() const { return _previousClemState; }
-
-qint32 ClementineRemote::volume() const { return _volume; }
-QString ClementineRemote::volumePct() const { return QString("%1%").arg(_volume); }
-
-void ClementineRemote::setCurrentVolume(qint32 vol)
-{
-    _volume = vol;
-    emit setVolume(vol);
-}
-
-void ClementineRemote::playpause()
-{
-    _previousClemState = _clemState;
-    if (_clemState == pb::remote::EngineState::Playing)
-        _clemState = pb::remote::EngineState::Paused;
-    else
-        _clemState = pb::remote::EngineState::Playing;
-
-    emit setEngineState(_clemState);
-}
-
-void ClementineRemote::stop()
-{
-    _previousClemState = _clemState;
-    _clemState         =  pb::remote::EngineState::Idle;
-    emit setEngineState(_clemState);
-}
-
-ushort ClementineRemote::repeatMode()  const { return sQmlRepeatCodes.value(_repeatMode); }
-ushort ClementineRemote::shuffleMode() const { return sQmlShuffleCodes.value(_shuffleMode); }
-
-const QList<RemotePlaylist *> &ClementineRemote::playlists() const { return _playlistsOpened; }
-RemotePlaylist *ClementineRemote::playlist(int idx, bool closedPlaylists) const
-{
-    if ( closedPlaylists )
-        return idx < _playlistsClosed.size() ? _playlistsClosed.at(idx) : nullptr;
-    else
-        return idx < _playlistsOpened.size() ? _playlistsOpened.at(idx) : nullptr;
-}
-int ClementineRemote::playlistIndex() const { return _dispPlaylistIndex; }
-int ClementineRemote::playlistID() const { return _dispPlaylistId; }
-
-int ClementineRemote::numberOfPlaylists(bool closedPlaylists) const
-{
-    return closedPlaylists ?  _playlistsClosed.size() : _playlistsOpened.size();
-}
-
-void ClementineRemote::setPlay()
-{
-    _clemState = pb::remote::EngineState::Playing;
-    emit updateEngineState();
-}
-
-const RemoteSong & ClementineRemote::currentSong() const { return _activeSong; }
-
-//uint ClementineRemote::currentSongIndex() const { return _activeSongIndex; }
-int ClementineRemote::currentSongIndex() const
-{
-    return _songsProxyModel->mapFromSource(_songsModel->index(_activeSongIndex)).row();
-}
-
-int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
-const RemoteSong &ClementineRemote::playlistSong(int index) const { return _songs.at(index); }
-RemoteSong &ClementineRemote::playlistSong(int index) { return _songs[index]; }
-
-bool ClementineRemote::isPlaying() const { return _clemState == pb::remote::EngineState::Playing; }
-bool ClementineRemote::isPaused() const { return _clemState == pb::remote::EngineState::Paused; }
-
-const QString ClementineRemote::currentTrackDuration() const { return _activeSong.pretty_length; }
-qint32 ClementineRemote::currentTrackLength() const{ return _activeSong.length; }
-
-int ClementineRemote::numberOfRemoteFiles() const { return _remoteFiles.size(); }
-const RemoteFile &ClementineRemote::remoteFile(int index) const { return _remoteFiles.at(index); }
-RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]; }
-
-int ClementineRemote::numberOfRadioStreams() const { return _radioStreams.size(); }
-const Stream &ClementineRemote::radioStream(int index) const { return _radioStreams.at(index); }
-Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; }
-
-const QString &ClementineRemote::libraryPath() const{ return _libraryPath; }
 
 const QString ClementineRemote::appTitle() { return QString("%1 v%2").arg(sAppTitle).arg(sVersion); }
 const QString ClementineRemote::appName() { return sAppName; }
@@ -521,6 +469,18 @@ const QString ClementineRemote::projectURL() { return sProjectUrl; }
 const QString ClementineRemote::donateURL() { return sDonateUrl; }
 const QString ClementineRemote::btcAddress() { return sBTCaddress; }
 const QString ClementineRemote::clementineReleaseURL() { return sClementineReleaseURL; }
+const QString ClementineRemote::iconClick()
+{
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    return QString("click.png");
+#else
+    return QString("mouse.png");
+#endif
+}
+const QString ClementineRemote::clementineFilesSupportMinVersion()
+{
+    return QString("%1.%2").arg(sClemFilesSupportMinVersion.first).arg(sClemFilesSupportMinVersion.second);
+}
 
 int ClementineRemote::sockTimeoutMs() { return sSockTimeoutMs; }
 
@@ -557,10 +517,15 @@ QString ClementineRemote::disconnectReason(int reason) const
     }
 }
 
-QVariantList ClementineRemote::getExpandableIndexes(const QModelIndex &currentIndex) const
-{
-    return _libProxyModel->getExpandableIndexes(currentIndex);
-}
+
+
+
+////////////////////////////////
+/// Library methods
+////////////////////////////////
+
+const QString &ClementineRemote::libraryPath() const{ return _libraryPath; }
+QAbstractItemModel *ClementineRemote::libraryModel() const{ return _libProxyModel; }
 
 bool ClementineRemote::isLibraryItemTrack(const QModelIndex &index) const
 {
@@ -568,6 +533,11 @@ bool ClementineRemote::isLibraryItemTrack(const QModelIndex &index) const
     return index.isValid()?
                 _libProxyModel->data(index, LibraryModel::type).toInt() >= LibraryModel::Track
               : false;
+}
+
+QVariantList ClementineRemote::getExpandableIndexes(const QModelIndex &currentIndex) const
+{
+    return _libProxyModel->getExpandableIndexes(currentIndex);
 }
 
 QString ClementineRemote::libraryItemIcon(const QModelIndex &index) const
@@ -589,12 +559,85 @@ QString ClementineRemote::libraryItemIcon(const QModelIndex &index) const
     }
 }
 
-QAbstractItemModel *ClementineRemote::libraryModel() const{ return _libProxyModel; }
+
+////////////////////////////////
+/// QML and Setting
+////////////////////////////////
+
+const QString ClementineRemote::clemVersion() const { return _clemVersion; }
+bool ClementineRemote::clementineFilesSupport() const { return _clemFilesSupport; }
+
+bool ClementineRemote::overwriteDownloadedSongs() const {return false;}
+
+bool ClementineRemote::verticalVolumeSlider() const { return _settings.value(sSettings[Settings::verticalVolume], false).toBool(); }
+void ClementineRemote::setVerticalVolumeSlider(bool isVertical) { _settings.setValue(sSettings[Settings::verticalVolume], isVertical); }
+
+uint ClementineRemote::iconSize() const { return _settings.value(sSettings[Settings::iconSize], sDefaultIconSize).toUInt(); }
+void ClementineRemote::setIconSize(uint size) { _settings.setValue(sSettings[Settings::iconSize], size); }
+bool ClementineRemote::hideServerFilesPreviousNextNavButtons() const { return true; }
 
 bool ClementineRemote::isDownloading() const { return M_LoadAtomic(_isDownloading); }
-bool ClementineRemote::setIsDownloading(bool isDownloading){ _isDownloading = isDownloading; }
-
+void ClementineRemote::setIsDownloading(bool isDownloading){ _isDownloading = isDownloading; }
 bool ClementineRemote::downloadsAllowed() const { return _downloadsAllowed; }
+
+
+QString ClementineRemote::settingHost() const { return _settings.value(sSettings[Settings::host], "").toString(); }
+QString ClementineRemote::settingPort() const { return _settings.value(sSettings[Settings::port], "").toString(); }
+QString ClementineRemote::settingPass() const { return _settings.value(sSettings[Settings::pass], "").toString(); }
+
+void ClementineRemote::saveConnectionInSettings(const QString &host, const QString &port, const QString &pass)
+{
+    _settings.setValue(sSettings[Settings::host], host);
+    _settings.setValue(sSettings[Settings::port], port);
+    _settings.setValue(sSettings[Settings::pass], pass);
+    _settings.sync();
+}
+
+qint32 ClementineRemote::playerState() const { return _clemState; }
+qint32 ClementineRemote::playerPreviousState() const { return _previousClemState; }
+
+bool ClementineRemote::isPlaying() const { return _clemState == pb::remote::EngineState::Playing; }
+bool ClementineRemote::isPaused() const { return _clemState == pb::remote::EngineState::Paused; }
+void ClementineRemote::setPlay()
+{
+    _clemState = pb::remote::EngineState::Playing;
+    emit updateEngineState();
+}
+
+qint32 ClementineRemote::volume() const { return _volume; }
+QString ClementineRemote::volumePct() const { return QString("%1%").arg(_volume); }
+
+void ClementineRemote::setCurrentVolume(qint32 vol)
+{
+    _volume = vol;
+    emit setVolume(vol);
+}
+
+void ClementineRemote::playpause()
+{
+    _previousClemState = _clemState;
+    if (_clemState == pb::remote::EngineState::Playing)
+        _clemState = pb::remote::EngineState::Paused;
+    else
+        _clemState = pb::remote::EngineState::Playing;
+
+    emit setEngineState(_clemState);
+}
+
+void ClementineRemote::stop()
+{
+    _previousClemState = _clemState;
+    _clemState         =  pb::remote::EngineState::Idle;
+    emit setEngineState(_clemState);
+}
+
+ushort ClementineRemote::repeatMode()  const { return sQmlRepeatCodes.value(_repeatMode); }
+ushort ClementineRemote::shuffleMode() const { return sQmlShuffleCodes.value(_shuffleMode); }
+
+
+////////////////////////////////
+/// Playlist methods
+////////////////////////////////
 
 PlaylistModel *ClementineRemote::modelOpenedPlaylists() const { return _plOpenedModel; }
 PlaylistModel *ClementineRemote::modelClosedPlaylists() const { return _plClosedModel; }
@@ -611,7 +654,25 @@ int ClementineRemote::modelRowFromProxyRow(int proxyRow) const
     return -1;
 }
 
-bool ClementineRemote::hideServerFilesPreviousNextNavButtons() const { return true; }
+const QList<RemotePlaylist *> &ClementineRemote::playlists() const { return _playlistsOpened; }
+RemotePlaylist *ClementineRemote::playlist(int idx, bool closedPlaylists) const
+{
+    if ( closedPlaylists )
+        return idx < _playlistsClosed.size() ? _playlistsClosed.at(idx) : nullptr;
+    else
+        return idx < _playlistsOpened.size() ? _playlistsOpened.at(idx) : nullptr;
+}
+int ClementineRemote::playlistIndex() const { return _dispPlaylistIndex; }
+int ClementineRemote::playlistID() const { return _dispPlaylistId; }
+
+int ClementineRemote::numberOfPlaylists(bool closedPlaylists) const
+{
+    return closedPlaylists ?  _playlistsClosed.size() : _playlistsOpened.size();
+}
+
+////////////////////////////////
+/// RemoteFile methods
+////////////////////////////////
 
 const QString &ClementineRemote::remoteFilesPath() const { return _remoteFilesPath; }
 QString ClementineRemote::remoteFilesPath_QML() const{ return _remoteFilesPath; }
@@ -620,11 +681,32 @@ void ClementineRemote::loadRemotePathForHost(const QString &host)
 {
     _remoteFilesPath = _remoteFilesPathPerHost.value(host, "./");
 }
+bool ClementineRemote::allFilesSelected() const
+{
+    for (const RemoteFile &f : _remoteFiles)
+    {
+        if (!f.isDir && !f.selected)
+            return false;
+    }
+    return true;
+}
 
-const QString ClementineRemote::clemVersion() const { return _clemVersion; }
-QString ClementineRemote::clementineFilesSupportMinVersion() { return QString("%1.%2").arg(sClemFilesSupportMinVersion.first).arg(sClemFilesSupportMinVersion.second);}
-bool ClementineRemote::clementineFilesSupport() const { return _clemFilesSupport; }
+int ClementineRemote::numberOfRemoteFiles() const { return _remoteFiles.size(); }
+const RemoteFile &ClementineRemote::remoteFile(int index) const { return _remoteFiles.at(index); }
+RemoteFile &ClementineRemote::remoteFile(int index) { return _remoteFiles[index]; }
 
+
+////////////////////////////////
+/// RemoteSong methods
+////////////////////////////////
+
+QAbstractItemModel *ClementineRemote::modelRemoteSongs() const { return _songsProxyModel; }
+int ClementineRemote::nbSongs() const { return _songs.size(); }
+bool ClementineRemote::allSongsSelected() const { return _songsProxyModel->allSongsSelected(); }
+void ClementineRemote::selectAllSongsFromProxyModel(bool selectAll)
+{
+    _songsProxyModel->selectAllSongs(selectAll);
+}
 int ClementineRemote::activeSongIndex() const
 {
     _songsModel->index(0);
@@ -637,26 +719,66 @@ int ClementineRemote::activeSongIndex() const
     }
     return -1;
 }
+int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
+const RemoteSong &ClementineRemote::playlistSong(int index) const { return _songs.at(index); }
+RemoteSong &ClementineRemote::playlistSong(int index) { return _songs[index]; }
 
-QString ClementineRemote::settingHost() const { return _settings.value(sSettings[Settings::host], "").toString(); }
-QString ClementineRemote::settingPort() const { return _settings.value(sSettings[Settings::port], "").toString(); }
-QString ClementineRemote::settingPass() const { return _settings.value(sSettings[Settings::pass], "").toString(); }
+const QString ClementineRemote::currentTrackDuration() const { return _activeSong.pretty_length; }
+qint32 ClementineRemote::currentTrackLength() const{ return _activeSong.length; }
 
-void ClementineRemote::saveConnectionInSettings(const QString &host, const QString &port, const QString &pass)
+const RemoteSong & ClementineRemote::currentSong() const { return _activeSong; }
+
+int ClementineRemote::currentSongIndex() const
 {
-    _settings.setValue(sSettings[Settings::host], host);
-    _settings.setValue(sSettings[Settings::port], port);
-    _settings.setValue(sSettings[Settings::pass], pass);
-    _settings.sync();
+    return _songsProxyModel->mapFromSource(_songsModel->index(_activeSongIndex)).row();
 }
 
-bool ClementineRemote::verticalVolumeSlider() const { return _settings.value(sSettings[Settings::verticalVolume], false).toBool(); }
-void ClementineRemote::setVerticalVolumeSlider(bool isVertical) { _settings.setValue(sSettings[Settings::verticalVolume], isVertical); }
-
-uint ClementineRemote::iconSize() const { return _settings.value(sSettings[Settings::iconSize], sDefaultIconSize).toUInt(); }
-void ClementineRemote::setIconSize(uint size) { _settings.setValue(sSettings[Settings::iconSize], size); }
 
 
+////////////////////////////////
+/// Radio methods
+////////////////////////////////
+
+int ClementineRemote::numberOfRadioStreams() const { return _radioStreams.size(); }
+const Stream &ClementineRemote::radioStream(int index) const { return _radioStreams.at(index); }
+Stream &ClementineRemote::radioStream(int index) { return _radioStreams[index]; }
+
+
+#ifdef __DEBUG__
+#include <QDebug>
+#endif
+void ClementineRemote::lockUserMutex()
+{
+#ifdef __USE_CONNECTION_THREAD__
+  #ifdef __DEBUG__
+    qDebug() << ">>>>>>>>>> Lock UserMutex";
+  #endif
+    _secureUserMsg.lock();
+#endif
+}
+void ClementineRemote::releaseUserMutex()
+{
+#ifdef __USE_CONNECTION_THREAD__
+  #ifdef __DEBUG__
+    qDebug() << "<<<<<<<<<< UnLock UserMutex";
+  #endif
+    _secureUserMsg.unlock();
+#endif
+}
+void ClementineRemote::sendInfo(const QString &title, const QString &msg)
+{
+#ifdef __DEBUG__
+    qDebug() << "INFO " << title << " : " << msg;
+#endif
+    emit info(title, msg);
+}
+void ClementineRemote::sendError(const QString &title, const QString &msg)
+{
+#ifdef __DEBUG__
+    qCritical() << "ERROR " << title << " : " << msg;
+#endif
+    emit error(title, msg);
+}
 
 QString ClementineRemote::_remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath)
 {
@@ -672,25 +794,6 @@ QString ClementineRemote::_remoteFilesListError(pb::remote::ResponseListFiles::E
     case pb::remote::ResponseListFiles::NONE:
         return tr("All good \\o/");
     }
+    return QString();
 }
-
-#ifdef __DEBUG__
-#include <QDebug>
-#endif
-void ClementineRemote::sendInfo(const QString &title, const QString &msg)
-{
-#ifdef __DEBUG__
-    qDebug() << "INFO " << title << " : " << msg;
-#endif
-    emit info(title, msg);
-}
-
-void ClementineRemote::sendError(const QString &title, const QString &msg)
-{
-#ifdef __DEBUG__
-    qCritical() << "ERROR " << title << " : " << msg;
-#endif
-    emit error(title, msg);
-}
-
 #endif // CLEMENTINEREMOTE_H

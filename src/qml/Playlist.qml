@@ -63,9 +63,20 @@ Rectangle {
 //            print("nb Closed Playlists: "+nbClosedPlaylists);
             if (nbClosedPlaylists === 0)
                 noMorePlaylistDialog.open();
-            else
-                openPlaylistDialog.open();
-        }
+            else {
+                playlistChoiceDialog.text = qsTr("Please select a Playlist to open");
+                playlistChoiceDialog.combo.model  = cppRemote.modelClosedPlaylists();
+                playlistChoiceDialog.openPlaylist = true;
+                playlistChoiceDialog.open();
+            }
+        } // onClosedPlaylistsReceived
+
+        function onAskPlaylistDestID() {
+            playlistChoiceDialog.text = qsTr("Please select a destination Playlist");
+            playlistChoiceDialog.combo.model  = cppRemote.modelOpenedPlaylists();
+            playlistChoiceDialog.openPlaylist = false;
+            playlistChoiceDialog.open();
+        } // onAskPlaylistDestID
     } // Connections cppRemote
 
 
@@ -73,7 +84,7 @@ Rectangle {
 
 
     function goToCurrentPlaylistAndTrack() {
-        updateCurrentPlaylist(cppRemote.playlistIndex());
+        updateCurrentPlaylist(cppRemote.activePlaylistIndex());
 
 //        print("songsView.size: "+songsView.count);
         let songIdx = cppRemote.currentSongIndex();
@@ -88,7 +99,7 @@ Rectangle {
 //        if (cppRemote.isPlaying())
 //        {
             playingSongIdx    = songsView.currentIndex;
-            activePlaylistIdx = cppRemote.playlistIndex();
+            activePlaylistIdx = cppRemote.activePlaylistIndex();
             print("activePlaylistIdx: "+activePlaylistIdx);
 //        }
 //        if (idx)
@@ -208,6 +219,23 @@ Rectangle {
 
 
     ImageButton {
+        id:   addToOtherPlaylistButton
+        size: buttonSize
+        anchors {
+            bottom: parent.bottom
+            right:  downSelectedSongsButton.left
+            rightMargin: headerSpacing
+        }
+        source: "icons/addToPlayList.png";
+        onClicked: {
+            if (!mainApp.checkClementineVersion())
+                return
+            if (!cppRemote.appendSongsToOtherPlaylist())
+                mainApp.error(qsTr("No track selected"), qsTr("Please select at least one Track"));
+        }
+        visible: selectionMode
+    } // addToOtherPlaylistButton
+    ImageButton {
         id:   downSelectedSongsButton
         size: buttonSize
         anchors {
@@ -234,7 +262,7 @@ Rectangle {
             right:  selectAllButton.left
             rightMargin: headerSpacing
         }
-        source: "icons/click.png";
+        source: 'icons/' + cppRemote.iconClick();
         onClicked: {
             cppRemote.selectAllSongsFromProxyModel(false);
             selectionMode = false;
@@ -534,9 +562,11 @@ Are you sure you want to continue?")
     } // playlistDestructionConfirmationDialog
 
     Dialog {
-        id: openPlaylistDialog
+        id: playlistChoiceDialog
+        property alias text: openPlaylistLbl.text
+        property alias combo: closedPlaylistCombo
 
-        property bool createNewPlaylist: false
+        property bool  openPlaylist: true
 
         width: playlist.width *3/4
 
@@ -548,20 +578,31 @@ Are you sure you want to continue?")
         modal: true
         standardButtons: Dialog.Ok | Dialog.Cancel
 
-        onAccepted: cppRemote.openPlaylist(closedPlaylistCombo.currentValue);
         onOpened:   closedPlaylistCombo.currentIndex = 0;
+        onAccepted: {
+            if (openPlaylist)
+                cppRemote.openPlaylist(closedPlaylistCombo.currentValue);
+            else
+            {
+                cppRemote.insertUrls(closedPlaylistCombo.currentValue, "");
+                cppRemote.selectAllSongsFromProxyModel(false);
+                selectionMode = false;
+            }
+        }
+        onRejected: if (!openPlaylist) cppRemote.releaseUserMutex();
 
         ColumnLayout {
             spacing: 20
             anchors.fill: parent
             Label {
+                id: openPlaylistLbl
                 elide: Label.ElideMiddle
-                text: qsTr("Please select a Playlist to open")
+//                text: qsTr("Please select a Playlist to open")
                 Layout.fillWidth: true
             }
             ComboBox {
                 id: closedPlaylistCombo
-                model   : cppRemote.modelClosedPlaylists()
+//                model   : cppRemote.modelClosedPlaylists()
                 delegate: ItemDelegate{
                     text: name ;
                     width: ListView.view.width;
@@ -571,7 +612,7 @@ Are you sure you want to continue?")
                 valueRole: "id"
             }
         }
-    } // openPlaylistDialog
+    } // playlistChoiceDialog
 
     Dialog {
         id: renPlaylistDialog

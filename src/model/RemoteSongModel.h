@@ -45,7 +45,8 @@ public:
         pretty_length,
         selected,
         songIndex,
-        songId
+        songId,
+        url
     };
 
     // Basic functionality:
@@ -81,8 +82,10 @@ public:
 
     bool allSongsSelected() const;
     void selectAllSongs(bool selectAll);
-    QList<int> selectedSongsIdexes();
-    QList<int> selectedSongsIDs();
+    QList<int>  selectedSongsIdexes();
+    QList<int>  selectedSongsIDs();
+    QStringList selectedSongsURLs();
+
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;

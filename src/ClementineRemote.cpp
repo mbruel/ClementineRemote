@@ -103,7 +103,6 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _songsModel(new RemoteSongModel),
     _songsProxyModel(new RemoteSongProxyModel),
-    _songsToRemove(), _songsToDownload(),
     _activePlaylistId(1), _trackPostition(0),
     _initialized(false),
     _clemFilesSupport(false),
@@ -111,9 +110,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _remoteFiles(),
 #ifdef __USE_CONNECTION_THREAD__
     _secureRemoteFilesData(), _remoteFilesData(),
-    _secureFilesToAppend(),
 #endif
-    _filesToAppend(),
     _radioStreams(),
 #ifdef __USE_CONNECTION_THREAD__
     _secureRadioStreams(), _radioStreamsData(),
@@ -126,7 +123,11 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #else
     _libraryPath(QFileInfo(_settings.fileName()).absolutePath()),
 #endif
-    _libDB(), _libModel(new LibraryModel), _libProxyModel(new LibraryProxyModel)
+    _libDB(), _libModel(new LibraryModel), _libProxyModel(new LibraryProxyModel),
+#ifdef __USE_CONNECTION_THREAD__
+    _secureUserMsg(),
+#endif
+    _userMsg()
 {
     setObjectName(sAppName);
 
@@ -151,10 +152,6 @@ ClementineRemote::ClementineRemote(QObject *parent):
          _remoteFilesPathPerHost[host] = _settings.value(host).toString();
     _settings.endGroup();
 
-    _filesToAppend.set_type(pb::remote::APPEND_FILES);
-    _songsToRemove.set_type(pb::remote::REMOVE_SONGS);
-    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
-
     qDebug() << "Settings filename: " << _settings.fileName()
              << " => libraryPath: " << _libraryPath;
 
@@ -170,113 +167,6 @@ ClementineRemote::~ClementineRemote()
 {
     qDebug() << "[MB_TRACE] destruction ClementineRemote";
     close();
-}
-
-void ClementineRemote::appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName)
-{
-    if (!proxyIndex.isValid())
-    {
-        sendError(tr("Nothing selected"), tr("Select either a single Track or an Album"));
-        return;
-    }
-    int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
-    if (itemType == LibraryModel::Album)
-    {
-        qDebug() << "Library album activated: " << _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
-        int childCount = _libProxyModel->rowCount(proxyIndex);
-        if (childCount == 0)
-        {
-            sendError("", tr("No tracks in the selected album %1").arg(
-                          _libProxyModel->data(proxyIndex, LibraryModel::name).toString()));
-            return;
-        }
-        QStringList urls;
-        for (int i = 0; i < childCount; ++i)
-        {
-            QModelIndex childIndex = _libProxyModel->index(i, 0, proxyIndex);
-            QString url = _libProxyModel->data(childIndex, LibraryModel::url).toString();
-            qDebug() << "Adding Library track from album: " << url;
-            urls << url;
-        }
-        emit insertUrls(_dispPlaylistId, urls, newPlaylistName);
-        sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
-                     childCount).arg(
-                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
-    }
-    else if (itemType == LibraryModel::Track)
-    {
-        QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
-        qDebug() << "Library track activated: " << url;
-        emit insertUrls(_dispPlaylistId, {url}, newPlaylistName);
-        sendInfo("", tr("the track %1 has been added to the playlist %2").arg(
-                     _libProxyModel->data(proxyIndex, LibraryModel::name).toString()).arg(
-                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
-    }
-    else
-        sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
-}
-
-void ClementineRemote::downloadLibraryItem(const QModelIndex &proxyIndex)
-{
-    if (!proxyIndex.isValid())
-    {
-        sendError(tr("Nothing selected"), tr("Select either a single Track or an Album"));
-        return;
-    }
-    int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
-    if (itemType == LibraryModel::Artist)
-    {
-        sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
-        return;
-    }
-
-#ifdef __USE_CONNECTION_THREAD__
-    _secureSongs.lock();
-#endif
-    _songsToDownload.Clear();
-    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
-    pb::remote::RequestDownloadSongs *req = _songsToDownload.mutable_request_download_songs();
-    req->set_download_item(pb::remote::DownloadItem::Urls);
-    if (itemType == LibraryModel::Album)
-    {
-        QString albumName = _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
-        qDebug() << "Library album to download: " << albumName;
-        int childCount = _libProxyModel->rowCount(proxyIndex);
-        if (childCount == 0)
-        {
-            sendError("", tr("No tracks in the selected album %1").arg(albumName));
-#ifdef __USE_CONNECTION_THREAD__
-            _secureSongs.unlock();
-#endif
-            return;
-        }
-        for (int i = 0; i < childCount; ++i)
-        {
-            QModelIndex childIndex = _libProxyModel->index(i, 0, proxyIndex);
-            QString url = _libProxyModel->data(childIndex, LibraryModel::url).toString();
-            qDebug() << "Adding Library track from album: " << url;
-            *req->add_urls() = url.toStdString();
-        }
-        emit sendSongsToDownload(albumName);
-    }
-    else if (itemType == LibraryModel::Track)
-    {
-        QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
-        qDebug() << "Library track to download: " << url;
-        *req->add_urls() = url.toStdString();
-        emit sendSongsToDownload(QString());
-    }
-}
-
-bool ClementineRemote::isConnected() const { return _connection->isConnected(); }
-void ClementineRemote::cancelDownload() const { _connection->cancelDownload(); }
-
-const QString ClementineRemote::hostname() const
-{
-    if (_connection)
-        return _connection->hostname();
-    else
-        return "nowhere..."; // should never happen
 }
 
 void ClementineRemote::close()
@@ -324,403 +214,7 @@ void ClementineRemote::close()
     }
 }
 
-int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
-{
-#ifdef __USE_CONNECTION_THREAD__
-    _secureFilesToAppend.lock();
-#endif
-    _filesToAppend.clear_response_list_files();
-    QStringList selectedFiles;
-    for (const RemoteFile &f : _remoteFiles)
-    {
-        if (!f.isDir && f.selected)
-            selectedFiles << f.filename;
-    }
-    if (selectedFiles.isEmpty())
-    {
-#ifdef __USE_CONNECTION_THREAD__
-        _secureFilesToAppend.unlock();
-#endif
-        sendError(tr("No track selected"),
-                  tr("Please select at least one Track<br/>You need to be in <b>selection mode</b>.<br/>\
-For that either do a long press an a Track or use one of the 2 bottoms on the right hand."));
-        return 0;
-    }
-    else
-    {
-        pb::remote::RequestAppendFiles *files = _filesToAppend.mutable_request_append_files();
-        files->set_relative_path(_remoteFilesPath.toStdString());
-        if (!newPlaylistName.isEmpty())
-            files->set_new_playlist_name(newPlaylistName.toStdString());
-        else
-            files->set_playlist_id(_dispPlaylistId);
 
-        for (const QString &filename : selectedFiles)
-            *files->add_files() = filename.toStdString();
-
-        sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
-                     selectedFiles.size()).arg(
-                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
-        emit sendFilesToAppend();
-        return selectedFiles.size();
-    }
-}
-
-void ClementineRemote::downloadSelectedFiles()
-{
-#ifdef __USE_CONNECTION_THREAD__
-    _secureFilesToAppend.lock();
-#endif
-    _songsToDownload.Clear();
-    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
-    QStringList selectedFiles;
-    for (const RemoteFile &f : _remoteFiles)
-    {
-        if (!f.isDir && f.selected)
-            selectedFiles << f.filename;
-    }
-    if (selectedFiles.isEmpty())
-    {
-#ifdef __USE_CONNECTION_THREAD__
-        _secureFilesToAppend.unlock();
-#endif
-        sendError("No selected files",
-                  tr("You should at least select one music file to download..."));
-    }
-    else
-    {
-        pb::remote::RequestDownloadSongs *files = _songsToDownload.mutable_request_download_songs();
-        files->set_download_item(pb::remote::DownloadItem::Urls);
-        files->set_relative_path(_remoteFilesPath.toStdString());
-        for (const QString &filename : selectedFiles)
-            *files->add_urls() = filename.toStdString();
-
-#ifdef __USE_CONNECTION_THREAD__
-        _secureFilesToAppend.unlock();
-        _secureSongs.lock(); // this one will be unlocked in ClementineRemote::doSendSongsToDownload
-#endif
-        emit sendSongsToDownload(QFileInfo(_remoteFilesPath).fileName());
-    }
-}
-
-bool ClementineRemote::allFilesSelected() const
-{
-    for (const RemoteFile &f : _remoteFiles)
-    {
-        if (!f.isDir && !f.selected)
-            return false;
-    }
-    return true;
-}
-
-void ClementineRemote::doSendFilesToAppend()
-{
-    _connection->sendDataToServer(_filesToAppend);
-    _filesToAppend.clear_request_append_files();
-#ifdef __USE_CONNECTION_THREAD__
-    _secureFilesToAppend.unlock();
-#endif
-}
-
-void ClementineRemote::setLibraryFilter(const QString &searchTxt)
-{
-    qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
-    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
-    QRegExp regExp(searchTxt, caseSensitivity);
-    _libProxyModel->setFilterRegExp(regExp);
-}
-
-void ClementineRemote::setSongsFilter(const QString &searchTxt)
-{
-    qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
-    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
-    QRegExp regExp(searchTxt, caseSensitivity);
-    _songsProxyModel->setFilterRegExp(regExp);
-}
-
-#include <QMutexLocker>
-bool ClementineRemote::allSongsSelected()
-{
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(&_secureSongs);
-#endif
-    return _songsProxyModel->allSongsSelected();
-}
-
-void ClementineRemote::selectAllSongsFromProxyModel(bool selectAll)
-{
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(&_secureSongs);
-#endif
-    _songsProxyModel->selectAllSongs(selectAll);
-}
-
-void ClementineRemote::deleteSelectedSongs()
-{
-#ifdef __USE_CONNECTION_THREAD__
-    _secureSongs.lock();
-#endif
-    _songsToRemove.clear_request_remove_songs();
-    QList<int> selectedSongsIdexes = _songsProxyModel->selectedSongsIdexes();
-    if (selectedSongsIdexes.isEmpty())
-    {
-#ifdef __USE_CONNECTION_THREAD__
-        _secureSongs.unlock();
-#endif
-        return ;
-    }
-    else
-    {
-        pb::remote::RequestRemoveSongs *req = _songsToRemove.mutable_request_remove_songs();
-        req->set_playlist_id(_dispPlaylistId);
-        for (int songIndex : selectedSongsIdexes)
-            req->add_songs(songIndex);
-
-        emit sendSongsToRemove();
-    }
-}
-
-void ClementineRemote::downloadSelectedSongs()
-{
-#ifdef __USE_CONNECTION_THREAD__
-    _secureSongs.lock();
-#endif
-    _songsToDownload.Clear();
-    _songsToDownload.set_type(pb::remote::DOWNLOAD_SONGS);
-    QList<int> selectedSongsIDs = _songsProxyModel->selectedSongsIDs();
-    if (selectedSongsIDs.isEmpty())
-    {
-#ifdef __USE_CONNECTION_THREAD__
-        _secureSongs.unlock();
-#endif
-        return ;
-    }
-    else
-    {
-        pb::remote::RequestDownloadSongs *req = _songsToDownload.mutable_request_download_songs();
-        req->set_playlist_id(_dispPlaylistId);
-        req->set_download_item(pb::remote::DownloadItem::APlaylist);
-        for (int songID : selectedSongsIDs)
-            req->add_songs_ids(songID);
-
-        emit sendSongsToDownload(QString());//playlistName());
-    }
-}
-
-void ClementineRemote::doSendSongsToRemove()
-{
-    _connection->sendDataToServer(_songsToRemove);
-    _songsToRemove.clear_request_append_files();
-#ifdef __USE_CONNECTION_THREAD__
-    _secureSongs.unlock();
-#endif
-}
-
-void ClementineRemote::doSendSongsToDownload()
-{
-    _connection->sendDataToServer(_songsToDownload);
-    _songsToDownload.clear_request_download_songs();
-#ifdef __USE_CONNECTION_THREAD__
-    _secureSongs.unlock();
-#endif
-}
-
-QString ClementineRemote::playlistName() const
-{
-    return _dispPlaylist ? _dispPlaylist->name : QString("Playlist #%1").arg(_dispPlaylistId);
-}
-
-bool ClementineRemote::isCurrentPlaylistSaved() const
-{
-    if (_dispPlaylist)
-        return _dispPlaylist->favorite;
-    else
-        return false;
-}
-
-
-void ClementineRemote::updateCurrentSongIdx(qint32 currentSongIndex)
-{
-    int idx = 0;
-    for (const RemoteSong &s : _songs)
-    {
-        if (s.index == currentSongIndex)
-        {
-            _activeSongIndex = idx;
-            emit currentSongIdx(_songsProxyModel->mapFromSource(_songsModel->index(idx)).row());
-            break;
-        }
-        ++idx;
-    }
-}
-
-
-
-
-void ClementineRemote::dumpCurrentPlaylist()
-{
-    for (const RemoteSong &s : _songs)
-        qDebug() << "  - " << s.str();
-}
-
-
-void ClementineRemote::rcvPlaylists(const pb::remote::ResponsePlaylists &playlists)
-{
-    bool includeClosedPlaylists = playlists.has_include_closed() && playlists.include_closed();
-    if (_playlistsOpened.size())
-    {
-        emit _plOpenedModel->preClearPlaylists(_playlistsOpened.size() - 1);
-        qDeleteAll(_playlistsOpened);
-        _playlistsOpened.clear();
-        emit _plOpenedModel->postClearPlaylists();
-    }
-    if (includeClosedPlaylists && _playlistsClosed.size())
-    {
-        emit _plClosedModel->preClearPlaylists(_playlistsClosed.size() - 1);
-        qDeleteAll(_playlistsClosed);
-        _playlistsClosed.clear();
-        emit _plClosedModel->postClearPlaylists();
-    }
-
-    qint32 nbPlaylists = playlists.playlist_size();
-    int idxOpened = 0, idxClosed = 0;
-    if (nbPlaylists)
-    {
-        for (const auto& pb_playlist : playlists.playlist())
-        {
-            if(pb_playlist.closed())
-            {
-                emit _plClosedModel->preAddPlaylist(idxClosed);
-                _playlistsClosed << new RemotePlaylist(pb_playlist);
-                emit _plClosedModel->postAddPlaylist(idxClosed++);
-            }
-            else
-            {
-                emit _plOpenedModel->preAddPlaylist(idxOpened);
-                _playlistsOpened << new RemotePlaylist(pb_playlist);
-                emit _plOpenedModel->postAddPlaylist(idxOpened++);
-            }
-        }
-    }
-
-    updateCurrentPlaylist();
-
-    if (includeClosedPlaylists)
-        emit closedPlaylistsReceived(idxClosed);
-
-//    emit updatePlaylists();
-    qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << idxOpened
-             << " (closed ones: " << idxClosed << ")";
-    dumpPlaylists();
-}
-
-
-void ClementineRemote::updateCurrentPlaylist()
-{
-    _dispPlaylist       = nullptr;
-    _dispPlaylistIndex = 0;
-    int idx = 0;
-    for (RemotePlaylist *p : _playlistsOpened)
-    {
-        if (p->id == _dispPlaylistId)
-        {
-            _dispPlaylist       = p;
-            _dispPlaylistIndex = idx;
-            qDebug() << "[ClementineRemote::updateCurrentPlaylist] currentPlaylist: #" << idx
-                     << " : " << p->name;
-
-            emit updatePlaylist(idx);
-            break;
-        }
-        ++idx;
-    }
-}
-
-void ClementineRemote::updateActivePlaylist()
-{
-    _activePlaylistId = _dispPlaylistId;
-    int row = 0;
-    for (RemotePlaylist *p : _playlistsOpened)
-    {
-        if (p->id == _activePlaylistId)
-        {
-            if (!p->playing)
-            {
-                p->playing = true;
-                QModelIndex index = _plOpenedModel->index(row);
-                emit _plOpenedModel->dataChanged(index, index, {PlaylistModel::iconSrc});
-            }
-        }
-        else if (p->playing)
-        {
-            p->playing = false;
-            QModelIndex index = _plOpenedModel->index(row);
-            emit _plOpenedModel->dataChanged(index, index, {PlaylistModel::iconSrc});
-        }
-        ++row;
-    }
-}
-
-void ClementineRemote::dumpPlaylists()
-{
-    for (RemotePlaylist *p : _playlistsOpened)
-        qDebug() << "  - " << p->str();
-}
-
-
-void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files)
-{
-    if (files.has_error() && files.error() != pb::remote::ResponseListFiles::NONE)
-        sendError("", _remoteFilesListError(files.error(), files.relative_path()));
-    else
-    {
-        if (_remoteFiles.size())
-        {
-            emit preClearRemoteFiles(_remoteFiles.size() - 1);
-            _remoteFiles.clear();
-            emit postClearRemoteFiles();
-        }
-
-        qint32 nbRemoteFiles = files.files_size();
-        if (nbRemoteFiles)
-        {
-            emit preAddRemoteFiles(nbRemoteFiles -1 );
-            _remoteFiles.reserve(nbRemoteFiles);
-            for (const auto& pb_file : files.files())
-                _remoteFiles << RemoteFile(pb_file.filename(), pb_file.is_dir());
-            emit postAddRemoteFiles();
-        }
-
-        qDebug() << "[MsgType::LIST_FILES] Nb Files: " << _remoteFiles.size();
-
-
-        _remoteFilesPath = files.relative_path().c_str();
-        _remoteFilesPathPerHost[_connection->hostname()] = _remoteFilesPath;
-        emit updateRemoteFilesPath(_remoteFilesPath);
-    }
-}
-
-void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios)
-{
-    if (_radioStreams.size())
-    {
-        emit preClearRadioStreams(_radioStreams.size() - 1);
-        _radioStreams.clear();
-        emit postClearRadioStreams();
-
-    }
-    qint32 nbStreams = radios.streams_size();
-    if (nbStreams)
-    {
-        emit preAddRadioStreams(nbStreams -1 );
-        _radioStreams.reserve(nbStreams);
-        for (const auto &radio: radios.streams())
-            _radioStreams << Stream(radio.name(), radio.url(), radio.url_logo());
-        emit postAddRadioStreams();
-    }
-
-    qDebug() << "[MsgType::REQUEST_SAVED_RADIOS] Nb Radio Streams: " << _radioStreams.size();
-}
 
 QString ClementineRemote::testDownloadPath()
 {
@@ -791,142 +285,7 @@ QString ClementineRemote::downloadPath()
 
 QUrl ClementineRemote::downloadPathURL() { return QUrl::fromLocalFile(downloadPath()); }
 
-#ifdef __USE_CONNECTION_THREAD__
-void ClementineRemote::onPlaylistsOpenedUpdatedByWorker()
-{
-    rcvPlaylists(_playlistData.response_playlists());
-    _playlistData.clear_response_playlists();
-    _securePlaylists.unlock();
-}
-void ClementineRemote::onSongsUpdatedByWorker(bool initialized)
-{
-    rcvPlaylistSongs(_songsData.response_playlist_songs());
-    _songsData.clear_response_playlist_songs();
-    _secureSongs.unlock();
-    if (!initialized)
-        updateActivePlaylist();
-}
-void ClementineRemote::onRemoteFilesUpdatedByWorker()
-{
-    rcvListOfRemoteFiles(_remoteFilesData.response_list_files());
-    _remoteFilesData.clear_response_list_files();
-    _secureRemoteFilesData.unlock();
-}
-#endif
 
-void ClementineRemote::onLibraryDownloaded()
-{
-    QString host = _connection->hostname();
-    _libDB = QSqlDatabase::addDatabase("QSQLITE", host);
-    _libDB.setDatabaseName(QString("%1/%2.db").arg(_libraryPath).arg(host));
-    if(!_libDB.open()){
-        qCritical() << "Can't open sqlite DB... " << _libDB.databaseName();
-        return;
-    }
-
-    emit _libModel->beginReset();
-    _libModel->clear();
-
-    QElapsedTimer timeStart;
-    timeStart.start();
-
-    int nbArtists = 0, nbAlbums = 0, nbTracks = 0;
-    QSqlQuery query(_libDB);
-    if(!query.exec(sLibrarySQL))
-        qDebug() << "Can't Execute Query !";
-    else
-    {
-        QStandardItem *rootItem = _libModel->invisibleRootItem(),
-                *artistItem = nullptr, *albumItem = nullptr;
-        QString currentArtist, currentAlbum;
-        while(query.next())
-        {
-            QString artist   = query.value(0).toString();
-            QString album    = query.value(1).toString();
-            QString title    = query.value(2).toString();
-            int     track    = query.value(3).toInt();
-            QString filename = query.value(4).toString();
-            ++nbTracks;
-
-            if (!artistItem || artist != currentArtist)
-            {
-                artistItem = new QStandardItem();
-                artistItem->setData(artist.isEmpty() ? tr("unset artist") : artist,
-                                    LibraryModel::name);
-                artistItem->setData(LibraryModel::Artist, LibraryModel::type);
-                rootItem->appendRow(artistItem);
-                currentArtist = artist;
-                ++nbArtists;
-            }
-
-            if (!albumItem || album != currentAlbum)
-            {
-                albumItem = new QStandardItem();
-                albumItem->setData(album.isEmpty() ? tr("unset album") : album,
-                                    LibraryModel::name);
-                albumItem->setData(LibraryModel::Album, LibraryModel::type);
-                artistItem->appendRow(albumItem);
-                currentAlbum = album;
-                ++nbAlbums;
-            }
-
-            QStandardItem *trackItem = new QStandardItem();
-            if (track == -1)
-                trackItem->setData(title, LibraryModel::name);
-            else
-                trackItem->setData(QString("%1 - %2").arg(track, 2, 10, QChar('0')).arg(title),
-                                   LibraryModel::name);
-            trackItem->setData(filename.toLower().endsWith("m3u")?LibraryModel::Playlist:LibraryModel::Track,
-                               LibraryModel::type);
-            trackItem->setData(filename, LibraryModel::url);
-            albumItem->appendRow(trackItem);
-        }
-    }
-    emit _libModel->endReset();
-
-    qint64 durationMS = timeStart.elapsed();
-//   QTime::fromMSecsSinceStartOfDay(static_cast<int>(duration)).toString("hh:mm:ss.zzz"));
-    sendInfo(tr("Library loaded in %1 ms").arg(durationMS),
-             tr("<ul><li>Number of Artists: %1</li><li>Number of Albums: %2</li><li>Number of Tracks: %3</li></ul>").arg(
-                 nbArtists).arg(nbAlbums).arg(nbTracks));
-}
-
-void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs)
-{
-    _dispPlaylistId = songs.requested_playlist().id();
-    qDebug() << "[MsgType::PLAYLIST_SONGS] playlist ID: " << _dispPlaylistId;
-    updateCurrentPlaylist();
-
-    if (_songs.size())
-    {
-        emit preClearSongs(_songs.size() - 1);
-        _songs.clear();
-        emit postSongRemoved();
-    }
-
-
-    qint32 nbSongs = songs.songs_size();
-    if (nbSongs > 0)
-    {
-        emit preAddSongs(songs.songs_size() -1 );
-        _songs.reserve(songs.songs_size());
-        qint32 idx = 0;
-        for (const auto& song : songs.songs())
-        {
-            _songs << song;
-            if (song.index() == _activeSong.index)
-            {
-                qDebug() << "[MsgType::PLAYLIST_SONGS] current song id: " << _activeSongIndex;
-                _activeSongIndex = idx;
-            }
-            ++idx;
-        }
-        emit postSongAppended();
-    }
-
-    qDebug() << "[MsgType::PLAYLIST_SONGS] Nb Songs: " << _songs.size();
-//    dumpCurrentPlaylist();
-}
 
 void ClementineRemote::checkClementineVersion()
 {
@@ -1109,6 +468,169 @@ void ClementineRemote::parseMessage(const QByteArray &data)
     }
 }
 
+
+
+////////////////////////////////
+/// Library methods
+////////////////////////////////
+
+void ClementineRemote::setLibraryFilter(const QString &searchTxt)
+{
+    qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
+    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
+    QRegExp regExp(searchTxt, caseSensitivity);
+    _libProxyModel->setFilterRegExp(regExp);
+}
+
+void ClementineRemote::appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName)
+{
+    if (!proxyIndex.isValid())
+    {
+        sendError(tr("Nothing selected"), tr("Select either a single Track or an Album"));
+        return;
+    }
+    int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
+    if (itemType == LibraryModel::Album)
+    {
+        qDebug() << "Library album activated: " << _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
+        int childCount = _libProxyModel->rowCount(proxyIndex);
+        if (childCount == 0)
+        {
+            sendError("", tr("No tracks in the selected album %1").arg(
+                          _libProxyModel->data(proxyIndex, LibraryModel::name).toString()));
+            return;
+        }
+        lockUserMutex();
+        _userMsg.Clear();
+        _userMsg.set_type(pb::remote::INSERT_URLS);
+        pb::remote::RequestInsertUrls *req = _userMsg.mutable_request_insert_urls();
+        for (int i = 0; i < childCount; ++i)
+        {
+            QModelIndex childIndex = _libProxyModel->index(i, 0, proxyIndex);
+            QString url = _libProxyModel->data(childIndex, LibraryModel::url).toString();
+            qDebug() << "Adding Library track from album: " << url;
+            *req->add_urls() = url.toStdString();
+        }
+        emit insertUrls(_dispPlaylistId, newPlaylistName);
+        sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
+                     childCount).arg(
+                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+    }
+    else if (itemType == LibraryModel::Track)
+    {
+        lockUserMutex();
+        _userMsg.Clear();
+        _userMsg.set_type(pb::remote::INSERT_URLS);
+        pb::remote::RequestInsertUrls *req = _userMsg.mutable_request_insert_urls();
+        QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
+        *req->add_urls() = url.toStdString();
+        qDebug() << "Library track activated: " << url;
+        emit insertUrls(_dispPlaylistId, newPlaylistName);
+        sendInfo("", tr("the track %1 has been added to the playlist %2").arg(
+                     _libProxyModel->data(proxyIndex, LibraryModel::name).toString()).arg(
+                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+    }
+    else
+        sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
+}
+
+
+void ClementineRemote::downloadLibraryItem(const QModelIndex &proxyIndex)
+{
+    if (!proxyIndex.isValid())
+    {
+        sendError(tr("Nothing selected"), tr("Select either a single Track or an Album"));
+        return;
+    }
+    int itemType = _libProxyModel->data(proxyIndex, LibraryModel::type).toInt();
+    if (itemType == LibraryModel::Artist)
+    {
+        sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
+        return;
+    }
+
+    lockUserMutex();
+    _userMsg.Clear();
+    _userMsg.set_type(pb::remote::DOWNLOAD_SONGS);
+    pb::remote::RequestDownloadSongs *req = _userMsg.mutable_request_download_songs();
+    req->set_download_item(pb::remote::DownloadItem::Urls);
+    if (itemType == LibraryModel::Album)
+    {
+        QString albumName = _libProxyModel->data(proxyIndex, LibraryModel::name).toString();
+        qDebug() << "Library album to download: " << albumName;
+        int childCount = _libProxyModel->rowCount(proxyIndex);
+        if (childCount == 0)
+        {
+            sendError("", tr("No tracks in the selected album %1").arg(albumName));
+            return;
+        }
+        for (int i = 0; i < childCount; ++i)
+        {
+            QModelIndex childIndex = _libProxyModel->index(i, 0, proxyIndex);
+            QString url = _libProxyModel->data(childIndex, LibraryModel::url).toString();
+            qDebug() << "Adding Library track from album: " << url;
+            *req->add_urls() = url.toStdString();
+        }
+        emit sendSongsToDownload(albumName);
+    }
+    else if (itemType == LibraryModel::Track)
+    {
+        QString url = _libProxyModel->data(proxyIndex, LibraryModel::url).toString();
+        qDebug() << "Library track to download: " << url;
+        *req->add_urls() = url.toStdString();
+        emit sendSongsToDownload(QString());
+    }
+}
+
+
+////////////////////////////////
+/// QML getter/setters
+////////////////////////////////
+
+bool ClementineRemote::isConnected() const { return _connection->isConnected(); }
+void ClementineRemote::cancelDownload() const { _connection->cancelDownload(); }
+
+const QString ClementineRemote::hostname() const
+{
+    if (_connection)
+        return _connection->hostname();
+    else
+        return "nowhere..."; // should never happen
+}
+
+
+////////////////////////////////
+/// Playlist methods
+////////////////////////////////
+
+QString ClementineRemote::playlistName() const
+{
+    return _dispPlaylist ? _dispPlaylist->name : QString("Playlist #%1").arg(_dispPlaylistId);
+}
+
+bool ClementineRemote::isCurrentPlaylistSaved() const
+{
+    if (_dispPlaylist)
+        return _dispPlaylist->favorite;
+    else
+        return false;
+}
+
+int ClementineRemote::activePlaylistIndex()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_securePlaylists);
+#endif
+    int idx = 0;
+    for (RemotePlaylist *p : _playlistsOpened)
+    {
+        if (p->id == _activePlaylistId)
+            return idx;
+        ++idx;
+    }
+    return idx;
+}
+
 qint32 ClementineRemote::currentPlaylistID() const
 {
     if (_dispPlaylist)
@@ -1140,3 +662,532 @@ void ClementineRemote::closingPlaylist(qint32 playlistID)
     if (_activePlaylistId == playlistID)
         _activePlaylistId = newDispPlaylist->id;
 }
+
+void ClementineRemote::updateActivePlaylist()
+{
+    _activePlaylistId = _dispPlaylistId;
+    int row = 0;
+    for (RemotePlaylist *p : _playlistsOpened)
+    {
+        if (p->id == _activePlaylistId)
+        {
+            if (!p->playing)
+            {
+                p->playing = true;
+                QModelIndex index = _plOpenedModel->index(row);
+                emit _plOpenedModel->dataChanged(index, index, {PlaylistModel::iconSrc});
+            }
+        }
+        else if (p->playing)
+        {
+            p->playing = false;
+            QModelIndex index = _plOpenedModel->index(row);
+            emit _plOpenedModel->dataChanged(index, index, {PlaylistModel::iconSrc});
+        }
+        ++row;
+    }
+}
+
+void ClementineRemote::updateCurrentPlaylist()
+{
+    _dispPlaylist       = nullptr;
+    _dispPlaylistIndex = 0;
+    int idx = 0;
+    for (RemotePlaylist *p : _playlistsOpened)
+    {
+        if (p->id == _dispPlaylistId)
+        {
+            _dispPlaylist       = p;
+            _dispPlaylistIndex = idx;
+            qDebug() << "[ClementineRemote::updateCurrentPlaylist] currentPlaylist: #" << idx
+                     << " : " << p->name;
+
+            emit updatePlaylist(idx);
+            break;
+        }
+        ++idx;
+    }
+}
+
+
+
+////////////////////////////////
+/// RemoteFile methods
+////////////////////////////////
+
+int ClementineRemote::sendSelectedFiles(const QString &newPlaylistName)
+{
+    lockUserMutex();
+    _userMsg.Clear();
+    _userMsg.set_type(pb::remote::APPEND_FILES);
+    QStringList selectedFiles;
+    for (const RemoteFile &f : _remoteFiles)
+    {
+        if (!f.isDir && f.selected)
+            selectedFiles << f.filename;
+    }
+    if (selectedFiles.isEmpty())
+    {
+        releaseUserMutex();
+        sendError(tr("No track selected"),
+                  tr("Please select at least one Track<br/>You need to be in <b>selection mode</b>.<br/>\
+For that either do a long press an a Track or use one of the 2 bottoms on the right hand."));
+        return 0;
+    }
+    else
+    {
+        pb::remote::RequestAppendFiles *files = _userMsg.mutable_request_append_files();
+        files->set_relative_path(_remoteFilesPath.toStdString());
+        if (!newPlaylistName.isEmpty())
+            files->set_new_playlist_name(newPlaylistName.toStdString());
+        else
+            files->set_playlist_id(_dispPlaylistId);
+
+        for (const QString &filename : selectedFiles)
+            *files->add_files() = filename.toStdString();
+
+        sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
+                     selectedFiles.size()).arg(
+                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+        emit sendFilesToAppend();
+        return selectedFiles.size();
+    }
+}
+
+void ClementineRemote::downloadSelectedFiles()
+{
+    lockUserMutex();
+    _userMsg.Clear();
+    _userMsg.set_type(pb::remote::DOWNLOAD_SONGS);
+    QStringList selectedFiles;
+    for (const RemoteFile &f : _remoteFiles)
+    {
+        if (!f.isDir && f.selected)
+            selectedFiles << f.filename;
+    }
+    if (selectedFiles.isEmpty())
+    {
+        releaseUserMutex();
+        sendError("No selected files",
+                  tr("You should at least select one music file to download..."));
+    }
+    else
+    {
+        pb::remote::RequestDownloadSongs *files = _userMsg.mutable_request_download_songs();
+        files->set_download_item(pb::remote::DownloadItem::Urls);
+        files->set_relative_path(_remoteFilesPath.toStdString());
+        for (const QString &filename : selectedFiles)
+            *files->add_urls() = filename.toStdString();
+
+        emit sendSongsToDownload(QFileInfo(_remoteFilesPath).fileName());
+    }
+}
+
+void ClementineRemote::doSendFilesToAppend()
+{
+    _connection->sendDataToServer(_userMsg);
+    _userMsg.clear_request_append_files();
+    releaseUserMutex();
+}
+
+
+////////////////////////////////
+/// RemoteSong methods
+////////////////////////////////
+
+void ClementineRemote::updateCurrentSongIdx(qint32 currentSongIndex)
+{
+    int idx = 0;
+    for (const RemoteSong &s : _songs)
+    {
+        if (s.index == currentSongIndex)
+        {
+            _activeSongIndex = idx;
+            emit currentSongIdx(_songsProxyModel->mapFromSource(_songsModel->index(idx)).row());
+            break;
+        }
+        ++idx;
+    }
+}
+
+void ClementineRemote::setSongsFilter(const QString &searchTxt)
+{
+    qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
+    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
+    QRegExp regExp(searchTxt, caseSensitivity);
+    _songsProxyModel->setFilterRegExp(regExp);
+}
+
+void ClementineRemote::deleteSelectedSongs()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_secureSongs);
+#endif
+    lockUserMutex();
+    _userMsg.Clear();
+    _userMsg.set_type(pb::remote::REMOVE_SONGS);
+    QList<int> selectedSongsIdexes = _songsProxyModel->selectedSongsIdexes();
+    if (selectedSongsIdexes.isEmpty())
+    {
+        releaseUserMutex();
+        return ;
+    }
+    else
+    {
+        pb::remote::RequestRemoveSongs *req = _userMsg.mutable_request_remove_songs();
+        req->set_playlist_id(_dispPlaylistId);
+        for (int songIndex : selectedSongsIdexes)
+            req->add_songs(songIndex);
+
+        emit sendSongsToRemove();
+    }
+}
+
+void ClementineRemote::downloadSelectedSongs()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_secureSongs);
+#endif
+    lockUserMutex();
+    _userMsg.Clear();
+    _userMsg.set_type(pb::remote::DOWNLOAD_SONGS);
+    QList<int> selectedSongsIDs = _songsProxyModel->selectedSongsIDs();
+    if (selectedSongsIDs.isEmpty())
+    {
+        releaseUserMutex();
+        return ;
+    }
+    else
+    {
+        pb::remote::RequestDownloadSongs *req = _userMsg.mutable_request_download_songs();
+        req->set_playlist_id(_dispPlaylistId);
+        req->set_download_item(pb::remote::DownloadItem::APlaylist);
+        for (int songID : selectedSongsIDs)
+            req->add_songs_ids(songID);
+
+        emit sendSongsToDownload(QString());//playlistName());
+    }
+}
+
+bool ClementineRemote::appendSongsToOtherPlaylist()
+{
+#ifdef __USE_CONNECTION_THREAD__
+    QMutexLocker lock(&_secureSongs);
+#endif
+    lockUserMutex();
+    _userMsg.Clear();
+    _userMsg.set_type(pb::remote::INSERT_URLS);
+    QStringList selectedSongsURLs = _songsProxyModel->selectedSongsURLs();
+
+    if (selectedSongsURLs.isEmpty())
+    {
+        releaseUserMutex();
+        return false;
+    }
+    else
+    {
+        pb::remote::RequestInsertUrls *req = _userMsg.mutable_request_insert_urls();
+        for (const QString &url : selectedSongsURLs)
+            *req->add_urls() = url.toStdString();
+        emit askPlaylistDestID();
+        return true;
+    }
+}
+
+void ClementineRemote::doSendSongsToRemove()
+{
+    _connection->sendDataToServer(_userMsg);
+    _userMsg.clear_request_append_files();
+    releaseUserMutex();
+}
+
+void ClementineRemote::doSendSongsToDownload()
+{
+    _connection->sendDataToServer(_userMsg);
+    _userMsg.clear_request_download_songs();
+    releaseUserMutex();
+}
+
+void ClementineRemote::doSendInsertUrls(qint32 playlistID, const QString &newPlaylistName)
+{
+    pb::remote::RequestInsertUrls *req = _userMsg.mutable_request_insert_urls();
+    if (newPlaylistName.isEmpty())
+        req->set_playlist_id(playlistID);
+    else
+        req->set_new_playlist_name(newPlaylistName.toStdString());
+    _connection->sendDataToServer(_userMsg);
+    _userMsg.clear_request_insert_urls();
+    releaseUserMutex();
+}
+
+
+
+////////////////////////////////
+/// private methods
+////////////////////////////////
+
+
+void ClementineRemote::rcvPlaylists(const pb::remote::ResponsePlaylists &playlists)
+{
+    bool includeClosedPlaylists = playlists.has_include_closed() && playlists.include_closed();
+    if (_playlistsOpened.size())
+    {
+        emit _plOpenedModel->preClearPlaylists(_playlistsOpened.size() - 1);
+        qDeleteAll(_playlistsOpened);
+        _playlistsOpened.clear();
+        emit _plOpenedModel->postClearPlaylists();
+    }
+    if (includeClosedPlaylists && _playlistsClosed.size())
+    {
+        emit _plClosedModel->preClearPlaylists(_playlistsClosed.size() - 1);
+        qDeleteAll(_playlistsClosed);
+        _playlistsClosed.clear();
+        emit _plClosedModel->postClearPlaylists();
+    }
+
+    qint32 nbPlaylists = playlists.playlist_size();
+    int idxOpened = 0, idxClosed = 0;
+    if (nbPlaylists)
+    {
+        for (const auto& pb_playlist : playlists.playlist())
+        {
+            if(pb_playlist.closed())
+            {
+                emit _plClosedModel->preAddPlaylist(idxClosed);
+                _playlistsClosed << new RemotePlaylist(pb_playlist);
+                emit _plClosedModel->postAddPlaylist(idxClosed++);
+            }
+            else
+            {
+                emit _plOpenedModel->preAddPlaylist(idxOpened);
+                _playlistsOpened << new RemotePlaylist(pb_playlist);
+                emit _plOpenedModel->postAddPlaylist(idxOpened++);
+            }
+        }
+    }
+
+    updateCurrentPlaylist();
+
+    if (includeClosedPlaylists)
+        emit closedPlaylistsReceived(idxClosed);
+
+//    emit updatePlaylists();
+    qDebug() << "[MsgType::PLAYLISTS] Nb Playlists: " << idxOpened
+             << " (closed ones: " << idxClosed << ")";
+    dumpPlaylists();
+}
+
+
+
+
+void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs)
+{
+    _dispPlaylistId = songs.requested_playlist().id();
+    qDebug() << "[MsgType::PLAYLIST_SONGS] playlist ID: " << _dispPlaylistId;
+    updateCurrentPlaylist();
+
+    if (_songs.size())
+    {
+        emit preClearSongs(_songs.size() - 1);
+        _songs.clear();
+        emit postSongRemoved();
+    }
+
+
+    qint32 nbSongs = songs.songs_size();
+    if (nbSongs > 0)
+    {
+        emit preAddSongs(songs.songs_size() -1 );
+        _songs.reserve(songs.songs_size());
+        qint32 idx = 0;
+        for (const auto& song : songs.songs())
+        {
+            _songs << song;
+            if (song.index() == _activeSong.index)
+            {
+                qDebug() << "[MsgType::PLAYLIST_SONGS] current song id: " << _activeSongIndex;
+                _activeSongIndex = idx;
+            }
+            ++idx;
+        }
+        emit postSongAppended();
+    }
+
+    qDebug() << "[MsgType::PLAYLIST_SONGS] Nb Songs: " << _songs.size();
+//    dumpCurrentPlaylist();
+}
+
+void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles &files)
+{
+    if (files.has_error() && files.error() != pb::remote::ResponseListFiles::NONE)
+        sendError("", _remoteFilesListError(files.error(), files.relative_path()));
+    else
+    {
+        if (_remoteFiles.size())
+        {
+            emit preClearRemoteFiles(_remoteFiles.size() - 1);
+            _remoteFiles.clear();
+            emit postClearRemoteFiles();
+        }
+
+        qint32 nbRemoteFiles = files.files_size();
+        if (nbRemoteFiles)
+        {
+            emit preAddRemoteFiles(nbRemoteFiles -1 );
+            _remoteFiles.reserve(nbRemoteFiles);
+            for (const auto& pb_file : files.files())
+                _remoteFiles << RemoteFile(pb_file.filename(), pb_file.is_dir());
+            emit postAddRemoteFiles();
+        }
+
+        qDebug() << "[MsgType::LIST_FILES] Nb Files: " << _remoteFiles.size();
+
+
+        _remoteFilesPath = files.relative_path().c_str();
+        _remoteFilesPathPerHost[_connection->hostname()] = _remoteFilesPath;
+        emit updateRemoteFilesPath(_remoteFilesPath);
+    }
+}
+
+
+void ClementineRemote::rcvSavedRadios(const pb::remote::ResponseSavedRadios &radios)
+{
+    if (_radioStreams.size())
+    {
+        emit preClearRadioStreams(_radioStreams.size() - 1);
+        _radioStreams.clear();
+        emit postClearRadioStreams();
+
+    }
+    qint32 nbStreams = radios.streams_size();
+    if (nbStreams)
+    {
+        emit preAddRadioStreams(nbStreams -1 );
+        _radioStreams.reserve(nbStreams);
+        for (const auto &radio: radios.streams())
+            _radioStreams << Stream(radio.name(), radio.url(), radio.url_logo());
+        emit postAddRadioStreams();
+    }
+
+    qDebug() << "[MsgType::REQUEST_SAVED_RADIOS] Nb Radio Streams: " << _radioStreams.size();
+}
+
+void ClementineRemote::dumpPlaylists()
+{
+    for (RemotePlaylist *p : _playlistsOpened)
+        qDebug() << "  - " << p->str();
+}
+
+void ClementineRemote::dumpCurrentPlaylist()
+{
+    for (const RemoteSong &s : _songs)
+        qDebug() << "  - " << s.str();
+}
+
+
+
+
+////////////////////////////////
+/// slots
+////////////////////////////////
+
+#ifdef __USE_CONNECTION_THREAD__
+void ClementineRemote::onPlaylistsOpenedUpdatedByWorker()
+{
+    rcvPlaylists(_playlistData.response_playlists());
+    _playlistData.clear_response_playlists();
+    _securePlaylists.unlock();
+}
+void ClementineRemote::onSongsUpdatedByWorker(bool initialized)
+{
+    rcvPlaylistSongs(_songsData.response_playlist_songs());
+    _songsData.clear_response_playlist_songs();
+    _secureSongs.unlock();
+    if (!initialized)
+        updateActivePlaylist();
+}
+void ClementineRemote::onRemoteFilesUpdatedByWorker()
+{
+    rcvListOfRemoteFiles(_remoteFilesData.response_list_files());
+    _remoteFilesData.clear_response_list_files();
+    _secureRemoteFilesData.unlock();
+}
+#endif
+
+void ClementineRemote::onLibraryDownloaded()
+{
+    QString host = _connection->hostname();
+    _libDB = QSqlDatabase::addDatabase("QSQLITE", host);
+    _libDB.setDatabaseName(QString("%1/%2.db").arg(_libraryPath).arg(host));
+    if(!_libDB.open()){
+        qCritical() << "Can't open sqlite DB... " << _libDB.databaseName();
+        return;
+    }
+
+    emit _libModel->beginReset();
+    _libModel->clear();
+
+    QElapsedTimer timeStart;
+    timeStart.start();
+
+    int nbArtists = 0, nbAlbums = 0, nbTracks = 0;
+    QSqlQuery query(_libDB);
+    if(!query.exec(sLibrarySQL))
+        qDebug() << "Can't Execute Query !";
+    else
+    {
+        QStandardItem *rootItem = _libModel->invisibleRootItem(),
+                *artistItem = nullptr, *albumItem = nullptr;
+        QString currentArtist, currentAlbum;
+        while(query.next())
+        {
+            QString artist   = query.value(0).toString();
+            QString album    = query.value(1).toString();
+            QString title    = query.value(2).toString();
+            int     track    = query.value(3).toInt();
+            QString filename = query.value(4).toString();
+            ++nbTracks;
+
+            if (!artistItem || artist != currentArtist)
+            {
+                artistItem = new QStandardItem();
+                artistItem->setData(artist.isEmpty() ? tr("unset artist") : artist,
+                                    LibraryModel::name);
+                artistItem->setData(LibraryModel::Artist, LibraryModel::type);
+                rootItem->appendRow(artistItem);
+                currentArtist = artist;
+                ++nbArtists;
+            }
+
+            if (!albumItem || album != currentAlbum)
+            {
+                albumItem = new QStandardItem();
+                albumItem->setData(album.isEmpty() ? tr("unset album") : album,
+                                    LibraryModel::name);
+                albumItem->setData(LibraryModel::Album, LibraryModel::type);
+                artistItem->appendRow(albumItem);
+                currentAlbum = album;
+                ++nbAlbums;
+            }
+
+            QStandardItem *trackItem = new QStandardItem();
+            if (track == -1)
+                trackItem->setData(title, LibraryModel::name);
+            else
+                trackItem->setData(QString("%1 - %2").arg(track, 2, 10, QChar('0')).arg(title),
+                                   LibraryModel::name);
+            trackItem->setData(filename.toLower().endsWith("m3u")?LibraryModel::Playlist:LibraryModel::Track,
+                               LibraryModel::type);
+            trackItem->setData(filename, LibraryModel::url);
+            albumItem->appendRow(trackItem);
+        }
+    }
+    emit _libModel->endReset();
+
+    qint64 durationMS = timeStart.elapsed();
+//   QTime::fromMSecsSinceStartOfDay(static_cast<int>(duration)).toString("hh:mm:ss.zzz"));
+    sendInfo(tr("Library loaded in %1 ms").arg(durationMS),
+             tr("<ul><li>Number of Artists: %1</li><li>Number of Albums: %2</li><li>Number of Tracks: %3</li></ul>").arg(
+                 nbArtists).arg(nbAlbums).arg(nbTracks));
+}
+

@@ -190,7 +190,7 @@ Rectangle {
                 leftMargin: headerSpacing
                 verticalCenter: parent.verticalCenter
             }
-            source: "icons/" + (selectionMode ? "selection.png" : "click.png");
+            source: 'icons/' + (selectionMode ? 'selection.png' : cppRemote.iconClick());
             onClicked: {
                 selectionMode = !selectionMode
                 if (selectionMode)
