@@ -61,6 +61,48 @@ The modification needed in Clementine can be found on [my fork](https://github.c
 - make
 
 
+
+### Licence
+<pre>
+//========================================================================
+//
+// Copyright (C) 2019 Matthieu Bruel <Matthieu.Bruel@gmail.com>
+//
+//
+// ngPost is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 3.0 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+</pre>
+
+
+### Questions / Issues / Requests
+- if you've any troubles to build or run ClemRemote, feel free to drop me an email
+- if you've some comments on the code, any questions on the implementation or any proposal for improvements, I'll be happy to discuss it with you so idem, feel free to drop me an email
+- if you'd like some other features, same same (but different), drop me an email ;)
+
+Here is my email: Matthieu.Bruel@gmail.com
+
+
+### Supported Languages
+For now it's only in english but it is possible to add translation packages<br/>
+If you'd like to translate ngPost in your language, it's easy to do (there is a nice GUI for that: QtLinguist), please get in touch with me (Matthieu.Bruel@gmail.com)
+
+
+### Thanks
+Thanks to Clementine team to have made this great Music Player and allowing the remote control functionality for their [Android Remote](https://github.com/clementine-player/Android-Remote). The functionality is basic, not a real protocol, but that more than enough on a LAN ;)
+
+
 ### Donations
 I'm Freelance nowadays, working on several personal projects, so if you use the app and would like to contribute to the effort, feel free to donate what you can.<br/>
 <br/>
