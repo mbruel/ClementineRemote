@@ -1,6 +1,7 @@
 .qmake.stash
 *.o
 Makefile
+src/ClementineRemote_iOS.pro
 src/ClementineRemote.pro.user
 src/protobuf/remotecontrolmessages.pb*
 src/ClementineRemote
