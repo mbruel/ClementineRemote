@@ -40,7 +40,7 @@
 #endif
 
 const QString ClementineRemote::sAppName    = QStringLiteral("ClemRemote");
-const QString ClementineRemote::sVersion    = "1.0-rc1";
+const QString ClementineRemote::sVersion    = "1.0-rc2";
 const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
 const QString ClementineRemote::sProjectUrl = QStringLiteral("https://github.com/mbruel/ClementineRemote");
 const QString ClementineRemote::sBTCaddress = QStringLiteral("3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6");

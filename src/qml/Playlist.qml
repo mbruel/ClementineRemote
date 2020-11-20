@@ -212,6 +212,38 @@ Rectangle {
 
 
     ImageButton {
+        id:   exitSelectModeButton
+        size: buttonSize
+        anchors {
+            bottom: parent.bottom
+            right:  selectAllButton.left
+            rightMargin: headerSpacing/2
+        }
+        source: 'icons/' + cppRemote.iconClick();
+        onClicked: {
+            cppRemote.selectAllSongsFromProxyModel(false);
+            selectionMode = false;
+        }
+        visible: selectionMode
+    } // exitSelectModeButton
+    ImageButton {
+        id:   selectAllButton
+        size: buttonSize
+        anchors {
+            bottom: parent.bottom
+            right:  addToOtherPlaylistButton.left
+            rightMargin: 2*headerSpacing
+        }
+        source: "icons/select_all.png";
+        onClicked: {
+            let allSelected = cppRemote.allSongsSelected();
+            cppRemote.selectAllSongsFromProxyModel(!allSelected);
+            if (allSelected)
+                songsView.currentIndex = -1;
+        }
+        visible: selectionMode
+    } // selectAllButton
+    ImageButton {
         id:   addToOtherPlaylistButton
         size: buttonSize
         anchors {
@@ -233,8 +265,8 @@ Rectangle {
         size: buttonSize
         anchors {
             bottom: parent.bottom
-            right:  exitSelectModeButton.left
-            rightMargin: headerSpacing
+            right:  deleteSongsButton.left
+            rightMargin: 2*headerSpacing
         }
         source: "icons/nav_downloads.png";
         onClicked: {
@@ -247,38 +279,6 @@ Rectangle {
         }
         visible: selectionMode
     } // downSelectedSongsButton
-    ImageButton {
-        id:   exitSelectModeButton
-        size: buttonSize
-        anchors {
-            bottom: parent.bottom
-            right:  selectAllButton.left
-            rightMargin: headerSpacing
-        }
-        source: 'icons/' + cppRemote.iconClick();
-        onClicked: {
-            cppRemote.selectAllSongsFromProxyModel(false);
-            selectionMode = false;
-        }
-        visible: selectionMode
-    } // exitSelectModeButton
-    ImageButton {
-        id:   selectAllButton
-        size: buttonSize
-        anchors {
-            bottom: parent.bottom
-            right:  deleteSongsButton.left
-            rightMargin: headerSpacing
-        }
-        source: "icons/select_all.png";
-        onClicked: {
-            let allSelected = cppRemote.allSongsSelected();
-            cppRemote.selectAllSongsFromProxyModel(!allSelected);
-            if (allSelected)
-                songsView.currentIndex = -1;
-        }
-        visible: selectionMode
-    } // selectAllButton
     ImageButton {
         id: deleteSongsButton
         size  : buttonSize
