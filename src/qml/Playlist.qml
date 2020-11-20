@@ -84,7 +84,8 @@ Rectangle {
 
 
     function goToCurrentPlaylistAndTrack() {
-        updateCurrentPlaylist(cppRemote.activePlaylistIndex());
+        if (playlistIdx !== cppRemote.activePlaylistIndex())
+            cppRemote.changePlaylist(cppRemote.activePlaylistIndex());
 
 //        print("songsView.size: "+songsView.count);
         let songIdx = cppRemote.currentSongIndex();

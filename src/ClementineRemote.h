@@ -253,8 +253,12 @@ public:
 
     Q_INVOKABLE qint32 currentPlaylistID() const;
     qint32 activePlaylistID() const;
+    bool isActivePlaylistDisplayed() const;
     void closingPlaylist(qint32 playlistID);
     void updateActivePlaylist();
+
+    void changeAndPlaySong(int songIndex, qint32 playlistID);
+
 
 
     ////////////////////////////////

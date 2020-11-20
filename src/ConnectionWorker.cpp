@@ -135,15 +135,24 @@ void ConnectionWorker::onDisconnectFromServer()
 void ConnectionWorker::onNextSong()
 {
     qDebug() << "[ConnectionWorker::onNextSong]";
-    onChangeToSong(1 + static_cast<int>(_remote->currentSongIndex()));
+    int nextIndex = 1 + static_cast<int>(_remote->currentSongIndex());
+    if (_remote->isActivePlaylistDisplayed())
+        onChangeToSong(nextIndex);
+    else
+        _remote->changeAndPlaySong(nextIndex, _remote->activePlaylistID());
 }
 
 void ConnectionWorker::onPreviousSong()
 {
     qDebug() << "[ConnectionWorker::onPreviousSong]";
-    int currentIndex = static_cast<int>(_remote->currentSongIndex()) - 1;
-    if (currentIndex >= 0 )
-        onChangeToSong(currentIndex);
+    int previousIndex = static_cast<int>(_remote->currentSongIndex()) - 1;
+    if (previousIndex >= 0 )
+    {
+        if (_remote->isActivePlaylistDisplayed())
+            onChangeToSong(previousIndex);
+        else
+            _remote->changeAndPlaySong(previousIndex, _remote->activePlaylistID());
+    }
 }
 
 void ConnectionWorker::onSetEngineState(qint32 state)
@@ -173,7 +182,7 @@ void ConnectionWorker::onSetEngineState(qint32 state)
     if (_remote->playerPreviousState() == pb::remote::EngineState::Idle && msg.type() == pb::remote::PLAY )
     {
         qDebug() << "[ConnectionWorker::onSetEngineState] try to play previous song: " << _remote->currentSong().title;
-        _doChangeSong(static_cast<int>(_remote->currentSongIndex()), _remote->activePlaylistID());
+        sendChangeSong(static_cast<int>(_remote->currentSongIndex()), _remote->activePlaylistID());
     }
 
 }
@@ -429,7 +438,7 @@ void ConnectionWorker::onInsertUrls(qint32 playlistID, const QString &newPlaylis
     _remote->doSendInsertUrls(playlistID, newPlaylistName);
 }
 
-void ConnectionWorker::_doChangeSong(int songIndex, qint32 playlistID)
+void ConnectionWorker::sendChangeSong(int songIndex, qint32 playlistID)
 {
     const RemoteSong &song = _remote->playlistSong(songIndex);
 
@@ -450,14 +459,7 @@ void ConnectionWorker::onChangeToSong(int proxyRow)
 {
     int modelRow = _remote->modelRowFromProxyRow(proxyRow);
     if (modelRow != -1)
-    {
-        _doChangeSong(modelRow, _remote->currentPlaylistID());
-        _remote->updateActivePlaylist();
-
-        // this will play music so we need to update the remote
-        _remote->setPlay();
-        emit _remote->updateEngineState();
-    }
+        _remote->changeAndPlaySong(modelRow, _remote->currentPlaylistID());
     else
         qCritical() << "[ConnectionWorker::onChangeToSong] ERROR getting model row from proxy one: " << proxyRow;
 }

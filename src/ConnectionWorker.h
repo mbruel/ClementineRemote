@@ -68,6 +68,8 @@ public:
     // Sends data to client without check if authenticated
     void sendDataToServer(pb::remote::Message &msg);
 
+    void sendChangeSong(int songIndex, qint32 playlistID);
+
     void requestSavedRadios();
 
     inline const QString &hostname() const;
@@ -142,8 +144,6 @@ private slots:
 
 
 private:
-    void _doChangeSong(int songIndex, qint32 playlistID);
-
     bool createDownloadDestinationFolder(const QString &dstFolder);
 
     QByteArray sha1Hex(QFile &file);

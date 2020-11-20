@@ -644,6 +644,11 @@ qint32 ClementineRemote::activePlaylistID() const
     return _activePlaylistId;
 }
 
+bool ClementineRemote::isActivePlaylistDisplayed() const
+{
+    return _dispPlaylist ? _dispPlaylist->id == _activePlaylistId : false;
+}
+
 void ClementineRemote::closingPlaylist(qint32 playlistID)
 {
     int idx = 0;
@@ -686,6 +691,15 @@ void ClementineRemote::updateActivePlaylist()
         }
         ++row;
     }
+}
+
+void ClementineRemote::changeAndPlaySong(int songIndex, qint32 playlistID)
+{
+    _connection->sendChangeSong(songIndex, playlistID);
+
+    // this will play music so we need to update the remote
+    setPlay();
+    emit updateEngineState();
 }
 
 void ClementineRemote::updateCurrentPlaylist()
