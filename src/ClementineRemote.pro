@@ -13,6 +13,10 @@ DEPENDPATH += $$PWD/../protobuf-3.13.0/src
 CONFIG(debug, debug|release) :{
     DEFINES += __DEBUG__
 }
+else {
+    # In release mode, remove all qDebugs !
+    DEFINES += QT_NO_DEBUG_OUTPUT
+}
 
 #For linux
 linux {
@@ -132,3 +136,13 @@ HEADERS += \
 DISTFILES += \
     ios/info.plist \
     protobuf/remotecontrolmessages.proto
+
+# https://developer.apple.com/library/archive/qa/qa1686/_index.html
+# Required icons:
+#   - 120x120 : Icon-60@2x.png
+#   - 57x57   : Icon.png
+#   - 72x72   : Icon-72.png
+#   - 76x76   : Icon-76.png
+# Recommanded :
+#   - 29x29   : Icon-Small.png
+#   - 50x50   : Icon-Small-50.png

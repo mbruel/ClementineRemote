@@ -70,6 +70,13 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
 
     static const QString sLibrarySQL;
 
+    // for QML to know at runtime if it's a debug or release build
+#ifdef __DEBUG__
+    static const bool sDebugBuild = true;
+#else
+    static const bool sDebugBuild = false;
+#endif
+
 private:
 #ifdef __USE_CONNECTION_THREAD__
     QThread                 _thread;            //!< all the network communication is done in a Thread to let the GUI reactive
@@ -452,7 +459,7 @@ private slots:
     ////////////////////////////////
     /// static methods
     ////////////////////////////////
-public:
+public:    
     inline Q_INVOKABLE static const QString clementineFilesSupportMinVersion();
     inline Q_INVOKABLE static const QString appTitle();
     inline Q_INVOKABLE static const QString appName();
@@ -466,6 +473,7 @@ public:
     inline Q_INVOKABLE static QString prettyLength(qint32 sec);
     inline             static int sockTimeoutMs();
 
+    inline Q_INVOKABLE static bool debugBuild();
 };
 
 
@@ -490,6 +498,7 @@ const QString ClementineRemote::clementineFilesSupportMinVersion()
 }
 
 int ClementineRemote::sockTimeoutMs() { return sSockTimeoutMs; }
+bool ClementineRemote::debugBuild()   { return sDebugBuild; }
 
 QString ClementineRemote::prettyLength(qint32 sec)
 {

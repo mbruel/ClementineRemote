@@ -256,7 +256,7 @@ Page {
                     sliderSize: switchHeight
 
                     checked: false
-                    onToggled: print("overwriteFilesSwitch: " + checked);
+                    onToggled: if (cppRemote.debugBuild()) print("overwriteFilesSwitch: " + checked);
                 } // overwriteFilesSwitch
 
             } // downSettings

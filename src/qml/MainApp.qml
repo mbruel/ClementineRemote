@@ -81,7 +81,8 @@ Item {
         function onError(title, msg) { error(title, msg); }
 
         function onActiveSongLength(length, pretty_length){
-            print("new track duration: "+pretty_length + " ("+length+")");
+            if (cppRemote.debugBuild())
+                print("[MainApp] active track duration: "+pretty_length + " ("+length+")");
             trackLength = length;
             trackDuration.text = pretty_length;
         }
@@ -314,7 +315,8 @@ Item {
                     return false;
                 }
             }
-            print("downloadPath: "+downloadPath);
+            if (cppRemote.debugBuild())
+                print("[MainApp] downloadPath: "+downloadPath);
             downloadProgressBar.value = 0;
             return true;
         }
@@ -494,13 +496,11 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 onPressedChanged: {
                     if (!pressed)
                     {
-                        print("onPressedChanged trackPosition: "+Math.round(value*trackLength))
+                        if (cppRemote.debugBuild())
+                            print("[MainApp] change track position: "+Math.round(value*trackLength))
                         cppRemote.setTrackPostion(Math.round(value*trackLength))
                     }
                 }
-//                onMoved:{
-////                    print("new trackPosition: "+value*trackLength)
-//                }
             } // trackSlider
 
             Rectangle {

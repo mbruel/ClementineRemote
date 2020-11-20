@@ -94,16 +94,12 @@ Window {
         mainArea.item.openSettings.connect(openSettings);
     }
 
-    function openSettings()
-    {
-        print("openSettings");
+    function openSettings() {
         mainArea.sourceComponent = settingsPage;
         mainArea.item.exitSettings.connect(closeSettings);
     }
 
-    function closeSettings()
-    {
-        print("openSettings");
+    function closeSettings() {
         if (cppRemote.isConnected())
             openMainApp();
         else

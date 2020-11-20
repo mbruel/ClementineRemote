@@ -113,7 +113,8 @@ Rectangle {
                 source: "icons/go-up.png";
                 onClicked: {
                     resetSelectionMode();
-                    print("[ServerFiles] parentPathButton!")
+                    if (cppRemote.debugBuild())
+                        print("[ServerFiles] parent folder clicked")
                     cppRemote.getServerFiles(relativePath.text, "..");
                 }
             } // parentPathButton
@@ -123,7 +124,8 @@ Rectangle {
                 source: "icons/go-home.png";
                 onClicked: {
                     resetSelectionMode();
-                    print("[ServerFiles] homePathButton!")
+                    if (cppRemote.debugBuild())
+                        print("[ServerFiles] home clicked!")
                     cppRemote.getServerFiles("./", "");
                 }
             } // homePathButton

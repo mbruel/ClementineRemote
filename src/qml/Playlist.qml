@@ -60,7 +60,6 @@ Rectangle {
         function onActiveSongIdx(idx) { updateActiveSong(idx); }
         function onUpdatePlaylist(idx) { updateCurrentPlaylist(idx); }
         function onClosedPlaylistsReceived(nbClosedPlaylists){
-//            print("nb Closed Playlists: "+nbClosedPlaylists);
             if (nbClosedPlaylists === 0)
                 noMorePlaylistDialog.open();
             else {
@@ -99,7 +98,8 @@ Rectangle {
     } // updateActiveSong
 
     function updateCurrentPlaylist(idx){
-//        print("updateCurrentPlaylist: "+idx);
+        if (cppRemote.debugBuild())
+            print("[Playlist] updateCurrentPlaylist: "+idx);
         songsView.currentIndex = -1; // don't select any song
         playlistIdx = idx;
         if (playlistCombo.currentIndex !== idx)
@@ -334,7 +334,7 @@ Rectangle {
                 source: iconSrc
 
                 anchors.verticalCenter: parent.verticalCenter
-            }
+            } // icon
 
             Text{
                 id: txtName
@@ -345,7 +345,7 @@ Rectangle {
 
                 elide: Text.ElideRight
                 width: parent.width - icon.width - 3*comboLineSpacing
-            }
+            } // txtName
 
             highlighted: ListView.isCurrentItem
             onClicked: {
@@ -353,57 +353,12 @@ Rectangle {
                 playlistCombo.currentIndex = index;
                 if (index != playlistIdx)
                 {
-                    print("Playlist clicked: #" + index+ " : " +name )
+                    if (cppRemote.debugBuild())
+                        print("[Playlist] Playlist clicked: #" + index+ " : " +name )
                     cppRemote.changePlaylist(index)
                 }
-            }
-        }
-/*
-        Rectangle {
-            width: ListView.view.width
-            height: comboLineHeight
-
-//            color: ListView.isCurrentItem ? colorSongSelected : "white"
-
-            Image {
-                id: icon
-                x : combolineSpacing
-                width : comboIconSize
-                height: comboIconSize
-                source: iconSrc
-
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text{
-                id: txtName
-                text: name
-                x: comboLineHeight + 2*combolineSpacing
-
-                anchors.verticalCenter: icon.verticalCenter
-
-                elide: Text.ElideRight
-                width: parent.width - icon.width - 3*combolineSpacing
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled : true
-                onClicked: {
-                    playlistCombo.popup.close()
-                    playlistCombo.currentIndex = index;
-                    if (index != playlistIdx)
-                    {
-                        print("Playlist clicked: #" + index+ " : " +name )
-                        cppRemote.changePlaylist(index)
-                    }
-                }
-
-                onEntered: color = "lightgray"
-                onExited: color = "white"
-            }
-        }
-*/
+            } // onClicked
+        } // ItemDelegate
     } // Component playlistDelegate
 
     Component {
@@ -512,13 +467,13 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-//                    print("Clicked #" + index + ": " + title)
+//                    print("Song clicked #" + index + ": " + title)
                     songsView.currentIndex = index
                     if (selectionMode)
                         selected = !selected;
                 }
                 onDoubleClicked: {
-//                    print("onDoubleClicked #" + index + ": " + title )
+//                    print("Song double clicked #" + index + ": " + title )
                     songsView.currentIndex = index
                     cppRemote.changeToSong(index)
                 }
@@ -526,7 +481,7 @@ Rectangle {
                     songsView.currentIndex = index
                     selectionMode = true
                     selected = true;
-//                    print("onPressAndHold #" + index + ": " + title)
+//                    print("Song long press #" + index + ": " + title)
                 }
             } // MouseArea
         } // songDelegateRect
