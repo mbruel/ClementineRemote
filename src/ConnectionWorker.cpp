@@ -32,7 +32,7 @@
 ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     QObject(parent),
     _remote(remote),
-    _socket(nullptr), _timeout(), _disconnectReason(" "),
+    _socket(nullptr), _timeout(this), _disconnectReason(" "),
     _reading_protobuf(false), _expected_length(0), _buffer(),
     _host(), _port(0), _auth_code(-1),
     _libraryDL(), _songsDL()

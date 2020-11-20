@@ -49,15 +49,16 @@ Window {
     property string disconnectReason: ""
 
 //    Keys.onReleased: {
-//        console.log("Key pressed: "+event.key);
+//        print("Key pressed: "+event.key);
 //        if (event.key === Qt.Key_Back) {
-//            console.log("BACK");
+//            print("BACK");
 //            onDisconnected();
 //        }
 //    }
 
     onClosing: {
-        console.log("Close event");
+        if (cppRemote.debugBuild())
+            print("Close event");
         cppRemote.close();
 //        close.accepted = false
 //        mainArea.sourceComponent = loginPage;

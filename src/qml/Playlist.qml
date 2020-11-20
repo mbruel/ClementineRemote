@@ -207,7 +207,7 @@ Rectangle {
         boundsBehavior    : Flickable.DragOverBounds
         boundsMovement    : Flickable.FollowBoundsBehavior
         ScrollBar.vertical: ScrollBar {}
-//        onCurrentItemChanged: console.log("songsView current index: "+songsView.currentIndex)
+//        onCurrentItemChanged: print("songsView current index: "+songsView.currentIndex)
     } // songsView
 
 
@@ -490,7 +490,7 @@ Rectangle {
     Dialog {
         id: playlistDestructionConfirmationDialog
 
-        width: playlist.width *3/4
+//        width: playlist.width *3/4
 
         x: (playlist.width - width) / 2
         y: (playlist.height - height) / 2

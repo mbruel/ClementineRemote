@@ -166,7 +166,8 @@ Item {
     } // checkClementineVersion
 
     function changeMainMenu(selectedMenu){
-        console.log("New idx: "+selectedMenu );
+        if (cppRemote.debugBuild())
+            print("[MainApp] change main MenuNew: " + selectedMenu);
         toolBarIndex = selectedMenu;
 
         // make previous ToolBarButton Inactive
@@ -992,7 +993,6 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 text : qsTr("Settings")
                 icon.source: "icons/nav_settings.png"
                 onClicked: {
-                    console.log("onClicked " + settings.text);
                     drawer.close();
                     drawer.goSettings = true;
                 }
@@ -1004,7 +1004,6 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 text : qsTr("Downloads")
                 icon.source: "icons/nav_downloads.png"
                 onClicked: {
-                    console.log("onClicked " + downloads.text);
                     drawer.close();
                     info(qsTr("Feature not implemented..."),
                          qsTr("Please use the File explorer of your System to see/manage your downloads...")
@@ -1027,7 +1026,6 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 text : qsTr("Disconnect")
                 icon.source: "icons/nav_quit.png"
                 onClicked: {
-                    console.log("onClicked " + logout.text)
                     drawer.close();
                     drawer.disconnect = true;
                 }
