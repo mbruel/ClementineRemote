@@ -328,7 +328,7 @@ public:
     /// Radio methods
     ////////////////////////////////
 
-    inline int numberOfRadioStreams() const;
+    Q_INVOKABLE inline int numberOfRadioStreams() const;
     inline const Stream &radioStream(int index) const;
     inline Stream &radioStream(int index);
 

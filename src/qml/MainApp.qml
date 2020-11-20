@@ -186,22 +186,21 @@ Item {
 
         if (selectedMenu === 0)
             mainArea.sourceComponent = playlistPage;
-        else if (selectedMenu === 1)
-        {
+        else if (selectedMenu === 1) {
             cppRemote.getServerFiles(cppRemote.remoteFilesPath_QML());
             mainArea.sourceComponent = filesPage;
         }
         else if (selectedMenu === 2)
             mainArea.sourceComponent = libraryPage;
-        else if (selectedMenu === 3)
-        {
-            cppRemote.getServerFiles(cppRemote.remoteFilesPath_QML());
-            mainArea.sourceComponent = radiosPage;
+        else if (selectedMenu === 3) {
+            if (cppRemote.numberOfRadioStreams())
+                mainArea.sourceComponent = radiosPage;
+            else
+                mainArea.sourceComponent = noInternetRadioPage;
         }
         else if (selectedMenu === 4)
             mainArea.sourceComponent = globalSearchPage;
-        else
-        {
+        else {
             mainArea.setSource("SimpleMainArea.qml");
             mainArea.item.lbl.text = toolBarModel.get(selectedMenu).name;//menuList[selectedMenu];
             mainArea.item.color    = toolBarModel.get(selectedMenu).color;
@@ -820,7 +819,29 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
             color: "lightgray"
 
         }
-    } // libraryPage
+    } // globalSearchPage
+
+    Component {
+        id: noInternetRadioPage
+
+        Rectangle {
+            radius: 10
+            anchors.fill: parent.fill
+            color: "lightgray"
+            Text {
+                anchors{
+                    verticalCenter: parent.verticalCenter
+                    left: parent.left
+                    leftMargin: 10
+                }
+                text: '<h3>' + qsTr("Internet Radio Streams") + '</h3><br/>' +
+                      qsTr("You don't have any radio stream set up in Clementine") + '<br/><br/>' +
+                      qsTr('To add some go on Clementine server in the section: <b>Internet -- Your radio streams</b>')
+                width: parent.width - 20
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
 
     Dialog {
         id: infoDialog

@@ -28,10 +28,8 @@ Rectangle {
 
     property int qrBtcSize: 120
 
-    anchors{
-        verticalCenter: parent.verticalCenter;
-        fill: parent.fill
-    }
+    anchors.fill: parent.fill
+
     Flickable {
         id: flickable
         clip: true
