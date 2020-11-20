@@ -175,16 +175,10 @@ void ConnectionWorker::onSetEngineState(qint32 state)
         break;
     }
 
+    if (msg.type() == pb::remote::PLAY)
+        _remote->shallForceRePlayActiveSong();
 
     sendDataToServer(msg);
-
-    // Hack to make sure last played song will be resumed
-    if (_remote->playerPreviousState() == pb::remote::EngineState::Idle && msg.type() == pb::remote::PLAY )
-    {
-        qDebug() << "[ConnectionWorker::onSetEngineState] try to play previous song: " << _remote->currentSong().title;
-        sendChangeSong(static_cast<int>(_remote->currentSongIndex()), _remote->activePlaylistID());
-    }
-
 }
 
 void ConnectionWorker::onShuffle(ushort mode)
@@ -440,17 +434,15 @@ void ConnectionWorker::onInsertUrls(qint32 playlistID, const QString &newPlaylis
 
 void ConnectionWorker::sendChangeSong(int songIndex, qint32 playlistID)
 {
-    const RemoteSong &song = _remote->playlistSong(songIndex);
-
     pb::remote::Message msg;
     msg.set_type(pb::remote::CHANGE_SONG);
     pb::remote::RequestChangeSong *request = msg.mutable_request_change_song();
     if (playlistID != -1)
         request->set_playlist_id(playlistID);
 
-    qDebug() << "[ConnectionWorker::onChangeToSong] idx: " << songIndex << " : "<< song.str();
+    qDebug() << "[ConnectionWorker::onChangeToSong] playlistID: " << playlistID << ", songIndex: " << songIndex;
 
-    request->set_song_index(song.index);
+    request->set_song_index(songIndex);
 
     sendDataToServer(msg);
 }

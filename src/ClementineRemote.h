@@ -146,6 +146,9 @@ private:
 #endif
     pb::remote::Message _userMsg;
 
+    bool _forceRePlayActiveSong;
+    QPair<int, int> _activeSongAndPlaylistIndexes;
+
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -208,7 +211,6 @@ public:
     inline Q_INVOKABLE void saveConnectionInSettings(const QString &host, const QString &port, const QString &pass);
 
     inline Q_INVOKABLE qint32 playerState() const;
-    inline qint32 playerPreviousState() const;
     inline Q_INVOKABLE bool isPlaying() const;
     inline Q_INVOKABLE bool isPaused() const;
 
@@ -313,7 +315,7 @@ public:
     void doSendSongsToDownload();
     void doSendInsertUrls(qint32 playlistID, const QString &newPlaylistName);
 
-
+    void shallForceRePlayActiveSong();
 
     ////////////////////////////////
     /// Radio methods
@@ -599,7 +601,6 @@ void ClementineRemote::saveConnectionInSettings(const QString &host, const QStri
 }
 
 qint32 ClementineRemote::playerState() const { return _clemState; }
-qint32 ClementineRemote::playerPreviousState() const { return _previousClemState; }
 
 bool ClementineRemote::isPlaying() const { return _clemState == pb::remote::EngineState::Playing; }
 bool ClementineRemote::isPaused() const { return _clemState == pb::remote::EngineState::Paused; }

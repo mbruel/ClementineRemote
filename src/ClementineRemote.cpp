@@ -127,7 +127,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #ifdef __USE_CONNECTION_THREAD__
     _secureUserMsg(),
 #endif
-    _userMsg()
+    _userMsg(),
+    _forceRePlayActiveSong(false)
 {
     setObjectName(sAppName);
 
@@ -221,6 +222,7 @@ void ClementineRemote::close()
 void ClementineRemote::clearData(const QString &reason)
 {
     _initialized = false;
+    _forceRePlayActiveSong = false;
 
     emit _plOpenedModel->preClearPlaylists(_playlistsOpened.size() - 1 );
     qDeleteAll(_playlistsOpened);
@@ -452,6 +454,16 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         qDebug() << "[MsgType::PLAY]";
         _clemState = pb::remote::EngineState::Playing;
         emit updateEngineState();
+        if (_forceRePlayActiveSong)
+        {
+            // Hack to make sure last played song will be played
+            // as Clementine would start the one from it's current opened tab
+            qDebug() << "Force replay OUR active song: " << _activeSongAndPlaylistIndexes.first
+                     << " (playlist: " << _activeSongAndPlaylistIndexes.second << ")";
+            _connection->sendChangeSong(_activeSongAndPlaylistIndexes.first, _activeSongAndPlaylistIndexes.second);
+            _forceRePlayActiveSong = false;
+        }
+
         break;
     case pb::remote::PAUSE:
         qDebug() << "[MsgType::PAUSE]";
@@ -983,6 +995,15 @@ void ClementineRemote::doSendInsertUrls(qint32 playlistID, const QString &newPla
     _connection->sendDataToServer(_userMsg);
     _userMsg.clear_request_insert_urls();
     releaseUserMutex();
+}
+
+void ClementineRemote::shallForceRePlayActiveSong()
+{
+    if (_previousClemState == pb::remote::EngineState::Idle)
+    {
+        _activeSongAndPlaylistIndexes = {_activeSongIndex, _activePlaylistId};
+        _forceRePlayActiveSong = true;
+    }
 }
 
 
