@@ -9,6 +9,18 @@ I've built the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/r
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>
 
 ## Features
+### Player
+- start Previous track (the one from the Active Playlist, you may be looking another one)
+- start Next track (the one from the Active Playlist, you may be looking another one)
+- Play/Pause or Stop current track
+- change the volume
+- jump to current Track (from whatever Menu or Playlist)
+- change the position in the playing track
+- change the reapeat mode
+- change the shuffle mode
+- download the playing track
+
+
 ### Playlist Menu
 From the header Menu:
 - Change Playlist (from those opened in Clementine on the server)
@@ -23,14 +35,21 @@ From the header Menu:
 
 You can also:
 - **Double click on a Track** to play it
-- **Long press on a Track** to switch in **Edit mode** from where you can select more tracks or all (cf button in the bottom) to:
+- **Long press on a Track** to switch in **Selection mode** from where you can select more tracks or all (cf button in the bottom) to:
 - Copy tracks to another Playlist (requires Clementine v1.4.0rc1ClemRemote)
 - download the selected tracks (requires Clementine v1.4.0rc1ClemRemote)
 - remove the selected tracks from the playlist.
-- click on the cursor button to exit the **Edit mode**
+- click on the cursor button to exit the **Selection mode**
 
 ### Files Menu (requires Clementine v1.4.0rc1ClemRemote)
-
+You need to have set up the **Files root folder** in Clementine settings (cf [Tools -- Preferences -- Network Remote](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/Clementine_Network_Remote_Settings.png))<br/>
+- you can jump into a folder
+- go to the parent folder
+- go back to the home folder
+- long press on a track or use the cursor button (bottom right) to switch in **Selection Mode**
+- download selected tracks
+- append selected tracks to the current Playlist
+- create a new playlist with the selected tracks
 
 ### Library Menu
 The library is downloaded automatically when you first log to a Clementine server
@@ -50,7 +69,6 @@ If you use **Clementine v1.4.0rc1ClemRemote** or above, you can add the url of l
 ### Global Search Menu
 As I don't use any Internet Storage, I've not implemented this part...<br/>
 If you'd be interested in it, please open a [request issue here on GitHub](https://github.com/mbruel/ClementineRemote/issues) or drop me an email at Matthieu.Bruel@gmail.com
-
 
 ## Clementine version
 The modification needed in Clementine can be found on [my fork](https://github.com/mbruel/Clementine). I've asked 4 pull requests that are not yet merged so I've build the release myself for Linux, MacOS and Windows (using the Clementine workflow on my branch)<br/>
