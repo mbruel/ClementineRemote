@@ -522,8 +522,9 @@ void ConnectionWorker::onDisconnected()
     _socket = nullptr;
 
     _songsDL.init(0, 0);
+    _libraryDL.init();
 
-    emit _remote->disconnected(_disconnectReason);
+    _remote->clearData(_disconnectReason);
 }
 
 void ConnectionWorker::onReadyRead()

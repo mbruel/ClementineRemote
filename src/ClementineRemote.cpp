@@ -197,15 +197,19 @@ void ClementineRemote::close()
         delete _plClosedModel;
         _plClosedModel = nullptr;
     }
-    if (_songsProxyModel)
-    {
-        delete _songsProxyModel;
-        _songsProxyModel = nullptr;
-    }
     if (_songsModel)
     {
         delete _songsModel;
         _songsModel = nullptr;
+        delete _songsProxyModel;
+        _songsProxyModel = nullptr;
+    }
+    if (_libModel)
+    {
+        delete _libModel;
+        _libModel = nullptr;
+        delete _libProxyModel;
+        _libProxyModel = nullptr;
     }
     if (_connection)
     {
@@ -214,6 +218,43 @@ void ClementineRemote::close()
     }
 }
 
+void ClementineRemote::clearData(const QString &reason)
+{
+    _initialized = false;
+
+    emit _plOpenedModel->preClearPlaylists(_playlistsOpened.size() - 1 );
+    qDeleteAll(_playlistsOpened);
+    _playlistsOpened.clear();
+    emit _plOpenedModel->postClearPlaylists();
+
+    emit _plClosedModel->preClearPlaylists(_playlistsClosed.size() - 1 );
+    qDeleteAll(_playlistsClosed);
+    _playlistsClosed.clear();
+    emit _plClosedModel->postClearPlaylists();
+
+
+    _dispPlaylist = nullptr;
+    _dispPlaylistId = 0;
+    _dispPlaylistIndex = 0;
+
+    emit preClearSongs(_songs.size() - 1);
+    _songs.clear();
+    emit postSongRemoved();
+
+    _activeSongIndex = 0;
+    _activePlaylistId = 0;
+
+    _remoteFiles.clear();
+    _radioStreams.clear();
+
+    emit _libModel->beginReset();
+    _libModel->clear();
+    emit _libModel->endReset();
+
+    _isDownloading = 0x0;
+
+    emit disconnected(reason);
+}
 
 
 QString ClementineRemote::testDownloadPath()
@@ -346,10 +387,7 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         break;
 
     case pb::remote::MsgType::CURRENT_METAINFO:
-        _activeSong = RemoteSong(msg.response_current_metadata().song_metadata());
-        updateCurrentSongIdx(_activeSong.index);
-        emit currentSongLength(_activeSong.length, _activeSong.pretty_length);
-        qDebug() << "[MsgType::CURRENT_METAINFO] " << _activeSong.str();
+        updateActiveSong(msg.response_current_metadata().song_metadata());
         break;
 
     case pb::remote::SET_VOLUME:
@@ -616,7 +654,7 @@ bool ClementineRemote::isCurrentPlaylistSaved() const
         return false;
 }
 
-int ClementineRemote::activePlaylistIndex()
+int ClementineRemote::getAtivePlaylistIndex()
 {
 #ifdef __USE_CONNECTION_THREAD__
     QMutexLocker lock(&_securePlaylists);
@@ -809,19 +847,32 @@ void ClementineRemote::doSendFilesToAppend()
 /// RemoteSong methods
 ////////////////////////////////
 
-void ClementineRemote::updateCurrentSongIdx(qint32 currentSongIndex)
+int ClementineRemote::getActiveSongIndex() const
 {
+    if (isActivePlaylistDisplayed())
+        return _songsProxyModel->mapFromSource(_songsModel->index(_activeSongIndex)).row();
+    else
+        return _activeSongIndex;
+}
+void ClementineRemote::updateActiveSong(RemoteSong &&activeSong)
+{
+    _activeSong = activeSong;
+
     int idx = 0;
     for (const RemoteSong &s : _songs)
     {
-        if (s.index == currentSongIndex)
+        if (s.index == _activeSong.index)
         {
             _activeSongIndex = idx;
-            emit currentSongIdx(_songsProxyModel->mapFromSource(_songsModel->index(idx)).row());
+            if (isActivePlaylistDisplayed())
+                emit activeSongIdx(_songsProxyModel->mapFromSource(_songsModel->index(idx)).row());
             break;
         }
         ++idx;
     }
+
+    emit activeSongLength(_activeSong.length, _activeSong.pretty_length);
+    qDebug() << "[MsgType::CURRENT_METAINFO] " << _activeSong.str();
 }
 
 void ClementineRemote::setSongsFilter(const QString &searchTxt)

@@ -50,14 +50,14 @@ Rectangle {
     // private properties
     property bool selectionMode    : false
 
-    property int  playingSongIdx   : -1
+    property int  activeSongIdx   : -1
     property int  playlistIdx      : 0
     property int  activePlaylistIdx: 0
 
 
     Connections {
         target: cppRemote
-        function onCurrentSongIdx(idx) { updateCurrentSong(idx); }
+        function onActiveSongIdx(idx) { updateActiveSong(idx); }
         function onUpdatePlaylist(idx) { updateCurrentPlaylist(idx); }
         function onClosedPlaylistsReceived(nbClosedPlaylists){
 //            print("nb Closed Playlists: "+nbClosedPlaylists);
@@ -84,31 +84,23 @@ Rectangle {
 
 
     function goToCurrentPlaylistAndTrack() {
-        if (playlistIdx !== cppRemote.activePlaylistIndex())
-            cppRemote.changePlaylist(cppRemote.activePlaylistIndex());
+        if (playlistIdx !== cppRemote.getAtivePlaylistIndex())
+            cppRemote.changePlaylist(cppRemote.getAtivePlaylistIndex());
 
-//        print("songsView.size: "+songsView.count);
-        let songIdx = cppRemote.currentSongIndex();
-        updateCurrentSong(songIdx);
-        if (songIdx)
-            songsView.positionViewAtIndex(songsView.currentIndex, ListView.Center);
+        updateActiveSong(cppRemote.getActiveSongIndex());
+        songsView.positionViewAtIndex(activeSongIdx, ListView.Center);
     } // goToCurrentPlaylistAndTrack
 
-    function updateCurrentSong(idx) {
-//        print("updateCurrentSong: " + idx);
-        songsView.currentIndex = idx;
-//        if (cppRemote.isPlaying())
-//        {
-            playingSongIdx    = songsView.currentIndex;
-            activePlaylistIdx = cppRemote.activePlaylistIndex();
-            print("activePlaylistIdx: "+activePlaylistIdx);
-//        }
-//        if (idx)
-//            songsView.positionViewAtIndex(idx, ListView.Center)
-    } // updateCurrentSong
+    function updateActiveSong(idx) {
+        activeSongIdx = idx;
+        activePlaylistIdx = cppRemote.getAtivePlaylistIndex();
+        if (playlistIdx === activePlaylistIdx)
+            songsView.currentIndex = idx;
+    } // updateActiveSong
 
     function updateCurrentPlaylist(idx){
 //        print("updateCurrentPlaylist: "+idx);
+        songsView.currentIndex = -1; // don't select any song
         playlistIdx = idx;
         if (playlistCombo.currentIndex !== idx)
             playlistCombo.currentIndex = idx;
@@ -164,7 +156,7 @@ Rectangle {
 
                 onTextChanged: {
                     cppRemote.setSongsFilter(text);                    
-                    playingSongIdx = cppRemote.activeSongIndex();
+                    activeSongIdx = cppRemote.getActiveSongIndex();
                 }
                 Button {
                     id: clearSearch
@@ -429,7 +421,7 @@ Rectangle {
                     if (selected)
                         return colorSongSelected;
                 } else {
-                    if (activePlaylistIdx === playlistIdx && index === playingSongIdx)
+                    if (activePlaylistIdx === playlistIdx && index === activeSongIdx)
                         return colorSongPlaying
                     else if (ListView.isCurrentItem)
                         return colorSongSelected;

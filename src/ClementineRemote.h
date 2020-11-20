@@ -157,13 +157,13 @@ public:
     ~ClementineRemote();
 
     Q_INVOKABLE void close();
+    void clearData(const QString &reason);
 
     Q_INVOKABLE QString testDownloadPath();
     Q_INVOKABLE QString downloadPath();
     Q_INVOKABLE QUrl    downloadPathURL();
 
     void parseMessage(const QByteArray& data);
-
 
 
     ////////////////////////////////
@@ -249,7 +249,7 @@ public:
 
     Q_INVOKABLE QString playlistName() const;
     Q_INVOKABLE bool isCurrentPlaylistSaved() const;
-    Q_INVOKABLE int activePlaylistIndex();
+    Q_INVOKABLE int getAtivePlaylistIndex();
 
     Q_INVOKABLE qint32 currentPlaylistID() const;
     qint32 activePlaylistID() const;
@@ -300,7 +300,8 @@ public:
 
     inline const RemoteSong & currentSong() const;
     inline Q_INVOKABLE int currentSongIndex() const;
-    void updateCurrentSongIdx(qint32 currentSongIndex);
+    Q_INVOKABLE int getActiveSongIndex() const;
+    void updateActiveSong(RemoteSong &&activeSong);
 
     Q_INVOKABLE void setSongsFilter(const QString &searchTxt);
 
@@ -391,8 +392,8 @@ signals:
     void disconnected(QString reason);
     void connectionError(const QString &err);
 
-    void currentSongIdx(qint32 idx);
-    void currentSongLength(qint32 length, const QString &pretty_length);
+    void activeSongIdx(qint32 idx);
+    void activeSongLength(qint32 length, const QString &pretty_length);
     void currentTrackPosition(qint32 pos);
     void updateVolume(qint32 vol);
 

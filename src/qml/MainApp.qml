@@ -80,7 +80,7 @@ Item {
         function onInfo(title, msg)  { info(title, msg); }
         function onError(title, msg) { error(title, msg); }
 
-        function onCurrentSongLength(length, pretty_length){
+        function onActiveSongLength(length, pretty_length){
             print("new track duration: "+pretty_length + " ("+length+")");
             trackLength = length;
             trackDuration.text = pretty_length;
