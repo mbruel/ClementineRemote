@@ -33,9 +33,19 @@ You can also:
 
 
 #### Library Menu
-
+The library is downloaded automatically when you first log to a Clementine server
+- search for text (regular expression for track name, album and artist)
+- redownload the library
+- download an Album or a single track
+- append a Album or a single track to the current playlist
+- create a new playlist with the selected Album or single track
+- double click on an Artist or an Album will expand all / collapse its content
 
 #### Internet Radio Menu (requires Clementine v1.4.0rc1ClemRemote)
+The internet radio must be set on Clementine server, in the section [Internet -- Your radio streams](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/Clementine_Internet_Radio_Streams.png)<br/>
+If you use **Clementine v1.4.0rc1ClemRemote** or above, you can add the url of logo of your radios :)<br/>
+<br/>
+**double click on a Radio** to append it to the current playlist and start to play it
 
 #### Global Search Menu
 As I don't use any Internet Storage, I've not implemented this part...<br/>
