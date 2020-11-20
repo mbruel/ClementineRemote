@@ -8,8 +8,8 @@ I've built the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/r
 <br/><br/>
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>
 
-### Features
-#### Playlist Menu
+## Features
+### Playlist Menu
 From the header Menu:
 - Change Playlist (from those opened in Clementine on the server)
 - search for text (regular expression for track name, album and artist)
@@ -29,10 +29,10 @@ You can also:
 - remove the selected tracks from the playlist.
 - click on the cursor button to exit the **Edit mode**
 
-#### Files Menu (requires Clementine v1.4.0rc1ClemRemote)
+### Files Menu (requires Clementine v1.4.0rc1ClemRemote)
 
 
-#### Library Menu
+### Library Menu
 The library is downloaded automatically when you first log to a Clementine server
 - search for text (regular expression for track name, album and artist)
 - redownload the library
@@ -41,30 +41,30 @@ The library is downloaded automatically when you first log to a Clementine serve
 - create a new playlist with the selected Album or single track
 - double click on an Artist or an Album will expand all / collapse its content
 
-#### Internet Radio Menu (requires Clementine v1.4.0rc1ClemRemote)
+### Internet Radio Menu (requires Clementine v1.4.0rc1ClemRemote)
 The internet radio must be set on Clementine server, in the section [Internet -- Your radio streams](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/Clementine_Internet_Radio_Streams.png)<br/>
 If you use **Clementine v1.4.0rc1ClemRemote** or above, you can add the url of logo of your radios :)<br/>
 <br/>
 **double click on a Radio** to append it to the current playlist and start to play it
 
-#### Global Search Menu
+### Global Search Menu
 As I don't use any Internet Storage, I've not implemented this part...<br/>
 If you'd be interested in it, please open a [request issue here on GitHub](https://github.com/mbruel/ClementineRemote/issues) or drop me an email at Matthieu.Bruel@gmail.com
 
 
-### Clementine version
+## Clementine version
 The modification needed in Clementine can be found on [my fork](https://github.com/mbruel/Clementine). I've asked 4 pull requests that are not yet merged so I've build the release myself for Linux, MacOS and Windows (using the Clementine workflow on my branch)<br/>
 **You can download and try [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote)** (you then need to activate the network remote in [Tools -- Preferences -- Network Remote](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/Clementine_Network_Remote_Settings.png))
 
 
-### How to build
-#### Dependencies:
+## How to build
+### Dependencies:
 - build-essential (C++ compiler, libstdc++, make,...)
 - qt5-default (Qt5 libraries and headers)
 - qt5-qmake (to generate the moc files and create the Makefile)
 - protobuf-compiler and libprotobuf-dev
 
-#### Build:
+### Build:
 - go to `src/protobuf/` and generate the protobuf C++ file with the command `protoc remotecontrolmessages.proto --cpp_out=.`
 - go to `src`
 - qmake
@@ -72,7 +72,7 @@ The modification needed in Clementine can be found on [my fork](https://github.c
 
 
 
-### Licence
+## Licence
 <pre>
 //========================================================================
 //
@@ -96,7 +96,7 @@ The modification needed in Clementine can be found on [my fork](https://github.c
 </pre>
 
 
-### Questions / Issues / Requests
+## Questions / Issues / Requests
 - if you've any troubles to build or run ClemRemote, feel free to drop me an email
 - if you've some comments on the code, any questions on the implementation or any proposal for improvements, I'll be happy to discuss it with you so idem, feel free to drop me an email
 - if you'd like some other features, same same (but different), drop me an email ;)
@@ -104,16 +104,16 @@ The modification needed in Clementine can be found on [my fork](https://github.c
 Here is my email: Matthieu.Bruel@gmail.com
 
 
-### Supported Languages
+## Supported Languages
 For now it's only in english but it is possible to add translation packages<br/>
 If you'd like to translate ngPost in your language, it's easy to do (there is a nice GUI for that: QtLinguist), please get in touch with me (Matthieu.Bruel@gmail.com)
 
 
-### Thanks
+## Thanks
 Thanks to Clementine team to have made this great Music Player and allowing the remote control functionality for their [Android Remote](https://github.com/clementine-player/Android-Remote). The functionality is basic, not a real protocol, but that more than enough on a LAN ;)
 
 
-### Donations
+## Donations
 I'm Freelance nowadays, working on several personal projects, so if you use the app and would like to contribute to the effort, feel free to donate what you can.<br/>
 <br/>
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W2C236U6JNTUA&item_name=ClementineRemote&currency_code=EUR"><img align="left" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="ClementineRemote"></a>
