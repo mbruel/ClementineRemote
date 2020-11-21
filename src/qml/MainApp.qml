@@ -42,7 +42,7 @@ Item {
 
 
     property int headerButtonSize   : cppRemote.iconSize();
-    property int trackLength: cppRemote.currentTrackLength()
+    property int trackLength: cppRemote.activeTrackLength()
 
     property color bgGradiantStart: "#8b008b" // darkmagenta (https://doc.qt.io/qt-5/qml-color.html)
     property color bgGradiantStop:  "#ff8c00" // darkorange
@@ -80,13 +80,14 @@ Item {
         function onInfo(title, msg)  { info(title, msg); }
         function onError(title, msg) { error(title, msg); }
 
-        function onActiveSongLength(length, pretty_length){
+        function onActiveSongDetails(title, length, pretty_length){
             if (cppRemote.debugBuild())
-                print("[MainApp] active track duration: "+pretty_length + " ("+length+")");
-            trackLength = length;
+                print("[MainApp] new playing track: " + title + ", duration: " + pretty_length + " ("+length+")");
+            trackName.text     = title;
+            trackLength        = length;
             trackDuration.text = pretty_length;
         }
-        function onCurrentTrackPosition(pos){
+        function onActiveTrackPosition(pos){
             trackPosition.text = cppRemote.prettyLength(pos);
             trackSlider.value  = pos / trackLength;
         }
@@ -581,9 +582,24 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 rightMargin: 1.5*headerButtonSize + toolBarMargin
                 topMargin: -5
             }
-            text: cppRemote.currentTrackDuration()
+            text: cppRemote.activeTrackDuration()
         } // trackDuration
 
+        Text{
+            id: trackName
+            anchors{
+                top: playerBar.top
+                left: playerBar.left
+                topMargin: trackSlider.height/2
+                leftMargin: headerButtonSize
+            }
+            width: trackSlider.width - 15
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignHCenter
+            text: cppRemote.isPlaying() ? cppRemote.activeTrackName() : ""
+//            text: "short track name"
+//            text: "this is my track name that is rather quite a big long"
+        } // trackDuration
 
 
         // Second line
@@ -841,7 +857,7 @@ You can change that in:<br/>Tools -> Preferences -> Network Remote"));
                 wrapMode: Text.WordWrap
             }
         }
-    }
+    } // noInternetRadioPage
 
     Dialog {
         id: infoDialog

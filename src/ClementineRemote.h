@@ -58,7 +58,8 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
     enum class Settings {
         host, port, pass,
         downloadPath, remotePath,
-        verticalVolume, iconSize
+        verticalVolume, iconSize,
+        dispArtistInTrackName
     };
     static const QMap<Settings, QString> sSettings;
 
@@ -204,6 +205,9 @@ public:
     inline Q_INVOKABLE bool verticalVolumeSlider() const;
     inline Q_INVOKABLE void setVerticalVolumeSlider(bool isVertical);
 
+    inline Q_INVOKABLE bool dispArtistInTrackName() const;
+    inline Q_INVOKABLE void setDispArtistInTrackName(bool display);
+
     inline Q_INVOKABLE uint iconSize() const;
     inline Q_INVOKABLE void setIconSize(uint size);        
     inline Q_INVOKABLE bool hideServerFilesPreviousNextNavButtons() const;
@@ -260,7 +264,7 @@ public:
     Q_INVOKABLE bool isCurrentPlaylistSaved() const;
     Q_INVOKABLE int getAtivePlaylistIndex();
 
-    Q_INVOKABLE qint32 currentPlaylistID() const;
+    Q_INVOKABLE qint32 displayedPlaylistID() const;
     qint32 activePlaylistID() const;
     bool isActivePlaylistDisplayed() const;
     void closingPlaylist(qint32 playlistID);
@@ -304,11 +308,10 @@ public:
     inline const RemoteSong &playlistSong(int index) const;
     inline RemoteSong &playlistSong(int index);
 
-    inline Q_INVOKABLE const QString currentTrackDuration() const;
-    inline Q_INVOKABLE qint32 currentTrackLength() const;
-
-    inline const RemoteSong & currentSong() const;
-    inline Q_INVOKABLE int currentSongIndex() const;
+    inline Q_INVOKABLE const QString activeTrackName() const;
+    inline Q_INVOKABLE const QString activeTrackDuration() const;
+    inline Q_INVOKABLE qint32 activeTrackLength() const;
+    inline const RemoteSong & activeSong() const;
     Q_INVOKABLE int getActiveSongIndex() const;
     void updateActiveSong(RemoteSong &&activeSong);
 
@@ -402,8 +405,8 @@ signals:
     void connectionError(const QString &err);
 
     void activeSongIdx(qint32 idx);
-    void activeSongLength(qint32 length, const QString &pretty_length);
-    void currentTrackPosition(qint32 pos);
+    void activeSongDetails(const QString &name, qint32 length, const QString &pretty_length);
+    void activeTrackPosition(qint32 pos);
     void updateVolume(qint32 vol);
 
     void updateEngineState();
@@ -588,6 +591,14 @@ bool ClementineRemote::overwriteDownloadedSongs() const {return false;}
 bool ClementineRemote::verticalVolumeSlider() const { return _settings.value(sSettings[Settings::verticalVolume], false).toBool(); }
 void ClementineRemote::setVerticalVolumeSlider(bool isVertical) { _settings.setValue(sSettings[Settings::verticalVolume], isVertical); }
 
+bool ClementineRemote::dispArtistInTrackName() const { return RemoteSong::sDispArtistInName; }
+void ClementineRemote::setDispArtistInTrackName(bool display)
+{
+    RemoteSong::sDispArtistInName = display;
+    _settings.setValue(sSettings[Settings::dispArtistInTrackName], display);
+}
+
+
 uint ClementineRemote::iconSize() const { return _settings.value(sSettings[Settings::iconSize], sDefaultIconSize).toUInt(); }
 void ClementineRemote::setIconSize(uint size) { _settings.setValue(sSettings[Settings::iconSize], size); }
 bool ClementineRemote::hideServerFilesPreviousNextNavButtons() const { return true; }
@@ -723,8 +734,7 @@ void ClementineRemote::selectAllSongsFromProxyModel(bool selectAll)
     _songsProxyModel->selectAllSongs(selectAll);
 }
 int ClementineRemote::activeSongIndex() const
-{
-    _songsModel->index(0);
+{   
     QModelIndex modelIndex = _songsModel->index(_activeSongIndex, 0);
     if (modelIndex.isValid())
     {
@@ -738,15 +748,11 @@ int ClementineRemote::numberOfPlaylistSongs() const { return _songs.size(); }
 const RemoteSong &ClementineRemote::playlistSong(int index) const { return _songs.at(index); }
 RemoteSong &ClementineRemote::playlistSong(int index) { return _songs[index]; }
 
-const QString ClementineRemote::currentTrackDuration() const { return _activeSong.pretty_length; }
-qint32 ClementineRemote::currentTrackLength() const{ return _activeSong.length; }
+const QString ClementineRemote::activeTrackName() const{ return _activeSong.name(); }
+const QString ClementineRemote::activeTrackDuration() const { return _activeSong.pretty_length; }
+qint32 ClementineRemote::activeTrackLength() const{ return _activeSong.length; }
 
-const RemoteSong & ClementineRemote::currentSong() const { return _activeSong; }
-
-int ClementineRemote::currentSongIndex() const
-{
-    return _songsProxyModel->mapFromSource(_songsModel->index(_activeSongIndex)).row();
-}
+const RemoteSong & ClementineRemote::activeSong() const { return _activeSong; }
 
 
 

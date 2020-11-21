@@ -98,6 +98,7 @@ SOURCES += \
         model/RemoteFileModel.cpp \
         model/RemoteSongModel.cpp \
         main.cpp \
+        player/RemoteSong.cpp \
         protobuf/remotecontrolmessages.pb.cc \
         utils/Downloader.cpp
 

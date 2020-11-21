@@ -135,7 +135,7 @@ void ConnectionWorker::onDisconnectFromServer()
 void ConnectionWorker::onNextSong()
 {
     qDebug() << "[ConnectionWorker::onNextSong]";
-    int nextIndex = 1 + static_cast<int>(_remote->currentSongIndex());
+    int nextIndex = 1 + static_cast<int>(_remote->activeSongIndex());
     if (_remote->isActivePlaylistDisplayed())
         onChangeToSong(nextIndex);
     else
@@ -145,7 +145,7 @@ void ConnectionWorker::onNextSong()
 void ConnectionWorker::onPreviousSong()
 {
     qDebug() << "[ConnectionWorker::onPreviousSong]";
-    int previousIndex = static_cast<int>(_remote->currentSongIndex()) - 1;
+    int previousIndex = static_cast<int>(_remote->activeSongIndex()) - 1;
     if (previousIndex >= 0 )
     {
         if (_remote->isActivePlaylistDisplayed())
@@ -337,7 +337,7 @@ void ConnectionWorker::onAddRadioToPlaylist(int radioIdx)
     msg.set_type(pb::remote::INSERT_URLS);
 
     pb::remote::RequestInsertUrls *req = msg.mutable_request_insert_urls();
-    req->set_playlist_id(_remote->currentPlaylistID());
+    req->set_playlist_id(_remote->displayedPlaylistID());
     req->set_play_now(true);
     *req->add_urls() = _remote->radioStream(radioIdx).url.toStdString();
 
@@ -451,7 +451,7 @@ void ConnectionWorker::onChangeToSong(int proxyRow)
 {
     int modelRow = _remote->modelRowFromProxyRow(proxyRow);
     if (modelRow != -1)
-        _remote->changeAndPlaySong(modelRow, _remote->currentPlaylistID());
+        _remote->changeAndPlaySong(modelRow, _remote->displayedPlaylistID());
     else
         qCritical() << "[ConnectionWorker::onChangeToSong] ERROR getting model row from proxy one: " << proxyRow;
 }
@@ -463,7 +463,7 @@ void ConnectionWorker::onSetTrackPostion(qint32 newPos)
     msg.mutable_request_set_track_position()->set_position(newPos);
 
     qDebug() << "[ConnectionWorker::onSetTrackPostion] new Pos: " << newPos
-             << " ("<< _remote->prettyLength(newPos) << " for track: " << _remote->currentSong().title;
+             << " ("<< _remote->prettyLength(newPos) << " for track: " << _remote->activeSong().title;
 
     sendDataToServer(msg);
 }

@@ -93,7 +93,7 @@ Page {
             Rectangle {
                 id: playerSettings
                 width: parent.width
-                height: playerTitle.height + switchHeight + iconSizeSB.height + 6*sectionMargin
+                height: playerTitle.height + 2*switchHeight + iconSizeSB.height + 8*sectionMargin
                 color: "transparent"
 
                 radius: 10
@@ -135,8 +135,32 @@ Page {
                     sliderSize: switchHeight
 
                     checked: cppRemote.verticalVolumeSlider()
-                    onToggled: cppRemote.setVerticalVolumeSlider(vSliderSwitch.checked);
+                    onToggled: cppRemote.setVerticalVolumeSlider(checked);
                 } // vSliderSwitch
+
+                Text {
+                    id: dispArtistNameLbl
+                    anchors {
+                        left: parent.left
+                        verticalCenter: dispArtistNameSwitch.verticalCenter
+                        leftMargin: sectionMargin
+                    }
+                    text: qsTr("Display Artist with playing Track")
+                } // dispArtistNameLbl
+                SettingSwitch{
+                    id: dispArtistNameSwitch
+                    anchors {
+                        right: parent.right
+                        top: vSliderSwitch.bottom
+                        topMargin: sectionMargin
+                        rightMargin: sectionMargin
+                    }
+                    width: switchWidth
+                    sliderSize: switchHeight
+
+                    checked: cppRemote.dispArtistInTrackName()
+                    onToggled: cppRemote.setDispArtistInTrackName(checked);
+                } // dispArtistNameSwitch
 
                 Text {
                     id: iconSizeLbl
@@ -153,7 +177,7 @@ Page {
 //                    width: switchWidth
                     anchors {
                         right: parent.right
-                        top: vSliderSwitch.bottom
+                        top: dispArtistNameSwitch.bottom
                         topMargin: sectionMargin
                         rightMargin: sectionMargin
                     }

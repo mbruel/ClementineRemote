@@ -53,6 +53,8 @@ typedef struct RemoteSong
 
     bool selected; // for its selection in ListView
 
+    static bool sDispArtistInName;
+
 public:
     RemoteSong() = default;
     RemoteSong(const RemoteSong &) = default;
@@ -77,7 +79,8 @@ public:
 
     ~RemoteSong() = default;
 
-    inline QString  str() const;
+    inline QString str() const;
+    QString name() const;
 
 //    inline RemoteSong& operator=(const pb::remote::SongMetadata &m);
 } RemoteSong;

@@ -40,7 +40,7 @@
 #endif
 
 const QString ClementineRemote::sAppName    = QStringLiteral("ClemRemote");
-const QString ClementineRemote::sVersion    = "1.0-rc2";
+const QString ClementineRemote::sVersion    = "1.0-rc3";
 const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
 const QString ClementineRemote::sProjectUrl = QStringLiteral("https://github.com/mbruel/ClementineRemote");
 const QString ClementineRemote::sBTCaddress = QStringLiteral("3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6");
@@ -67,13 +67,14 @@ const QMap<pb::remote::ShuffleMode, ushort> ClementineRemote::sQmlShuffleCodes =
 };
 
 const QMap<ClementineRemote::Settings, QString> ClementineRemote::sSettings = {
-    {Settings::host,           QStringLiteral("host")},
-    {Settings::port,           QStringLiteral("port")},
-    {Settings::pass,           QStringLiteral("pass")},
-    {Settings::downloadPath,   QStringLiteral("downloadPath")},
-    {Settings::remotePath,     QStringLiteral("remotePath")},
-    {Settings::verticalVolume, QStringLiteral("verticalVolume")},
-    {Settings::iconSize,       QStringLiteral("iconSize")}
+    {Settings::host,                  QStringLiteral("host")},
+    {Settings::port,                  QStringLiteral("port")},
+    {Settings::pass,                  QStringLiteral("pass")},
+    {Settings::downloadPath,          QStringLiteral("downloadPath")},
+    {Settings::remotePath,            QStringLiteral("remotePath")},
+    {Settings::verticalVolume,        QStringLiteral("verticalVolume")},
+    {Settings::iconSize,              QStringLiteral("iconSize")},
+    {Settings::dispArtistInTrackName, QStringLiteral("dispArtistInTrackName")},
 };
 
 ClementineRemote::ClementineRemote(QObject *parent):
@@ -157,6 +158,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
              << " => libraryPath: " << _libraryPath;
 
     connect(this, &ClementineRemote::libraryDownloaded, this, &ClementineRemote::onLibraryDownloaded, Qt::QueuedConnection);
+
+    RemoteSong::sDispArtistInName = _settings.value(sSettings[Settings::dispArtistInTrackName], true).toBool();
 
 #ifdef Q_OS_IOS
     if (!_settings.contains(sSettings[Settings::verticalVolume]))
@@ -400,7 +403,7 @@ void ClementineRemote::parseMessage(const QByteArray &data)
 
     case pb::remote::UPDATE_TRACK_POSITION:
         _trackPostition = msg.response_update_track_position().position();
-        emit currentTrackPosition(_trackPostition);
+        emit activeTrackPosition(_trackPostition);
         qDebug() << "[MsgType::UPDATE_TRACK_POSITION] " << _trackPostition;
         break;
 
@@ -681,7 +684,7 @@ int ClementineRemote::getAtivePlaylistIndex()
     return idx;
 }
 
-qint32 ClementineRemote::currentPlaylistID() const
+qint32 ClementineRemote::displayedPlaylistID() const
 {
     if (_dispPlaylist)
         return _dispPlaylist->id;
@@ -883,7 +886,7 @@ void ClementineRemote::updateActiveSong(RemoteSong &&activeSong)
         ++idx;
     }
 
-    emit activeSongLength(_activeSong.length, _activeSong.pretty_length);
+    emit activeSongDetails(_activeSong.name(), _activeSong.length, _activeSong.pretty_length);
     qDebug() << "[MsgType::CURRENT_METAINFO] " << _activeSong.str();
 }
 

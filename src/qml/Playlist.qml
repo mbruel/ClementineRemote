@@ -498,7 +498,7 @@ Rectangle {
         title: qsTr("Delete Playlist")
 
         standardButtons: Dialog.Yes | Dialog.No
-        onAccepted:  cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+        onAccepted:  cppRemote.closePlaylist(cppRemote.displayedPlaylistID());
 
         Label {
             width: parent.width - 5
@@ -583,7 +583,7 @@ Are you sure you want to continue?")
                 if (createNewPlaylist)
                     cppRemote.createPlaylist(newNameField.text);
                 else
-                    cppRemote.renamePlaylist(cppRemote.currentPlaylistID(), newNameField.text);
+                    cppRemote.renamePlaylist(cppRemote.displayedPlaylistID(), newNameField.text);
             }
         }
 
@@ -620,7 +620,7 @@ Are you sure you want to continue?")
             onTriggered: {
                 if (!mainApp.checkClementineVersion())
                     return
-                cppRemote.savePlaylist(cppRemote.currentPlaylistID());
+                cppRemote.savePlaylist(cppRemote.displayedPlaylistID());
             }
         }
         Action {
@@ -640,7 +640,7 @@ Are you sure you want to continue?")
             onTriggered: {
                 if (!mainApp.checkClementineVersion())
                     return
-                cppRemote.clearPlaylist(cppRemote.currentPlaylistID());
+                cppRemote.clearPlaylist(cppRemote.displayedPlaylistID());
             }
         }
         Action {
@@ -654,10 +654,10 @@ Are you sure you want to continue?")
                     if (!cppRemote.isCurrentPlaylistSaved())
                         playlistDestructionConfirmationDialog.open();
                     else
-                        cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+                        cppRemote.closePlaylist(cppRemote.displayedPlaylistID());
                 }
                 else
-                    cppRemote.closePlaylist(cppRemote.currentPlaylistID());
+                    cppRemote.closePlaylist(cppRemote.displayedPlaylistID());
             }
         }
         Action {
