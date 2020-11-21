@@ -24,14 +24,14 @@ linux {
 }
 
 macx{
-    ICON = ngPost.icns
+    ICON = ClemRemote.icns
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/macx/ -lprotobuf
 
     PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/macx/libprotobuf.a
 }
 
 win32{
-    RC_ICONS += Clementine.ico
+    RC_ICONS += ClemRemote.ico
     LIBS += -L$$PWD/../protobuf-3.13.0/lib/win64/ -lprotobuf
 }
 
