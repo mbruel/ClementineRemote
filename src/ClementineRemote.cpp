@@ -32,7 +32,7 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QUrl>
-
+#include <QElapsedTimer>
 #include <QSqlQuery>
 
 #if defined(Q_OS_ANDROID)
