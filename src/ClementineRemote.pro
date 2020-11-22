@@ -36,8 +36,30 @@ win32{
 }
 
 ios {
+    QMAKE_XCODE_CODE_SIGN_IDENTITY = "iPhone Developer"
+    MY_DEVELOPMENT_TEAM.name = "Matthieu Bruel"
+    MY_DEVELOPMENT_TEAM.value = TO_BE_SET
+    QMAKE_MAC_XCODE_SETTINGS += TO_BE_SET 
+
+    QMAKE_INFO_PLIST = ios/info.plist
     ios_icon.files = $$files($$PWD/ios/Icon*.png)
     QMAKE_BUNDLE_DATA += ios_icon
+
+
+    ios_artwork.files = $$files($$PWD/data/SplashScreen*.png)
+    QMAKE_BUNDLE_DATA += ios_artwork
+
+    app_launch_screen.files = $$files($$PWD/ios/ClemRemoteSplash.storyboard)
+    QMAKE_BUNDLE_DATA += app_launch_screen
+
+    LIBS += -L$$PWD/../protobuf-3.13.0/lib/iOS/ -lprotobuf
+
+
+    PRE_TARGETDEPS += $$PWD/../protobuf-3.13.0/lib/iOS/libprotobuf.a
+
+    OTHER_FILES += ios/info.plist  \
+                   data/SplashScreen*.png  \
+                   ios/*.storyboard
 }
 
 android {
