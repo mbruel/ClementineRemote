@@ -2,7 +2,7 @@
 
 # StrawBerry Remote (to come...)
 Fork from [ClementineRemote](https://github.com/mbruel/ClementineRemote)
-developped in C++/QT5/QML to be available on any OS. <br/>
+developed in C++/QT5/QML to be available on any OS. <br/>
 
 <br/><br/>
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>

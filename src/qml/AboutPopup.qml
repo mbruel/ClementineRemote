@@ -82,8 +82,8 @@ Popup {
             id: aboutLbl
             linkColor: "white"
             width: parent.width
-            text: qsTr('Remote for Clementine Music Player developped in C++/QT5/QML to be available on any OS.')
-                  + '<br/>'+ qsTr('Its main goal is to add the Files View missing in the Android Remote.')
+            text: qsTr('Remote for Clementine Music Player developed in C++/QT5/QML to be available for any OS.')
+                  + '<br/>'+ qsTr('Its main goal is to add the Files View missing for the Android Remote.')
                   + '<br/>'+ qsTr('Extra features have been added to <b>Clementine</b>, ')
                   + qsTr('in order to use them, you need at least v') + cppRemote.clementineFilesSupportMinVersion()
                   + '<br/><br/>'+ qsTr('for more information, ')
