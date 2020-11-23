@@ -1,34 +1,6 @@
-
-          ClementineRemote release notes
-   cf https://github.com/mbruel/ClementineRemote
+Strawberry-Remote releases notes
 
 
-####################################################
-###       Release: v0.2                          ###
-###       date:    2020/11/02                    ###
-####################################################
 
-- Implement the FileSystem View
-Clementine patch is available on files_root_folder branch
-https://github.com/mbruel/Clementine/tree/files_root_folder
+For from ClementineRemote v1.0  cf https://github.com/mbruel/ClementineRemote
 
-- rely on Sond index rather than id (-1 in new created playlists)
-
-- Few fix the PlayList View
-
-- Fun with the volume slider for small iPhone
-
-- macro __USE_CONNECTION_THREAD__ allows to not use the connection Thread
-
-- data of all Models are always modified in GUI Thread
-=> Mutexes and signals / slot to switch Thread
-
-
-####################################################
-###       Release: v0.1                          ###
-###       date:    2020/10/27                    ###
-####################################################
-
-- overall design of the architecture and the GUI
-
-- PlayList View and "Player" working
