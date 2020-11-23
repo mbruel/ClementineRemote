@@ -65,15 +65,15 @@ Rectangle {
             }
             text: qsTr("As I don't use any Internet Storage, I've not implemented this part...")+
                   '<br/><br/>' +
-                  qsTr("If you'd be interested in it, please open a ticket on ") +
-                  '<a href="' + cppRemote.projectURL() +'">Clementine Remote GitHub</a> ' +
+                  qsTr("If you'd be interested in it, please open a request/issue on ") +
+                  '<a href="' + cppRemote.projectURL() +'/issues">Clementine Remote GitHub</a> ' +
                   '<br/>' + qsTr('or drop me an email at Matthieu.Bruel@gmail.com') +
                   '<br/><br/>' +
                   qsTr('If you like the app and wish to reward the effort, feel free to donate what you can :)') +
                   '<br/><br/>' + qsTr('Here is my btc address: ') + '<b>' + cppRemote.btcAddress() +'</b>'
             width: parent.width - 10
             wrapMode: Text.WordWrap
-            onLinkActivated: Qt.openUrlExternally(cppRemote.projectURL())
+            onLinkActivated: Qt.openUrlExternally(cppRemote.projectURL()+'/issues')
         }
 
         Image {

@@ -1,10 +1,10 @@
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/icon.png" alt="ClementineRemote">
 
-# ClemRemote v1.0-rc3
+# ClemRemote v1.0
 Remote for [Clementine Music Player](https://www.clementine-player.org/) ([github](https://github.com/clementine-player/Clementine)) developped in C++/QT5/QML to be available on any OS. <br/>
 Its main goal was to add the Files View missing in the Android Remote.<br/>
 I've also made it like a player, so you always see the running track, can pause or go next..<br/>
-I've built the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1_win64.zip). I'll publish it soon on iOS and Android once I've got some feedback.
+I've built the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0-rc1/ClemRemote_v1.0-rc1_win64.zip). I've also submitted the app on Google Play and the Apple Store, it will be available as soon as their acceptance process is done.
 <br/><br/>
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>
 
@@ -25,23 +25,23 @@ I've built the v1.0-rc1 for [Linux](https://github.com/mbruel/ClementineRemote/r
 From the header Menu:
 - Change Playlist (from those opened in Clementine on the server)
 - search for text (regular expression for track name, album and artist)
-- save/favourite a Playlist (requires Clementine v1.4.0rc1ClemRemote)
-- rename current playlist (requires Clementine v1.4.0rc1ClemRemote)
-- clear current playlist (requires Clementine v1.4.0rc1ClemRemote)
+- save/favourite a Playlist (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
+- rename current playlist (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
+- clear current playlist (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
 - close current playlist
 - download current playlist
-- open a closed playlist that is in favourite (requires Clementine v1.4.0rc1ClemRemote)
-- create a new playlist (requires Clementine v1.4.0rc1ClemRemote)
+- open a closed playlist that is in favourite (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
+- create a new playlist (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
 
 You can also:
 - **Double click on a Track** to play it
 - **Long press on a Track** to switch in **Selection mode** from where you can select more tracks or all (cf button in the bottom) to:
-- Copy tracks to another Playlist (requires Clementine v1.4.0rc1ClemRemote)
-- download the selected tracks (requires Clementine v1.4.0rc1ClemRemote)
+- Copy tracks to another Playlist (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
+- download the selected tracks (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
 - remove the selected tracks from the playlist.
 - click on the cursor button to exit the **Selection mode**
 
-### Files Menu (requires Clementine v1.4.0rc1ClemRemote)
+### Files Menu (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
 You need to have set up the **Files root folder** in Clementine settings (cf [Tools -- Preferences -- Network Remote](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/Clementine_Network_Remote_Settings.png))<br/>
 - you can jump into a folder
 - go to the parent folder
@@ -60,9 +60,9 @@ The library is downloaded automatically when you first log to a Clementine serve
 - create a new playlist with the selected Album or single track
 - double click on an Artist or an Album will expand all / collapse its content
 
-### Internet Radio Menu (requires Clementine v1.4.0rc1ClemRemote)
+### Internet Radio Menu (requires [Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote))
 The internet radio must be set on Clementine server, in the section [Internet -- Your radio streams](https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/Clementine_Internet_Radio_Streams.png)<br/>
-If you use **Clementine v1.4.0rc1ClemRemote** or above, you can add the url of logo of your radios :)<br/>
+From **[Clementine v1.4.0rc1ClemRemote](https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote)** or above, you can add the url of logo of your radios in Clementine :)<br/>
 <br/>
 **double click on a Radio** to append it to the current playlist and start to play it
 
@@ -94,7 +94,7 @@ The modification needed in Clementine can be found on [my fork](https://github.c
 <pre>
 //========================================================================
 //
-// Copyright (C) 2019 Matthieu Bruel <Matthieu.Bruel@gmail.com>
+// Copyright (C) 2020 Matthieu Bruel <Matthieu.Bruel@gmail.com>
 //
 //
 // ngPost is free software; you can redistribute it and/or modify
