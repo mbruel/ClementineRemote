@@ -25,7 +25,7 @@
 	<key>MinimumOSVersion</key>
 	<string>${IPHONEOS_DEPLOYMENT_TARGET}</string>
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+        <string>ClemRemoteSplash</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

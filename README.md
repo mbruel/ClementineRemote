@@ -97,7 +97,7 @@ The modification needed in Clementine can be found on [my fork](https://github.c
 // Copyright (C) 2020 Matthieu Bruel <Matthieu.Bruel@gmail.com>
 //
 //
-// ngPost is free software; you can redistribute it and/or modify
+// ClementineRemote is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as
 // published by the Free Software Foundation; version 3.0 of the License.
 //
