@@ -166,6 +166,6 @@ DISTFILES += \
 #   - 57x57   : Icon.png
 #   - 72x72   : Icon-72.png
 #   - 76x76   : Icon-76.png
-# Recommanded :
+# Recommended :
 #   - 29x29   : Icon-Small.png
 #   - 50x50   : Icon-Small-50.png

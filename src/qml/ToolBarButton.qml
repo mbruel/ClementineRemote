@@ -161,7 +161,7 @@ Item {
     function clearBadge() {badge.visible = false;}
 
 
-    //change the color of the button in differen button states
+    //change the color of the button in different button states
     states: [
         State {
             name: "Inactive"

@@ -727,7 +727,7 @@ void ConnectionWorker::downloadSong(const pb::remote::ResponseSongFileChunk &son
                 _songsDL.addError(tr("error writing file %1 (iterMax reached %2)").arg(
                                          _songsDL.song.filename).arg(iterMax));
 
-                qCritical() << "Error writting: "  << _songsDL.song.filename
+                qCritical() << "Error writing: "  << _songsDL.song.filename
                             << " : iterMax reached " << iterMax;
                 break;
             }
@@ -781,7 +781,7 @@ void ConnectionWorker::downloadLibrary(const pb::remote::ResponseLibraryChunk &l
         _libraryDL.file = new QFile(QString("%1/%2.db").arg(_libraryDL.downloadPath).arg(_host));
         if (_libraryDL.file->exists())
         {
-            qDebug() << "overwritting existing Library " << _libraryDL.file->fileName();
+            qDebug() << "overwriting existing Library " << _libraryDL.file->fileName();
             _libraryDL.file->remove();
         }
         _libraryDL.canWrite = _libraryDL.file->open(QIODevice::ReadWrite);
@@ -814,7 +814,7 @@ void ConnectionWorker::downloadLibrary(const pb::remote::ResponseLibraryChunk &l
 
         if (++iter == iterMax)
         {
-            qCritical() << "Error writting library : iterMax reached " << iterMax;
+            qCritical() << "Error writing library : iterMax reached " << iterMax;
             break;
         }
     } while (bytesWritten != size);
