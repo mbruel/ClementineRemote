@@ -2,6 +2,14 @@
           ClementineRemote release notes
    cf https://github.com/mbruel/ClementineRemote
 
+####################################################
+###       Release: v1.0                          ###
+###       date:    2020/11/22                    ###
+####################################################
+
+First official release of ClemRemote
+
+
 
 ####################################################
 ###       Release: v0.2                          ###
