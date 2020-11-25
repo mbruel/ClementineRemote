@@ -1,4 +1,4 @@
-<?xml version="2.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -6,51 +6,54 @@
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
-	<key>CFBundleIconFile</key>
-	<string>${ASSETCATALOG_COMPILER_APPICON_NAME}</string>
+	<key>CFBundleIconName</key>
+	<string>Icon</string>
+	<key>CFBundleIcons</key>
+	<dict/>
+	<key>CFBundleIcons~ipad</key>
+	<dict/>
 	<key>CFBundleIdentifier</key>
 	<string>${PRODUCT_BUNDLE_IDENTIFIER}</string>
 	<key>CFBundleName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundlePrimaryIcon</key>
+	<dict>
+		<key>CFBundleIconFiles</key>
+		<array>
+			<string>Icon</string>
+			<string>Icon-Small</string>
+			<string>Icon-Small-50</string>
+			<string>Icon-76</string>
+			<string>Icon-72</string>
+			<string>Icon-60@2x</string>
+		</array>
+		<key>UIPrerenderedIcon</key>
+		<true/>
+	</dict>
 	<key>CFBundleShortVersionString</key>
 	<string>${QMAKE_SHORT_VERSION}</string>
 	<key>CFBundleSignature</key>
 	<string>${QMAKE_PKGINFO_TYPEINFO}</string>
 	<key>CFBundleVersion</key>
-	<string>${QMAKE_FULL_VERSION}</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>MinimumOSVersion</key>
 	<string>${IPHONEOS_DEPLOYMENT_TARGET}</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
-        <string>ClemRemoteSplash</string>
+	<string>ClemRemoteSplash</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-        </array>
-        <key>UIFileSharingEnabled</key>
-        <true/>
-        <key>LSSupportsOpeningDocumentsInPlace</key>
-        <true/>
-	<key>CFBundlePrimaryIcon</key>
-        <dict>
-            <key>CFBundleIconFiles</key>
-            <array>
-                <string>Icon</string>
-                <string>Icon-Small</string>
-                <string>Icon-Small-50</string>
-                <string>Icon-76</string>
-                <string>Icon-72</string>
-                <string>Icon-60@2x</string>
-            </array>
-            <key>UIPrerenderedIcon</key>
-            <true/>
-        </dict>
+	</array>
 </dict>
 </plist>
-
