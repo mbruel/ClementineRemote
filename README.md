@@ -8,9 +8,11 @@ I've built the v1.0 for [Linux](https://github.com/mbruel/ClementineRemote/relea
 <img align="left" width="100" height="100" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/android_qr.png" alt="ClementineRemote"> It is availabe on [Google Play](https://play.google.com/store/apps/details?id=fr.mbruel.ClementineRemote)<br/>
 you can also find it on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbruel.ClementineRemote) on [izzysoft repo](https://apt.izzysoft.de/fdroid/)<br/>
 or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).
-<br/> It should arrive in a few days on the Apple Store.
+<br/> 
+<br/>
+It should arrive in a few days on the Apple Store.
+<br/>
 
-<br/><br/>
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>
 
 ## Features
