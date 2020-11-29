@@ -5,8 +5,9 @@ Remote for [Clementine Music Player](https://www.clementine-player.org/) ([githu
 Its main goal was to add the Files View missing in the Android Remote.<br/>
 I've also made it like a player, so you always see the running track, can pause or go next..<br/>
 I've built the v1.0 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_x64_setup.exe) (there is also a [portable version for win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_win64_portable.zip)).<br/>
-For Android [here is the apk built for the target API29](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).
-<img align="left" width="100" height="100" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/android_qr.png" alt="ClementineRemote"> It is availabe on [Google Play](https://play.google.com/store/apps/details?id=fr.mbruel.ClementineRemote), you can also find it on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbruel.ClementineRemote) on [izzysoft repo](https://apt.izzysoft.de/fdroid/), or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).
+<img align="left" width="100" height="100" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/android_qr.png" alt="ClementineRemote"> It is availabe on [Google Play](https://play.google.com/store/apps/details?id=fr.mbruel.ClementineRemote)<br/>
+you can also find it on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbruel.ClementineRemote) on [izzysoft repo](https://apt.izzysoft.de/fdroid/)<br/>
+or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).
 <br/> It should arrive in a few days on the Apple Store.
 
 <br/><br/>
