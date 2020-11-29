@@ -169,3 +169,9 @@ DISTFILES += \
 # Recommended :
 #   - 29x29   : Icon-Small.png
 #   - 50x50   : Icon-Small-50.png
+#
+# Snapshots:
+#iphone 6"5: Screenshots dimensions should be: 1242x2688 2688x1242 1284x2778 2778x1284
+#iphone 5"5: Screenshots dimensions should be: 1242x2208 2208x1242
+#iphone 12"9 3rd gen: Screenshots dimensions should be: 2048x2732 2732x2048
+#iphone 12"9 2nd gen: Screenshots dimensions should be: 2048x2732 2732x2048
