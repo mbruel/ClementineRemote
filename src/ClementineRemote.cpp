@@ -671,9 +671,6 @@ bool ClementineRemote::isCurrentPlaylistSaved() const
 
 int ClementineRemote::getAtivePlaylistIndex()
 {
-#ifdef __USE_CONNECTION_THREAD__
-    QMutexLocker lock(&_securePlaylists);
-#endif
     int idx = 0;
     for (RemotePlaylist *p : _playlistsOpened)
     {
@@ -1043,13 +1040,13 @@ void ClementineRemote::rcvPlaylists(const pb::remote::ResponsePlaylists &playlis
             if(pb_playlist.closed())
             {
                 emit _plClosedModel->preAddPlaylist(idxClosed);
-                _playlistsClosed << new RemotePlaylist(pb_playlist);
+                _playlistsClosed << new RemotePlaylist(pb_playlist, _activePlaylistId);
                 emit _plClosedModel->postAddPlaylist(idxClosed++);
             }
             else
             {
                 emit _plOpenedModel->preAddPlaylist(idxOpened);
-                _playlistsOpened << new RemotePlaylist(pb_playlist);
+                _playlistsOpened << new RemotePlaylist(pb_playlist, _activePlaylistId);
                 emit _plOpenedModel->postAddPlaylist(idxOpened++);
             }
         }

@@ -41,10 +41,10 @@ public:
     RemotePlaylist(const RemotePlaylist &) = default;
     RemotePlaylist(RemotePlaylist &&) = default;
 
-    RemotePlaylist(const pb::remote::Playlist &p):
+    RemotePlaylist(const pb::remote::Playlist &p, qint32 activePlaylistID):
         id(p.id()), name(p.name().c_str()), item_count(p.item_count()),
         active(p.active()), closed(p.closed()), favorite(p.favorite()),
-        playing(false)
+        playing(p.id() == activePlaylistID)
     {}
 
     RemotePlaylist& operator=(const RemotePlaylist &) = default;

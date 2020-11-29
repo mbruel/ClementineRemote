@@ -141,7 +141,7 @@ Rectangle {
             leftPadding: headerPadding
             ComboBox {
                 id: playlistCombo
-//                model : cppRemote.playlistsList()
+                width: parent.width*2/5
 
                 model   : cppRemote.modelOpenedPlaylists()
                 delegate: playlistDelegate
