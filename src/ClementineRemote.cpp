@@ -40,7 +40,7 @@
 #endif
 
 const QString ClementineRemote::sAppName    = QStringLiteral("ClemRemote");
-const QString ClementineRemote::sVersion    = "1.0";
+const QString ClementineRemote::sVersion    = "1.1";
 const QString ClementineRemote::sAppTitle   = tr("Clementine Remote");
 const QString ClementineRemote::sProjectUrl = QStringLiteral("https://github.com/mbruel/ClementineRemote");
 const QString ClementineRemote::sBTCaddress = QStringLiteral("3BGbnvnnBCCqrGuq1ytRqUMciAyMXjXAv6");
@@ -104,7 +104,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _songsModel(new RemoteSongModel),
     _songsProxyModel(new RemoteSongProxyModel),
-    _activePlaylistId(1), _trackPostition(0),
+    _activePlaylistId(-1), _requestSongsForPlaylistID(-1),
+    _trackPostition(0),
     _initialized(false),
     _clemFilesSupport(false),
     _remoteFilesPath("./"), _remoteFilesPathPerHost(),
@@ -138,6 +139,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _libProxyModel->setSourceModel(_libModel);
 
 #ifdef __USE_CONNECTION_THREAD__
+    connect(this, &ClementineRemote::initialized,
+            this, &ClementineRemote::onInitialized, Qt::QueuedConnection);
     connect(this, &ClementineRemote::playlistsOpenedUpdatedByWorker,
             this, &ClementineRemote::onPlaylistsOpenedUpdatedByWorker, Qt::QueuedConnection);
     connect(this, &ClementineRemote::songsUpdatedByWorker,
@@ -442,9 +445,15 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         break;
 
     case pb::remote::FIRST_DATA_SENT_COMPLETE:
+        if (_initialized)
+            return; // it's for another remote        
+#ifdef __USE_CONNECTION_THREAD__
+        emit initialized();
+#else
         _initialized = true;
         qDebug() << "[MsgType::FIRST_DATA_SENT_COMPLETE] fully Initialized \\o/";
         emit connected();
+#endif
         if (_clemFilesSupport)
             _connection->requestSavedRadios();
         if (QFileInfo(QString("%1/%2.db").arg(_libraryPath).arg(_connection->hostname())).exists())
@@ -481,9 +490,8 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         break;
 
     case pb::remote::ACTIVE_PLAYLIST_CHANGED:
-        _dispPlaylistId =  msg.response_active_changed().id();
-        qDebug() << "[MsgType::ACTIVE_PLAYLIST_CHANGED] id: " << _dispPlaylistId;
-        updateCurrentPlaylist();
+        _activePlaylistId =  msg.response_active_changed().id();
+        qDebug() << "[MsgType::ACTIVE_PLAYLIST_CHANGED] id: " << _activePlaylistId;
         updateActivePlaylist();
         break;
 
@@ -567,7 +575,7 @@ void ClementineRemote::appendLibraryItem(const QModelIndex &proxyIndex, const QS
         emit insertUrls(_dispPlaylistId, newPlaylistName);
         sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
                      childCount).arg(
-                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+                     newPlaylistName.isEmpty() ? playlistName() : newPlaylistName));
     }
     else if (itemType == LibraryModel::Track)
     {
@@ -581,7 +589,7 @@ void ClementineRemote::appendLibraryItem(const QModelIndex &proxyIndex, const QS
         emit insertUrls(_dispPlaylistId, newPlaylistName);
         sendInfo("", tr("the track %1 has been added to the playlist %2").arg(
                      _libProxyModel->data(proxyIndex, LibraryModel::name).toString()).arg(
-                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+                     newPlaylistName.isEmpty() ? playlistName() : newPlaylistName));
     }
     else
         sendError("", tr("You can't add an Artist directly.<br/> Please select either a single Track or an Album"));
@@ -714,13 +722,12 @@ void ClementineRemote::closingPlaylist(qint32 playlistID)
     }
     _dispPlaylist      = newDispPlaylist;
     _dispPlaylistIndex = idx;
-    if (_activePlaylistId == playlistID)
+    if (newDispPlaylist && _activePlaylistId == playlistID)
         _activePlaylistId = newDispPlaylist->id;
 }
 
 void ClementineRemote::updateActivePlaylist()
 {
-    _activePlaylistId = _dispPlaylistId;
     int row = 0;
     for (RemotePlaylist *p : _playlistsOpened)
     {
@@ -812,7 +819,7 @@ For that either do a long press an a Track or use one of the 2 bottoms on the ri
 
         sendInfo("", tr("%1 Tracks have been added to the playlist %2").arg(
                      selectedFiles.size()).arg(
-                     newPlaylistName.isEmpty() ? _dispPlaylist->name : newPlaylistName));
+                     newPlaylistName.isEmpty() ? playlistName() : newPlaylistName));
         emit sendFilesToAppend();
         return selectedFiles.size();
     }
@@ -1070,6 +1077,14 @@ void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs 
 {
     _dispPlaylistId = songs.requested_playlist().id();
     qDebug() << "[MsgType::PLAYLIST_SONGS] playlist ID: " << _dispPlaylistId;
+    if (_initialized && _requestSongsForPlaylistID.loadRelaxed() != _dispPlaylistId)
+    {
+        qDebug() << "[MsgType::PLAYLIST_SONGS] ignoring msg, not requested playlist: " << _dispPlaylistId;
+        return;
+    }
+    else
+        _requestSongsForPlaylistID = -1; // unset for next request
+
     updateCurrentPlaylist();
 
     if (_songs.size())
@@ -1190,13 +1205,23 @@ void ClementineRemote::onSongsUpdatedByWorker(bool initialized)
     _songsData.clear_response_playlist_songs();
     _secureSongs.unlock();
     if (!initialized)
+    {
+        _activePlaylistId = _dispPlaylistId;
         updateActivePlaylist();
+    }
 }
 void ClementineRemote::onRemoteFilesUpdatedByWorker()
 {
     rcvListOfRemoteFiles(_remoteFilesData.response_list_files());
     _remoteFilesData.clear_response_list_files();
     _secureRemoteFilesData.unlock();
+}
+
+void ClementineRemote::onInitialized()
+{
+    _initialized = true;
+    qDebug() << "[MsgType::FIRST_DATA_SENT_COMPLETE] fully Initialized \\o/";
+    emit connected();
 }
 #endif
 

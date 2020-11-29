@@ -121,6 +121,7 @@ private:
     RemoteSongProxyModel   *_songsProxyModel;//!< Proxy model used by QML ListView
 
     qint32                  _activePlaylistId;  //!<  ID of the playlist of the active song
+    QAtomicInt              _requestSongsForPlaylistID;
 
     qint32                  _trackPostition;    //!< position in the track of the active song (pb::remote::UPDATE_TRACK_POSITION)
 
@@ -259,6 +260,8 @@ public:
     inline Q_INVOKABLE int playlistIndex() const;
     inline Q_INVOKABLE int playlistID() const;
     inline int numberOfPlaylists(bool closedPlaylists = false) const;
+
+    inline void setRequestSongsForPlaylistID(qint32 playlistId);
 
     Q_INVOKABLE QString playlistName() const;
     Q_INVOKABLE bool isCurrentPlaylistSaved() const;
@@ -444,6 +447,7 @@ signals:
 
 
 #ifdef __USE_CONNECTION_THREAD__
+    void initialized();
     void playlistsOpenedUpdatedByWorker();
     void songsUpdatedByWorker(bool initialized);
     void remoteFilesUpdatedByWorker();
@@ -452,6 +456,7 @@ private slots:
     void onPlaylistsOpenedUpdatedByWorker();
     void onSongsUpdatedByWorker(bool initialized);
     void onRemoteFilesUpdatedByWorker();
+    void onInitialized();
 #endif
 
 private slots:
@@ -695,6 +700,8 @@ int ClementineRemote::numberOfPlaylists(bool closedPlaylists) const
 {
     return closedPlaylists ?  _playlistsClosed.size() : _playlistsOpened.size();
 }
+
+void ClementineRemote::setRequestSongsForPlaylistID(qint32 playlistId) { _requestSongsForPlaylistID = playlistId; }
 
 ////////////////////////////////
 /// RemoteFile methods

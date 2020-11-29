@@ -237,9 +237,17 @@ void ConnectionWorker::onChangePlaylist(qint32 pIdx)
 {
     qDebug() << "[ConnectionWorker::onChangePlaylist] playlistIdx: " << pIdx;
 
+    RemotePlaylist *playlist = _remote->playlist(pIdx);
+    if (!playlist)
+    {
+        qCritical() << "[ConnectionWorker::onChangePlaylist] Can't find playlist with index: " << pIdx;
+        return ;
+    }
+
     pb::remote::Message msg;
     msg.set_type(pb::remote::REQUEST_PLAYLIST_SONGS);
-    msg.mutable_request_playlist_songs()->set_id(_remote->playlist(pIdx)->id);
+    msg.mutable_request_playlist_songs()->set_id(playlist->id);
+    _remote->setRequestSongsForPlaylistID(playlist->id);
 
     sendDataToServer(msg);
 }
