@@ -14,7 +14,7 @@ or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/downloa
 <br/>
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/iOS_qr.png" alt="Clementine Remote for iOS">
 <br/> 
-and on the [Apple Store for iOS](https://apps.apple.com/fr/app/clemremote/id1541922045)<br/>
+and on the [Apple Store for iOS](https://apps.apple.com/fr/app/clemremote/id1541922045) (for 2.29€ cause I need to pay the Apple developer licence)<br/>
 <br/> 
 <br/>
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>
