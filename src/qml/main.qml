@@ -46,6 +46,9 @@ Window {
     property int toolBarButtonWidth : width/10;
     property int mainMargin         : 20;
 
+    property bool initialized       : false
+
+
     property string disconnectReason: ""
 
 //    Keys.onReleased: {
@@ -77,47 +80,49 @@ Window {
     Connections {
         target: cppRemote
 
-        function onConnected() { openMainApp(); }
+        function onConnected() {
+            openMainApp();
+            initialized = true;
+        }
         function onDisconnected(reason) {
             disconnectReason = reason;
             openLoginPage();
+            initialized = false;
         }
 //        onError: error(txt);
-    }
+    } // Connections cppRemote
+
+    function isInitialized() { return initialized; }
 
     function openLoginPage() {
         mainArea.sourceComponent  = loginPage;
         mainArea.item.errMsg.text = disconnectReason;
-    }
+    } // openLoginPage
 
     function openMainApp() {
         mainArea.sourceComponent = mainApp;
         mainArea.item.openSettings.connect(openSettings);
-    }
+    } // openMainApp
 
     function openSettings() {
         mainArea.sourceComponent = settingsPage;
         mainArea.item.exitSettings.connect(closeSettings);
-    }
+    } // openSettings
 
     function closeSettings() {
         if (cppRemote.isConnected())
             openMainApp();
         else
             openLoginPage("");
-    }
+    } // closeSettings
 
     Component {
         id: loginPage
-
-        LoginPage {
-            anchors.fill  : parent
-        }
-    }
+        LoginPage { anchors.fill  : parent }
+    } // loginPage
 
     Component {
         id: mainApp
-
         MainApp {
             title              : root.title
             toolBarIndex       : root.toolBarIndex
@@ -127,13 +132,10 @@ Window {
             toolBarButtonWidth : root.toolBarButtonWidth
             mainMargin         : root.mainMargin
         }
-    }
+    } // mainApp
 
     Component {
         id: settingsPage
-
-        SettingsPage {
-            anchors.fill  : parent
-        }
-    }
+        SettingsPage { anchors.fill  : parent }
+    } // settingsPage
 }

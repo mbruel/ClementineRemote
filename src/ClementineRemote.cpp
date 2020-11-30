@@ -1075,16 +1075,19 @@ void ClementineRemote::rcvPlaylists(const pb::remote::ResponsePlaylists &playlis
 
 void ClementineRemote::rcvPlaylistSongs(const pb::remote::ResponsePlaylistSongs &songs)
 {
-    _dispPlaylistId = songs.requested_playlist().id();
-    qDebug() << "[MsgType::PLAYLIST_SONGS] playlist ID: " << _dispPlaylistId;
-    if (_initialized && _requestSongsForPlaylistID.loadRelaxed() != _dispPlaylistId)
+    qint32 playlistID = songs.requested_playlist().id();
+    qDebug() << "[MsgType::PLAYLIST_SONGS] playlist ID: " << playlistID;
+    if (playlistID != _dispPlaylistId && // always update displayed playlist
+            _initialized && playlistID != _requestSongsForPlaylistID.loadRelaxed())
     {
-        qDebug() << "[MsgType::PLAYLIST_SONGS] ignoring msg, not requested playlist: " << _dispPlaylistId;
+        qDebug() << "[MsgType::PLAYLIST_SONGS] ignoring msg, _dispPlaylistId: " << _dispPlaylistId
+                 << ", _requestSongsForPlaylistID: " << _requestSongsForPlaylistID.loadRelaxed();
         return;
     }
-    else
+    else if (playlistID == _requestSongsForPlaylistID.loadRelaxed())
         _requestSongsForPlaylistID = -1; // unset for next request
 
+    _dispPlaylistId = playlistID;
     updateCurrentPlaylist();
 
     if (_songs.size())

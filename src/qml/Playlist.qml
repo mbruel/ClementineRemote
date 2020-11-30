@@ -79,8 +79,19 @@ Rectangle {
     } // Connections cppRemote
 
 
-    Component.onCompleted : goToCurrentPlaylistAndTrack();
+    Component.onCompleted : { root.isInitialized() ?
+                                  goToLastPlaylist() :
+                                  goToCurrentPlaylistAndTrack(); }
 
+    function goToLastPlaylist() {
+        playlistIdx = cppRemote.playlistIndex();
+        cppRemote.changePlaylist(playlistIdx);
+
+        if (playlistIdx === cppRemote.getAtivePlaylistIndex()) {
+            updateActiveSong(cppRemote.getActiveSongIndex());
+            songsView.positionViewAtIndex(activeSongIdx, ListView.Center);
+        }
+    }
 
     function goToCurrentPlaylistAndTrack() {
         if (playlistIdx !== cppRemote.getAtivePlaylistIndex())
