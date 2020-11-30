@@ -8,12 +8,10 @@ I've built the v1.0 for [Linux](https://github.com/mbruel/ClementineRemote/relea
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/android_qr.png" alt="Clementine Remote for Android">
 It is availabe on [Google Play](https://play.google.com/store/apps/details?id=fr.mbruel.ClementineRemote)<br/>
 you can also find it on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbruel.ClementineRemote) on [izzysoft repo](https://apt.izzysoft.de/fdroid/)<br/>
-or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).
-<br/> 
+or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).<br/>
 <br/>
-<img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/android_qr.png" alt="Clementine Remote for iOS">
+<img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/iOS_qr.png" alt="Clementine Remote for iOS">
 <br/> 
-<br/>
 and on the [Apple Store for iOS](https://apps.apple.com/fr/app/clemremote/id1541922045)<br/>
 <br/> 
 <br/>
