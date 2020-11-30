@@ -12,7 +12,7 @@ you can also find it on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbr
 or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).
 <br/> 
 <br/>
-and on the [Apple Store for iOS](https://apps.apple.com/fr/app/clemremote/id1541922045)
+<p style="text-align:right;">and on the [Apple Store for iOS](https://apps.apple.com/fr/app/clemremote/id1541922045)</p>
 <br/>
 
 <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Playlist.png" alt="ClementineRemote on Debian"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Files.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Library.png" alt="ClementineRemote on iPhone SE"/> <img width="200" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/pics/ClementineRemote_Radio.png" alt="ClementineRemote on iPhone SE"/><br/>
