@@ -81,6 +81,9 @@ Rectangle {
                 onDoubleClicked: {
                     filesView.currentIndex = index;
                     cppRemote.addRadioToPlaylist(index);
+                    mainApp.info(qsTr("Radio added to playlist"),
+                                 qsTr("The radio '%1' has been added to the playlist '%2'.").arg(
+                                     name).arg(cppRemote.playlistName()));
                 }
             } // MouseArea
         } // radioStreamDelegateRect
