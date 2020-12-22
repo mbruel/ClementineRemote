@@ -128,9 +128,9 @@ void ConnectionWorker::onConnectToServer(const QString &host, ushort port, int a
 
     qRegisterMetaType<QAbstractSocket::SocketError>("SocketError" );
     connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)),
-            this, SLOT(onError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+            this, SLOT(onError(QAbstractSocket::SocketError)), Qt::QueuedConnection);
     connect(_socket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)),
-            this, SLOT(onError(QAbstractSocket::SocketError)), Qt::DirectConnection);
+            this, SLOT(onError(QAbstractSocket::SocketError)), Qt::QueuedConnection);
 
     _socket->connectToHost(host, port);
     _timeout.start(_remote->sockTimeoutMs());
