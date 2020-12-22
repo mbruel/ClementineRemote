@@ -57,6 +57,8 @@ private:
     Downloader      _libraryDL;
     SongsDownloader _songsDL;
 
+    AtomicBool _killingSocket;
+
 public:
     ConnectionWorker(ClementineRemote *remote, QObject *parent = nullptr);
     ~ConnectionWorker();

@@ -35,7 +35,8 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     _socket(nullptr), _timeout(this), _disconnectReason(" "),
     _reading_protobuf(false), _expected_length(0), _buffer(),
     _host(), _port(0), _auth_code(-1),
-    _libraryDL(), _songsDL()
+    _libraryDL(), _songsDL(),
+    _killingSocket(0x0)
 {
     setObjectName("ConnectionWorker");
 
@@ -84,16 +85,25 @@ ConnectionWorker::~ConnectionWorker()
 }
 
 void ConnectionWorker::onKillSocket(){
+    _killingSocket = 0x1;
     if (_socket)
     {
         qDebug() << "[MB_TRACE][ConnectionWorker::onKillSocket]";
-        disconnect(_socket);
+        disconnect(_socket, &QAbstractSocket::disconnected, this, &ConnectionWorker::onDisconnected);
+        disconnect(_socket, &QIODevice::readyRead,          this, &ConnectionWorker::onReadyRead);
+        disconnect(_socket, SIGNAL(error(QAbstractSocket::SocketError)),
+                   this, SLOT(onError(QAbstractSocket::SocketError)));
+        disconnect(_socket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)),
+                   this, SLOT(onError(QAbstractSocket::SocketError)));
         _socket->disconnectFromHost();
         if (_socket->state() != QAbstractSocket::UnconnectedState)
             _socket->waitForDisconnected();
         _socket->deleteLater();
         _socket = nullptr;
     }
+    if (_timeout.isActive())
+        _timeout.stop();
+    _killingSocket = 0x0;
 }
 
 
@@ -510,9 +520,16 @@ void ConnectionWorker::onDisconnected()
     if (_timeout.isActive())
         _timeout.stop();
 
-    disconnect(_socket);
-    _socket->deleteLater();
-    _socket = nullptr;
+    if (!_killingSocket.loadRelaxed() && _socket)
+    {
+        disconnect(_socket, SIGNAL(error(QAbstractSocket::SocketError)),
+                   this, SLOT(onError(QAbstractSocket::SocketError)));
+        disconnect(_socket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)),
+                   this, SLOT(onError(QAbstractSocket::SocketError)));
+        disconnect(_socket, &QIODevice::readyRead, this, &ConnectionWorker::onReadyRead);
+        _socket->deleteLater();
+        _socket = nullptr;
+    }
 
     _songsDL.init(0, 0);
     _libraryDL.init();
@@ -522,6 +539,12 @@ void ConnectionWorker::onDisconnected()
 
 void ConnectionWorker::onReadyRead()
 {
+    if (_killingSocket.loadRelaxed() || !_socket)
+    {
+        qDebug() << "[ConnectionWorker::onReadyRead] ignoring read...";
+        return;
+    }
+
     while (_socket->bytesAvailable()) {
         if (!_reading_protobuf) {
             // If we have less than 4 byte, we cannot read the length. Wait for more
@@ -571,14 +594,17 @@ void ConnectionWorker::onSocketTimeout()
 
 void ConnectionWorker::onError(QAbstractSocket::SocketError err)
 {
-    qDebug() << "[ConnectionWorker::onError] err: " << err << " : " << _socket->errorString();
-    emit _remote->connectionError(_socket->errorString());
-
-    if (err == QAbstractSocket::SocketError::ConnectionRefusedError)
+    if (!_killingSocket.loadRelaxed() && _socket)
     {
-        _disconnectReason = _socket->errorString();
-        _timeout.stop();
-        onDisconnected();
+        qDebug() << "[ConnectionWorker::onError] err: " << err << " : " << _socket->errorString();
+        emit _remote->connectionError(_socket->errorString());
+
+        if (err == QAbstractSocket::SocketError::ConnectionRefusedError)
+        {
+            _disconnectReason = _socket->errorString();
+            _timeout.stop();
+            onDisconnected();
+        }
     }
 }
 
