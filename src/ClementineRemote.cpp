@@ -227,27 +227,23 @@ void ClementineRemote::close()
 
 void ClementineRemote::clearData(const QString &reason)
 {
+    emit disconnected(reason); // Update QML view to Login Page
+
     _initialized = false;
     _forceRePlayActiveSong = false;
 
-    emit _plOpenedModel->preClearPlaylists(_playlistsOpened.size() - 1 );
     qDeleteAll(_playlistsOpened);
     _playlistsOpened.clear();
-    emit _plOpenedModel->postClearPlaylists();
 
-    emit _plClosedModel->preClearPlaylists(_playlistsClosed.size() - 1 );
     qDeleteAll(_playlistsClosed);
     _playlistsClosed.clear();
-    emit _plClosedModel->postClearPlaylists();
 
 
     _dispPlaylist = nullptr;
     _dispPlaylistId = 0;
     _dispPlaylistIndex = 0;
 
-    emit preClearSongs(_songs.size() - 1);
     _songs.clear();
-    emit postSongRemoved();
 
     _activeSongIndex = 0;
     _activePlaylistId = 0;
@@ -255,13 +251,10 @@ void ClementineRemote::clearData(const QString &reason)
     _remoteFiles.clear();
     _radioStreams.clear();
 
-    emit _libModel->beginReset();
     _libModel->clear();
-    emit _libModel->endReset();
+    _libDB.close();
 
     _isDownloading = 0x0;
-
-    emit disconnected(reason);
 }
 
 
@@ -1231,7 +1224,10 @@ void ClementineRemote::onInitialized()
 void ClementineRemote::onLibraryDownloaded()
 {
     QString host = _connection->hostname();
-    _libDB = QSqlDatabase::addDatabase("QSQLITE", host);
+    if (QSqlDatabase::contains(host))
+        _libDB = QSqlDatabase::database(host);
+    else
+        _libDB = QSqlDatabase::addDatabase("QSQLITE", host);
     _libDB.setDatabaseName(QString("%1/%2.db").arg(_libraryPath).arg(host));
     if(!_libDB.open()){
         qCritical() << "Can't open sqlite DB... " << _libDB.databaseName();
