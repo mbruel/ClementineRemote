@@ -87,12 +87,11 @@ void ConnectionWorker::onKillSocket(){
     if (_socket)
     {
         qDebug() << "[MB_TRACE][ConnectionWorker::onKillSocket]";
-        disconnect(_socket, &QAbstractSocket::disconnected, this, &ConnectionWorker::onDisconnected);
-        disconnect(_socket, &QIODevice::readyRead,          this, &ConnectionWorker::onReadyRead);
+        disconnect(_socket);
         _socket->disconnectFromHost();
         if (_socket->state() != QAbstractSocket::UnconnectedState)
             _socket->waitForDisconnected();
-        delete _socket;
+        _socket->deleteLater();
         _socket = nullptr;
     }
 }
@@ -511,13 +510,7 @@ void ConnectionWorker::onDisconnected()
     if (_timeout.isActive())
         _timeout.stop();
 
-    disconnect(_socket, SIGNAL(error(QAbstractSocket::SocketError)),
-            this, SLOT(onError(QAbstractSocket::SocketError)));
-    disconnect(_socket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)),
-            this, SLOT(onError(QAbstractSocket::SocketError)));
-    disconnect(_socket, &QIODevice::readyRead, this, &ConnectionWorker::onReadyRead);
-
-
+    disconnect(_socket);
     _socket->deleteLater();
     _socket = nullptr;
 
