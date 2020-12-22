@@ -1,0 +1,14 @@
+<i>ClementineRemote</i> is a Remote Control for the <a href='https://www.clementine-player.org/'>Clementine Music Player</a>, available for all major platforms. Its main goal was to add the Files View missing in the Android Remote. It's also made like a player, so you always see the running track, can pause or go next.
+
+You can fully control the music on your Clementine server: create playlists, browse the file system or the library, launch your saved internet radios... It's designed like a player, so from any Menu you're seeing the current played track and can pause, change the position, go to the next one... and also change the level of the volume. It's also possible to download the songs, albums or playlist.
+
+<b>Features:</b>
+
+* a <b>Player</b> to start previous/next track, play, pause, skip, shuffle, change volume, etc.
+* a <b>Playlist Menu</b> to manipulate the playlist – edit, search, rename, clear …
+* a <b>Files Menu</b> to walk the directories below Clementine's root folder, download tracks, append tracks to the playlist, and more
+* a <b>Library Menu</b> to search Clementine's library for text (incl. using regular expressions) in title, author etc.
+* an <b>Internet Radio Menu</b>
+* a <b>Global Search Menu
+
+…and more…

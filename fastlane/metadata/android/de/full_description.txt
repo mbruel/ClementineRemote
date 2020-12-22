@@ -1,0 +1,14 @@
+<i>ClementineRemote</i> ist eine Fernbedienung für den <a href='https://www.clementine-player.org/'>Clementine Music Player</a>, die für alle wichtigen Plattformen verfügbar ist. Sein Hauptziel war es, die in der Android-Fernbedienung fehlende Dateiansicht hinzuzufügen. Die App ist auch wie ein Player aufgebaut, so dass Sie immer den laufenden Track sehen, pausieren oder zum nächsten wechseln können.
+
+Du kannst die Musik auf Deinem Clementine-Server mit dieser App steuern: Playlisten erstellen, das Dateisystem durchforsten, gespeicherte Internet-Radios starten… Die App ist als Musik-Player ausgelegt. Daher findet sich in jedem Menü des gerade abgespielten Tracks die Möglichkeit, das Stück zu pausieren, die Abspiel-Position zu verändern, zum nächsten Track zu springen... und auch die Lautstärke anzupassen. Ebenso ist es möglich, Songs, Alben oder Playlisten herunterzuladen.
+
+<b>Features:</b>
+
+* ein <b>Player</b> um den vorherigen/nächsten Titel zu starten, abzuspielen, zu pausieren, zu überspringen, zu mischen, die Lautstärke zu ändern, usw.
+* ein <b>Playlist Menu</b> um die Wiedergabeliste zu manipulieren – bearbeiten, suchen, umbenennen, löschen ...
+* ein <b>Dateimenü</b> um die Verzeichnisse unterhalb des Stammordners von Clementine zu durchlaufen, Titel herunterzuladen, Titel an die Wiedergabeliste anzuhängen und mehr
+* ein <b>Bibliotheks-Menü</b> zum Suchen in Clementine's Bibliothek – einschließlich der Nutzung regulärer Ausdrücke
+* ein Menü für <b>Internet Radio</b>
+* eine <b>Globale Suche</b>
+
+…und mehr…
