@@ -2,6 +2,7 @@
 
 # ClemRemote v1.0
 Remote for [Clementine Music Player](https://www.clementine-player.org/) ([github](https://github.com/clementine-player/Clementine)) developed in C++/QT5/QML to be available on any OS. <br/>
+It is published under **licence GPL v3** <br/>
 You can fully control the music on your Clementine server: create playlists, browse the file system or the library, launch your saved internet radios...<br/>
 It's designed like a player, so from any Menu you're seeing the current played track and can pause, change the position, go to the next one... and also change the level of the volume.<br/>
 It's also possible to download the songs, albums or playlist<br/>
