@@ -81,6 +81,7 @@ public:
 
 signals:
     void connectToServer(ClementineSession *session);
+    void getLibrary();
     void disconnectFromServer();
     void killSocket();
 

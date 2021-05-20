@@ -44,6 +44,38 @@ Rectangle {
     property int rowHeight: 30
     property int indent: 20
 
+    function loadLibrary() {
+        if (cppRemote.isLibraryLoaded()) {
+            libView.visible = true;
+            loadingIndicator.visible = false;
+        }
+        else
+        {
+            libView.visible = false;
+            loadingIndicator.visible = true;
+            if (cppRemote.delayLibraryLoading())
+                requestLibraryTimer.start(); // delay the loading to make sure the view is visible
+        }
+    }
+
+    Component.onCompleted: loadLibrary();
+
+    Connections{
+        target: cppRemote
+        function onLibraryLoaded(){
+            loadLibrary();
+        }
+    }
+
+    Timer {
+        id: requestLibraryTimer
+        interval: 100
+        running: false
+        repeat: false
+        onTriggered: cppRemote.requestLibrary();
+    }
+
+
     Rectangle{
         id     : headerRow
         width  : parent.width
@@ -101,9 +133,14 @@ Rectangle {
                 verticalCenter: parent.verticalCenter
             }
             source: "icons/refresh.png";
-            onClicked: cppRemote.getLibrary();
+            onClicked: {
+                libView.visible = false;
+                loadingIndicator.visible = true;
+                cppRemote.getLibrary();
+            }
         } // refreshLibButton
     } // headerRow
+
 
     QQC1.TreeView {
         id: libView
@@ -262,4 +299,10 @@ Rectangle {
             } // onClicked
         } // newPlaylistButton
     } // actionRect
+
+    QQC.BusyIndicator {
+        id: loadingIndicator
+        running: true
+        anchors.centerIn: libView
+    }
 }

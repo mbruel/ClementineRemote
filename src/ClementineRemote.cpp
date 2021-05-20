@@ -75,7 +75,9 @@ const QMap<ClementineRemote::Settings, QString> ClementineRemote::sSettings = {
     {Settings::verticalVolume,        QStringLiteral("verticalVolume")},
     {Settings::iconSize,              QStringLiteral("iconSize")},
     {Settings::dispArtistInTrackName, QStringLiteral("dispArtistInTrackName")},
+    {Settings::delayLibraryLoading,   QStringLiteral("delayLibraryLoading")},
 };
+
 
 const QString ClementineRemote::sQuickSessionName = ClementineRemote::tr("Quick Session");
 
@@ -133,7 +135,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
 #endif
     _userMsg(),
     _forceRePlayActiveSong(false),
-    _sessionsSaved(), _sessionSelected(0)
+    _sessionsSaved(), _sessionSelected(0),
+    _libraryLoaded(false)
 {
     setObjectName(sAppName);
 
@@ -194,9 +197,8 @@ ClementineRemote::~ClementineRemote()
     close();
 }
 
-void ClementineRemote::close()
+void ClementineRemote::saveSessions()
 {
-    qDebug() << "[MB_TRACE] close ClementineRemote";
     _settings.beginWriteArray(sSettings[Settings::session]);
     int sessionIdx = 0;
     for (ClementineSession *session : _sessionsSaved) {
@@ -210,8 +212,14 @@ void ClementineRemote::close()
     }
     _settings.endArray();
     _settings.setValue(sSettings[Settings::lastSession],  sessionName());
-
     _settings.sync();
+}
+
+void ClementineRemote::close()
+{
+    qDebug() << "[MB_TRACE] close ClementineRemote";
+    saveSessions();
+
 #ifdef __USE_CONNECTION_THREAD__
     emit _connection->killSocket();
     _thread.quit();
@@ -281,8 +289,9 @@ void ClementineRemote::clearData(const QString &reason)
 
     _libModel->clear();
     _libDB.close();
+    _libraryLoaded = false;
 
-    _isDownloading = 0x0;
+    _isDownloading = 0x0;    
 }
 
 
@@ -474,14 +483,11 @@ void ClementineRemote::parseMessage(const QByteArray &data)
         _initialized = true;
         qDebug() << "[MsgType::FIRST_DATA_SENT_COMPLETE] fully Initialized \\o/";
         emit connected();
+        if (!delayLibraryLoading())
+            requestLibrary();
 #endif
         if (_clemFilesSupport)
             _connection->requestSavedRadios();
-        if (_sessionSelected > 0 // We force redownload for Quick Session
-                && QFileInfo(QString("%1/%2.db").arg(_libraryPath).arg(sessionName())).exists())
-            emit libraryDownloaded();
-        else
-            emit getLibrary();
         break;
 
     case pb::remote::PLAY:
@@ -665,6 +671,22 @@ void ClementineRemote::downloadLibraryItem(const QModelIndex &proxyIndex)
     }
 }
 
+void ClementineRemote::getLibrary(){
+    _libraryLoaded = false;
+    emit _connection->getLibrary();
+}
+
+void ClementineRemote::requestLibrary()
+{
+    if (_libraryLoaded)
+        return;
+    if (_sessionSelected > 0 // We force redownload for Quick Session
+            && QFileInfo(QString("%1/%2.db").arg(_libraryPath).arg(sessionName())).exists())
+        emit libraryDownloaded();
+    else
+        getLibrary();
+}
+
 
 ////////////////////////////////
 /// QML getter/setters
@@ -741,7 +763,6 @@ void ClementineRemote::deleteCurrentSession()
     delete session;
     _sessionSelected = 0;
 }
-
 
 
 ////////////////////////////////
@@ -1317,6 +1338,9 @@ void ClementineRemote::onInitialized()
     _initialized = true;
     qDebug() << "[MsgType::FIRST_DATA_SENT_COMPLETE] fully Initialized \\o/";
     emit connected();
+
+    if (!delayLibraryLoading())
+        requestLibrary();
 }
 #endif
 
@@ -1392,8 +1416,11 @@ void ClementineRemote::onLibraryDownloaded()
         }
     }
     emit _libModel->endReset();
+    _libraryLoaded = true;
+    emit libraryLoaded(); // warn QML for easy-loading
 
     qint64 durationMS = timeStart.elapsed();
+
 //   QTime::fromMSecsSinceStartOfDay(static_cast<int>(duration)).toString("hh:mm:ss.zzz"));
     sendInfo(tr("Library loaded in %1 ms").arg(durationMS),
              tr("<ul><li>Number of Artists: %1</li><li>Number of Albums: %2</li><li>Number of Tracks: %3</li></ul>").arg(

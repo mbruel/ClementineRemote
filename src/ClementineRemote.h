@@ -58,7 +58,8 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
         session, host, port, pass, lastSession,
         downloadPath, remotePath,
         verticalVolume, iconSize,
-        dispArtistInTrackName
+        dispArtistInTrackName,
+        delayLibraryLoading
     };
     static const QMap<Settings, QString> sSettings;
 
@@ -160,6 +161,8 @@ private:
     int                       _sessionSelected;
     static const QString sQuickSessionName;
 
+    bool _libraryLoaded;
+
 
 private:
     ClementineRemote(QObject *parent = nullptr);
@@ -193,7 +196,9 @@ public:
     Q_INVOKABLE void setLibraryFilter(const QString &searchTxt);
     Q_INVOKABLE void appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName);
     Q_INVOKABLE void downloadLibraryItem(const QModelIndex &proxyIndex);
-
+    Q_INVOKABLE void getLibrary();
+    inline Q_INVOKABLE bool isLibraryLoaded() const;
+    Q_INVOKABLE void requestLibrary();
 
 
     ////////////////////////////////
@@ -210,6 +215,9 @@ public:
 
     inline Q_INVOKABLE bool dispArtistInTrackName() const;
     inline Q_INVOKABLE void setDispArtistInTrackName(bool display);
+
+    inline Q_INVOKABLE bool delayLibraryLoading() const;
+    inline Q_INVOKABLE void setDelayLibraryLoading(bool delay);
 
     inline Q_INVOKABLE uint iconSize() const;
     inline Q_INVOKABLE void setIconSize(uint size);        
@@ -252,6 +260,7 @@ public:
     Q_INVOKABLE int lastSessionIndex() const {return _sessionSelected;}
     Q_INVOKABLE int createNewSession(const QString &sessionName, const QString &host, int port, int pass);
     Q_INVOKABLE void deleteCurrentSession();
+    Q_INVOKABLE void saveSessions();
 
     ////////////////////////////////
     /// Playlist methods
@@ -399,8 +408,8 @@ signals:
     void downloadPlaylist(qint32 playlistID, QString playlistName);
     void downloadComplete(qint32 downloadedFiles, qint32 totalFiles, QStringList errors);
 
-    void getLibrary();
     void libraryDownloaded();
+    void libraryLoaded();
 
     void insertUrls(qint32 playlistID, const QString &newPlaylistName);
 
@@ -589,6 +598,8 @@ QString ClementineRemote::libraryItemIcon(const QModelIndex &index) const
     }
 }
 
+bool ClementineRemote::isLibraryLoaded() const { return _libraryLoaded; }
+
 
 ////////////////////////////////
 /// QML and Setting
@@ -608,6 +619,10 @@ void ClementineRemote::setDispArtistInTrackName(bool display)
     RemoteSong::sDispArtistInName = display;
     _settings.setValue(sSettings[Settings::dispArtistInTrackName], display);
 }
+
+bool ClementineRemote::delayLibraryLoading() const { return _settings.value(sSettings[Settings::delayLibraryLoading], true).toBool(); }
+void ClementineRemote::setDelayLibraryLoading(bool delay) { _settings.setValue(sSettings[Settings::delayLibraryLoading], delay);}
+
 
 
 uint ClementineRemote::iconSize() const { return _settings.value(sSettings[Settings::iconSize], sDefaultIconSize).toUInt(); }

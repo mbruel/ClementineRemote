@@ -78,6 +78,7 @@ Page {
         sessions.model = cppRemote.sessionNames();
         sessions.currentIndex = 0;
         displayMessage(qsTr("Session deleted"));
+        cppRemote.saveSessions();
     }
 
     function saveSession(sessionName) {
@@ -105,6 +106,7 @@ Page {
             sessions.currentIndex = lastIdx;
             displayMessage(qsTr("Session created"));
         }
+        cppRemote.saveSessions();
     }
 
     Connections{

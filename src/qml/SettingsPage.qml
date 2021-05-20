@@ -91,7 +91,7 @@ Page {
             Rectangle {
                 id: playerSettings
                 width: parent.width
-                height: playerTitle.height + 2*switchHeight + iconSizeSB.height + 8*sectionMargin
+                height: playerTitle.height + 3*switchHeight + iconSizeSB.height + 10*sectionMargin
                 color: "transparent"
 
                 radius: 10
@@ -185,6 +185,30 @@ Page {
                     value: cppRemote.iconSize()
                     onValueChanged: cppRemote.setIconSize(value);
                 } // iconSizeSB
+
+                Text {
+                    id: loadLibraryLbl
+                    anchors {
+                        left: parent.left
+                        verticalCenter: loadLibrarySwitch.verticalCenter
+                        leftMargin: sectionMargin
+                    }
+                    text: qsTr("Load library when first access")
+                } // dispArtistNameLbl
+                SettingSwitch{
+                    id: loadLibrarySwitch
+                    anchors {
+                        right: parent.right
+                        top: iconSizeSB.bottom
+                        topMargin: sectionMargin
+                        rightMargin: sectionMargin
+                    }
+                    width: switchWidth
+                    sliderSize: switchHeight
+
+                    checked: cppRemote.delayLibraryLoading()
+                    onToggled: cppRemote.setDelayLibraryLoading(checked);
+                } // dispArtistNameSwitch
 
             } // playerSettings
 

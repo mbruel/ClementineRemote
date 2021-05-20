@@ -84,6 +84,7 @@ Window {
         }
         function onDisconnected(reason) {
             disconnectReason = reason;
+            cppRemote.saveSessions();
             openLoginPage();
             initialized = false;
         }

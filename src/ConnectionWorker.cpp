@@ -49,6 +49,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
 
     connect(this,    &ConnectionWorker::connectToServer,      this, &ConnectionWorker::onConnectToServer,      connectionType);
     connect(this,    &ConnectionWorker::killSocket,           this, &ConnectionWorker::onKillSocket,           connectionType);
+    connect(this,    &ConnectionWorker::getLibrary,           this, &ConnectionWorker::onGetLibrary,           connectionType);
 
     connect(_remote, &ClementineRemote::disconnectFromServer, this, &ConnectionWorker::onDisconnectFromServer, connectionType);
     connect(_remote, &ClementineRemote::changeToSong,         this, &ConnectionWorker::onChangeToSong,         connectionType);
@@ -74,7 +75,6 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::downloadCurrentSong,  this, &ConnectionWorker::onDownloadCurrentSong,  connectionType);
     connect(_remote, &ClementineRemote::downloadPlaylist,     this, &ConnectionWorker::onDownloadPlaylist,     connectionType);
     connect(_remote, &ClementineRemote::sendSongsToDownload,  this, &ConnectionWorker::onSendSongsToDownload,  connectionType);
-    connect(_remote, &ClementineRemote::getLibrary,           this, &ConnectionWorker::onGetLibrary,           connectionType);
     connect(_remote, &ClementineRemote::insertUrls,           this, &ConnectionWorker::onInsertUrls,           connectionType);
 }
 
