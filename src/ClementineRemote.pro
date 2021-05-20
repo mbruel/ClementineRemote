@@ -141,6 +141,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     ClementineRemote.h \
+    ClementineSession.h \
     ConnectionWorker.h \
     model/LibraryModel.h \
     model/PlaylistModel.h \

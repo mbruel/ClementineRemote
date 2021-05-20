@@ -19,6 +19,7 @@
 //========================================================================
 
 #include "ClementineRemote.h"
+#include "ClementineSession.h"
 #include "ConnectionWorker.h"
 #include "model/RemoteSongModel.h"
 #include "model/PlaylistModel.h"
@@ -45,7 +46,6 @@ const QString ClementineRemote::sBTCaddress = QStringLiteral("3BGbnvnnBCCqrGuq1y
 const QString ClementineRemote::sDonateUrl  = QStringLiteral("https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=W2C236U6JNTUA&item_name=ClementineRemote&currency_code=EUR");
 const QString ClementineRemote::sClementineReleaseURL = QStringLiteral("https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote");
 
-
 const QPair<ushort, ushort> ClementineRemote::sClemFilesSupportMinVersion = {1, 4};
 
 const QString ClementineRemote::sLibrarySQL =
@@ -65,15 +65,19 @@ const QMap<pb::remote::ShuffleMode, ushort> ClementineRemote::sQmlShuffleCodes =
 };
 
 const QMap<ClementineRemote::Settings, QString> ClementineRemote::sSettings = {
+    {Settings::session,               QStringLiteral("session")},
     {Settings::host,                  QStringLiteral("host")},
     {Settings::port,                  QStringLiteral("port")},
     {Settings::pass,                  QStringLiteral("pass")},
-    {Settings::downloadPath,          QStringLiteral("downloadPath")},
     {Settings::remotePath,            QStringLiteral("remotePath")},
+    {Settings::lastSession,           QStringLiteral("lastSession")},
+    {Settings::downloadPath,          QStringLiteral("downloadPath")},
     {Settings::verticalVolume,        QStringLiteral("verticalVolume")},
     {Settings::iconSize,              QStringLiteral("iconSize")},
     {Settings::dispArtistInTrackName, QStringLiteral("dispArtistInTrackName")},
 };
+
+const QString ClementineRemote::sQuickSessionName = ClementineRemote::tr("Quick Session");
 
 ClementineRemote::ClementineRemote(QObject *parent):
     QObject(parent), Singleton<ClementineRemote>(),
@@ -106,7 +110,7 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _trackPostition(0),
     _initialized(false),
     _clemFilesSupport(false),
-    _remoteFilesPath("./"), _remoteFilesPathPerHost(),
+    _remoteFilesPath("./"),
     _remoteFiles(),
 #ifdef __USE_CONNECTION_THREAD__
     _secureRemoteFilesData(), _remoteFilesData(),
@@ -128,7 +132,8 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _secureUserMsg(),
 #endif
     _userMsg(),
-    _forceRePlayActiveSong(false)
+    _forceRePlayActiveSong(false),
+    _sessionsSaved(), _sessionSelected(0)
 {
     setObjectName(sAppName);
 
@@ -150,10 +155,25 @@ ClementineRemote::ClementineRemote(QObject *parent):
     _thread.setObjectName("ConnectionWorkerThread");
 #endif
 
-    _settings.beginGroup(sSettings[Settings::remotePath]);
-    for (const QString &host :  _settings.childKeys())
-         _remoteFilesPathPerHost[host] = _settings.value(host).toString();
-    _settings.endGroup();
+    // load sessions
+    QString lastSession = _settings.value(sSettings[Settings::lastSession], sQuickSessionName).toString();
+    int nbSessions = _settings.beginReadArray(sSettings[Settings::session]);
+    for (int i = 0; i < nbSessions; ++i) {
+        _settings.setArrayIndex(i);
+        QString session = _settings.value(sSettings[Settings::session]).toString();
+        _sessionsSaved <<  new ClementineSession(session, this,
+                                                 _settings.value(sSettings[Settings::host]).toString(),
+                                                 static_cast<ushort>(_settings.value(sSettings[Settings::port]).toUInt()),
+                                                 _settings.value(sSettings[Settings::pass]).toInt(),
+                                                 _settings.value(sSettings[Settings::remotePath]).toString());
+        if (session == lastSession) {
+            _sessionSelected = i;
+            qDebug() << "Last session : " << session << " (#" << _sessionSelected << ")";
+        }
+    }
+    _settings.endArray();
+    if (_sessionsSaved.isEmpty())
+        _sessionsSaved << new ClementineSession(sQuickSessionName, this);
 
     qDebug() << "Settings filename: " << _settings.fileName()
              << " => libraryPath: " << _libraryPath;
@@ -177,10 +197,20 @@ ClementineRemote::~ClementineRemote()
 void ClementineRemote::close()
 {
     qDebug() << "[MB_TRACE] close ClementineRemote";
-    _settings.beginGroup(sSettings[Settings::remotePath]);
-    for (auto it = _remoteFilesPathPerHost.cbegin(), itEnd = _remoteFilesPathPerHost.cend(); it != itEnd ; ++it)
-        _settings.setValue(it.key(), it.value());
-    _settings.endGroup();
+    _settings.beginWriteArray(sSettings[Settings::session]);
+    int sessionIdx = 0;
+    for (ClementineSession *session : _sessionsSaved) {
+        qDebug() << session->str();
+        _settings.setArrayIndex(sessionIdx++);
+        _settings.setValue(sSettings[Settings::session],    session->name());
+        _settings.setValue(sSettings[Settings::host],       session->host());
+        _settings.setValue(sSettings[Settings::port],       session->port());
+        _settings.setValue(sSettings[Settings::pass],       session->pass());
+        _settings.setValue(sSettings[Settings::remotePath], session->remotePath());
+    }
+    _settings.endArray();
+    _settings.setValue(sSettings[Settings::lastSession],  sessionName());
+
     _settings.sync();
 #ifdef __USE_CONNECTION_THREAD__
     emit _connection->killSocket();
@@ -447,7 +477,8 @@ void ClementineRemote::parseMessage(const QByteArray &data)
 #endif
         if (_clemFilesSupport)
             _connection->requestSavedRadios();
-        if (QFileInfo(QString("%1/%2.db").arg(_libraryPath).arg(_connection->hostname())).exists())
+        if (_sessionSelected > 0 // We force redownload for Quick Session
+                && QFileInfo(QString("%1/%2.db").arg(_libraryPath).arg(sessionName())).exists())
             emit libraryDownloaded();
         else
             emit getLibrary();
@@ -642,13 +673,75 @@ void ClementineRemote::downloadLibraryItem(const QModelIndex &proxyIndex)
 bool ClementineRemote::isConnected() const { return _connection->isConnected(); }
 void ClementineRemote::cancelDownload() const { _connection->cancelDownload(); }
 
-const QString ClementineRemote::hostname() const
+QString ClementineRemote::hostname() const
 {
-    if (_connection)
-        return _connection->hostname();
+    if (_sessionSelected == 0) // Quick Session
+        return _sessionsSaved.at(_sessionSelected)->host();
     else
-        return "nowhere..."; // should never happen
+        return _sessionsSaved.at(_sessionSelected)->name();
 }
+
+QString ClementineRemote::sessionName() const
+{
+    return _sessionsSaved.at(_sessionSelected)->name();
+}
+
+QStringList ClementineRemote::sessionNames() const
+{
+    QStringList sessions;
+    for (ClementineSession *s : _sessionsSaved)
+        sessions << s->name();
+    return sessions;
+}
+
+ClementineSession *ClementineRemote::getSession(int index)
+{
+    if (index < 0){
+        _sessionSelected = 0;
+        qCritical() << "WRONG session index...";
+    }
+    else if (index < _sessionsSaved.size())
+        _sessionSelected = index;
+    else
+    {
+        _sessionSelected = 0;
+        qCritical() << "WRONG session index...";
+    }
+
+    return _sessionsSaved.at(_sessionSelected);
+}
+
+void ClementineRemote::tryConnectToServer(int sessionIndex, const QString &host, ushort port, int auth_code)
+{
+    _sessionSelected = sessionIndex;
+    ClementineSession *session = _sessionsSaved.at(sessionIndex);
+    if (sessionIndex == 0)
+    {
+        session->setHost(host);
+        session->setPort(port);
+        session->setPass(auth_code);
+    }
+    setRemotePathForHost();
+    emit _connection->connectToServer(session);
+}
+
+int ClementineRemote::createNewSession(const QString &sessionName, const QString &host, int port, int pass)
+{
+    _sessionsSaved << new ClementineSession(sessionName, this, host, static_cast<ushort>(port), pass);
+    return _sessionsSaved.size() - 1;
+}
+
+void ClementineRemote::deleteCurrentSession()
+{
+    if (_sessionSelected == 0)
+        return; // can't delete Quick Session
+
+    ClementineSession *session = _sessionsSaved[_sessionSelected];
+    _sessionsSaved.removeAt(_sessionSelected);
+    delete session;
+    _sessionSelected = 0;
+}
+
 
 
 ////////////////////////////////
@@ -748,6 +841,14 @@ void ClementineRemote::changeAndPlaySong(int songIndex, qint32 playlistID)
     // this will play music so we need to update the remote
     setPlay();
     emit updateEngineState();
+}
+
+void ClementineRemote::setRemotePathForHost()
+{
+    if (_sessionSelected < _sessionsSaved.size())
+        _remoteFilesPath = _sessionsSaved[_sessionSelected]->remotePath();
+    else
+        _remoteFilesPath = "./"; // should never happen
 }
 
 void ClementineRemote::updateCurrentPlaylist()
@@ -1139,7 +1240,7 @@ void ClementineRemote::rcvListOfRemoteFiles(const pb::remote::ResponseListFiles 
 
 
         _remoteFilesPath = files.relative_path().c_str();
-        _remoteFilesPathPerHost[_connection->hostname()] = _remoteFilesPath;
+        _sessionsSaved[_sessionSelected]->setRemotePath(_remoteFilesPath);
         emit updateRemoteFilesPath(_remoteFilesPath);
     }
 }
@@ -1221,7 +1322,7 @@ void ClementineRemote::onInitialized()
 
 void ClementineRemote::onLibraryDownloaded()
 {
-    QString host = _connection->hostname();
+    QString host = sessionName();
     if (QSqlDatabase::contains(host))
         _libDB = QSqlDatabase::database(host);
     else
@@ -1298,4 +1399,5 @@ void ClementineRemote::onLibraryDownloaded()
              tr("<ul><li>Number of Artists: %1</li><li>Number of Albums: %2</li><li>Number of Tracks: %3</li></ul>").arg(
                  nbArtists).arg(nbAlbums).arg(nbTracks));
 }
+
 

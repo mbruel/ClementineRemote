@@ -22,6 +22,7 @@
 #include <QQmlContext>
 
 #include "ClementineRemote.h"
+#include "ClementineSession.h"
 #include "model/RemoteSongModel.h"
 #include "model/PlaylistModel.h"
 #include "model/RemoteFileModel.h"
@@ -61,12 +62,17 @@ int main(int argc, char *argv[])
     qmlRegisterInterface<QAbstractItemModel>("Library", 1);
 
 
+    qmlRegisterUncreatableType<ClementineSession>("Session", 1, 0, "ClementineSession",
+                                                  QStringLiteral("ClementineSession should not be created in QML"));
     qmlRegisterUncreatableType<ClementineRemote>("PlayList",    1, 0, "ClementineRemote",
-        QStringLiteral("ClementineRemote should not be created in QML"));
+                                                 QStringLiteral("ClementineRemote should not be created in QML"));
     qmlRegisterUncreatableType<ClementineRemote>("RemoteFile",  1, 0, "ClementineRemote",
-        QStringLiteral("ClementineRemote should not be created in QML"));
+                                                 QStringLiteral("ClementineRemote should not be created in QML"));
     qmlRegisterUncreatableType<ClementineRemote>("RadioStream", 1, 0, "ClementineRemote",
-        QStringLiteral("ClementineRemote should not be created in QML"));
+                                                 QStringLiteral("ClementineRemote should not be created in QML"));
+    qmlRegisterUncreatableType<ClementineRemote>("Session", 1, 0, "ClementineRemote",
+                                                 QStringLiteral("ClementineRemote should not be created in QML"));
+
 
     QPointer<ClementineRemote> remote = QPointer<ClementineRemote>(ClementineRemote::getInstance());
     engine.rootContext()->setContextProperty("cppRemote", remote.data());

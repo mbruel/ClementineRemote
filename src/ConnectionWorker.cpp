@@ -20,6 +20,7 @@
 
 #include "ConnectionWorker.h"
 #include "ClementineRemote.h"
+#include "ClementineSession.h"
 #include "player/RemotePlaylist.h"
 
 #include <QFile>
@@ -32,7 +33,7 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     _remote(remote),
     _socket(nullptr), _timeout(this), _disconnectReason(" "),
     _reading_protobuf(false), _expected_length(0), _buffer(),
-    _host(), _port(0), _auth_code(-1),
+    _session(nullptr),
     _libraryDL(), _songsDL(),
     _killingSocket(0x0)
 {
@@ -44,7 +45,11 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     Qt::ConnectionType connectionType = Qt::DirectConnection;
 #endif
 
-    connect(_remote, &ClementineRemote::connectToServer,      this, &ConnectionWorker::onConnectToServer,      connectionType);
+    connect(&_timeout, &QTimer::timeout, this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
+
+    connect(this,    &ConnectionWorker::connectToServer,      this, &ConnectionWorker::onConnectToServer,      connectionType);
+    connect(this,    &ConnectionWorker::killSocket,           this, &ConnectionWorker::onKillSocket,           connectionType);
+
     connect(_remote, &ClementineRemote::disconnectFromServer, this, &ConnectionWorker::onDisconnectFromServer, connectionType);
     connect(_remote, &ClementineRemote::changeToSong,         this, &ConnectionWorker::onChangeToSong,         connectionType);
     connect(_remote, &ClementineRemote::setTrackPostion,      this, &ConnectionWorker::onSetTrackPostion,      connectionType);
@@ -71,10 +76,6 @@ ConnectionWorker::ConnectionWorker(ClementineRemote *remote, QObject *parent) :
     connect(_remote, &ClementineRemote::sendSongsToDownload,  this, &ConnectionWorker::onSendSongsToDownload,  connectionType);
     connect(_remote, &ClementineRemote::getLibrary,           this, &ConnectionWorker::onGetLibrary,           connectionType);
     connect(_remote, &ClementineRemote::insertUrls,           this, &ConnectionWorker::onInsertUrls,           connectionType);
-
-
-    connect(&_timeout, &QTimer::timeout,             this, &ConnectionWorker::onSocketTimeout, Qt::DirectConnection);
-    connect(this,     &ConnectionWorker::killSocket, this, &ConnectionWorker::onKillSocket,    connectionType);
 }
 
 ConnectionWorker::~ConnectionWorker()
@@ -104,21 +105,13 @@ void ConnectionWorker::onKillSocket(){
     _killingSocket = 0x0;
 }
 
-
-void ConnectionWorker::onConnectToServer(const QString &host, ushort port, int auth_code)
+void ConnectionWorker::onConnectToServer(ClementineSession *session)
 {
-    _host      = host;
-    _port      = port;
-    _auth_code = auth_code;
+    _session = session;
     _socket = new QTcpSocket();
-
-    _remote->loadRemotePathForHost(host);
-
-//    _socket->moveToThread(&_thread);
 
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, true);
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-    //    _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption, NgPost::articleSize());
 
     connect(_socket, &QAbstractSocket::connected,    this, &ConnectionWorker::onConnected,    Qt::DirectConnection);
     connect(_socket, &QAbstractSocket::disconnected, this, &ConnectionWorker::onDisconnected, Qt::DirectConnection);
@@ -130,7 +123,7 @@ void ConnectionWorker::onConnectToServer(const QString &host, ushort port, int a
     connect(_socket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)),
             this, SLOT(onError(QAbstractSocket::SocketError)), Qt::QueuedConnection);
 
-    _socket->connectToHost(host, port);
+    _socket->connectToHost(session->host(), session->port());
     _timeout.start(_remote->sockTimeoutMs());
 }
 
@@ -496,16 +489,14 @@ void ConnectionWorker::onConnected()
 {
     _timeout.stop();
 
-    _remote->saveConnectionInSettings(_host, QString::number(_port), QString::number(_auth_code));
-
-    qDebug() << "[ConnectionWorker::onConnected] to server " << _host << ":" << _port;
+    qDebug() << "[ConnectionWorker::onConnected] to " << _session->str();
     // Create the general message and set the message type
     pb::remote::Message msg;
     msg.set_type(pb::remote::CONNECT);
 
     pb::remote::RequestConnect *reqConnect = msg.mutable_request_connect();
-    if (_auth_code != -1)
-        reqConnect->set_auth_code(_auth_code);
+    if (_session->pass() != -1)
+        reqConnect->set_auth_code(_session->pass());
 
     sendDataToServer(msg);
 
@@ -514,7 +505,7 @@ void ConnectionWorker::onConnected()
 
 void ConnectionWorker::onDisconnected()
 {
-    qDebug() << "[ConnectionWorker::onDisconnected] from server " << _host << ":" << _port;
+    qDebug() << "[ConnectionWorker::onDisconnected] from " << _session->str();
     if (_timeout.isActive())
         _timeout.stop();
 
@@ -532,6 +523,7 @@ void ConnectionWorker::onDisconnected()
     _songsDL.init(0, 0);
     _libraryDL.init();
 
+    _session = nullptr;
     _remote->clearData(_disconnectReason);
 }
 
@@ -583,7 +575,7 @@ void ConnectionWorker::onReadyRead()
 
 void ConnectionWorker::onSocketTimeout()
 {
-    qDebug() << "[ConnectionWorker::onSocketTimeout] to server " << _host << ":" << _port;
+    qDebug() << "[ConnectionWorker::onSocketTimeout] on " << _session->str();
     _timeout.stop();
     emit _remote->connectionError(tr("Unable to connect..."));
     if (_socket)
@@ -803,7 +795,7 @@ void ConnectionWorker::downloadLibrary(const pb::remote::ResponseLibraryChunk &l
     {
         _libraryDL.init();
         _libraryDL.downloadPath = _remote->libraryPath();
-        _libraryDL.file = new QFile(QString("%1/%2.db").arg(_libraryDL.downloadPath).arg(_host));
+        _libraryDL.file = new QFile(QString("%1/%2.db").arg(_libraryDL.downloadPath).arg(_session->name()));
         if (_libraryDL.file->exists())
         {
             qDebug() << "overwriting existing Library " << _libraryDL.file->fileName();

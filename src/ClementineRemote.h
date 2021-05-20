@@ -34,6 +34,7 @@
 #include <QThread>
 #include <QMutex>
 #endif
+class ClementineSession;
 class ConnectionWorker;
 class RemotePlaylist;
 class PlaylistModel;
@@ -54,7 +55,7 @@ class ClementineRemote : public QObject, public Singleton<ClementineRemote>
     static const uint    sDefaultIconSize = 42;
 
     enum class Settings {
-        host, port, pass,
+        session, host, port, pass, lastSession,
         downloadPath, remotePath,
         verticalVolume, iconSize,
         dispArtistInTrackName
@@ -127,7 +128,6 @@ private:
 
     bool                    _clemFilesSupport;
     QString                 _remoteFilesPath;
-    QMap<QString, QString>  _remoteFilesPathPerHost;
     QList<RemoteFile>       _remoteFiles;
 #ifdef __USE_CONNECTION_THREAD__
     QMutex                  _secureRemoteFilesData;
@@ -155,6 +155,10 @@ private:
 
     bool _forceRePlayActiveSong;
     QPair<int, int> _activeSongAndPlaylistIndexes;
+
+    QList<ClementineSession*> _sessionsSaved;
+    int                       _sessionSelected;
+    static const QString sQuickSessionName;
 
 
 private:
@@ -218,7 +222,6 @@ public:
     inline Q_INVOKABLE QString settingHost() const;
     inline Q_INVOKABLE QString settingPort() const;
     inline Q_INVOKABLE QString settingPass() const;
-    inline Q_INVOKABLE void saveConnectionInSettings(const QString &host, const QString &port, const QString &pass);
 
     inline Q_INVOKABLE qint32 playerState() const;
     inline Q_INVOKABLE bool isPlaying() const;
@@ -239,10 +242,16 @@ public:
     Q_INVOKABLE bool isConnected() const;
     Q_INVOKABLE void cancelDownload() const;
 
-    Q_INVOKABLE const QString hostname() const;
+    Q_INVOKABLE QString hostname() const;
+    QString sessionName() const;
 
 
-
+    Q_INVOKABLE QStringList sessionNames() const;
+    Q_INVOKABLE ClementineSession *getSession(int index);
+    Q_INVOKABLE void tryConnectToServer(int sessionIndex, const QString &host, ushort port, int auth_code = -1);
+    Q_INVOKABLE int lastSessionIndex() const {return _sessionSelected;}
+    Q_INVOKABLE int createNewSession(const QString &sessionName, const QString &host, int port, int pass);
+    Q_INVOKABLE void deleteCurrentSession();
 
     ////////////////////////////////
     /// Playlist methods
@@ -281,8 +290,6 @@ public:
 
     inline const QString &remoteFilesPath() const;
     inline Q_INVOKABLE QString remoteFilesPath_QML() const; //!< can't use refs in QML...
-
-    inline void loadRemotePathForHost(const QString &host);
 
     inline Q_INVOKABLE bool allFilesSelected() const;
 
@@ -344,6 +351,7 @@ private:
     inline void sendError(const QString &title, const QString &msg);
     inline QString _remoteFilesListError(pb::remote::ResponseListFiles::Error errCode, const std::string &relativePath);
 
+    void setRemotePathForHost();
     void updateCurrentPlaylist();
 
     void rcvPlaylists(const pb::remote::ResponsePlaylists &playlists);
@@ -615,14 +623,6 @@ QString ClementineRemote::settingHost() const { return _settings.value(sSettings
 QString ClementineRemote::settingPort() const { return _settings.value(sSettings[Settings::port], "").toString(); }
 QString ClementineRemote::settingPass() const { return _settings.value(sSettings[Settings::pass], "").toString(); }
 
-void ClementineRemote::saveConnectionInSettings(const QString &host, const QString &port, const QString &pass)
-{
-    _settings.setValue(sSettings[Settings::host], host);
-    _settings.setValue(sSettings[Settings::port], port);
-    _settings.setValue(sSettings[Settings::pass], pass);
-    _settings.sync();
-}
-
 qint32 ClementineRemote::playerState() const { return _clemState; }
 
 bool ClementineRemote::isPlaying() const { return _clemState == pb::remote::EngineState::Playing; }
@@ -708,10 +708,7 @@ void ClementineRemote::setRequestSongsForPlaylistID(qint32 playlistId) { _reques
 const QString &ClementineRemote::remoteFilesPath() const { return _remoteFilesPath; }
 QString ClementineRemote::remoteFilesPath_QML() const{ return _remoteFilesPath; }
 
-void ClementineRemote::loadRemotePathForHost(const QString &host)
-{
-    _remoteFilesPath = _remoteFilesPathPerHost.value(host, "./");
-}
+
 bool ClementineRemote::allFilesSelected() const
 {
     for (const RemoteFile &f : _remoteFiles)
@@ -822,4 +819,5 @@ QString ClementineRemote::_remoteFilesListError(pb::remote::ResponseListFiles::E
     }
     return QString();
 }
+
 #endif // CLEMENTINEREMOTE_H

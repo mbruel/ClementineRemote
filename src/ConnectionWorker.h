@@ -25,6 +25,7 @@
 #include <QByteArray>
 #include <QTimer>
 class ClementineRemote;
+class ClementineSession;
 class RemotePlaylist;
 
 /*!
@@ -46,11 +47,8 @@ private:
     qint32      _expected_length;
     QByteArray  _buffer;
 
-
     // server details
-    QString _host;
-    ushort  _port;
-    int     _auth_code; //!< -1 <=> no pass
+    ClementineSession *_session;
 
     Downloader      _libraryDL;
     SongsDownloader _songsDL;
@@ -72,8 +70,6 @@ public:
 
     void requestSavedRadios();
 
-    inline const QString &hostname() const;
-
     void prepareDownload(const pb::remote::ResponseDownloadTotalSize &downloadSize);
     void downloadSong(const pb::remote::ResponseSongFileChunk &songChunk);
     void downloadFinished();
@@ -84,13 +80,13 @@ public:
     inline void cancelDownload();
 
 signals:
-    void connectToServer(const QString &host, ushort port, int auth_code);
+    void connectToServer(ClementineSession *session);
     void disconnectFromServer();
     void killSocket();
 
 
 private slots:
-    void onConnectToServer(const QString &host, ushort port, int auth_code);
+    void onConnectToServer(ClementineSession *session);
     void onDisconnectFromServer();
     void onKillSocket();
 
@@ -150,7 +146,6 @@ private:
 
 };
 
-const QString &ConnectionWorker::hostname() const { return _host; }
 void ConnectionWorker::cancelDownload(){ _songsDL.cancelDownload(); }
 
 bool ConnectionWorker::isConnected() const { return _socket != nullptr; }

@@ -65,5 +65,6 @@
         <file>icons/x-clementine-artist.png</file>
         <file>icons/jumpTo.png</file>
         <file>icons/mouse.png</file>
+        <file>icons/save.png</file>
     </qresource>
 </RCC>
