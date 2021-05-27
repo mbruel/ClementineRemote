@@ -361,8 +361,10 @@ void ConnectionWorker::onSendSongsToDownload(const QString &dstFolder)
 {
     if (dstFolder.isEmpty())
         _songsDL.downloadPath = _remote->downloadPath();
-    else if (!createDownloadDestinationFolder(dstFolder))
+    else if (!createDownloadDestinationFolder(dstFolder)){
+        _remote->releaseUserMutex();
         return;
+    }
 
     emit _remote->downloadProgress(0); // let's make the progress bar visible ;)
     _remote->doSendSongsToDownload();
