@@ -1,1 +1,1 @@
-Remote Control for Clementine Music Player
+Remote Control for Clementine Music Player allowing you to browse your Files

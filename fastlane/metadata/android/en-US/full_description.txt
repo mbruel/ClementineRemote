@@ -1,6 +1,12 @@
-<i>ClementineRemote</i> is a Remote Control for the <a href='https://www.clementine-player.org/'>Clementine Music Player</a>, available for all major platforms. Its main goal was to add the Files View missing in the Android Remote. It's also made like a player, so you always see the running track, can pause or go next.
+<b>ClemRemote</b> is a Remote Control for <a href='https://www.clementine-player.org/'>Clementine Music Player</a> available on all platform (developped in C++/QT). It is open source and published under licence GPL v3. You can find the source on github <a href="https://github.com/mbruel/ClementineRemote">here</a>.
 
-You can fully control the music on your Clementine server: create playlists, browse the file system or the library, launch your saved internet radios... It's designed like a player, so from any Menu you're seeing the current played track and can pause, change the position, go to the next one... and also change the level of the volume. It's also possible to download the songs, albums or playlist.
+Its main goal was to add the Files View missing in the existing Android Remote.
+
+It's designed like a player, so from any Menu you're seeing the current played track and can pause, change the position, go to the next one... and also change the level of the volume.
+
+You can fully control the music on your Clementine server: create playlists, browse the file system or the library, launch your saved internet radios...
+It's also possible to download the songs, albums or playlist
+
 
 <b>Features:</b>
 
@@ -9,6 +15,8 @@ You can fully control the music on your Clementine server: create playlists, bro
 * a <b>Files Menu</b> to walk the directories below Clementine's root folder, download tracks, append tracks to the playlist, and more
 * a <b>Library Menu</b> to search Clementine's library for text (incl. using regular expressions) in title, author etc.
 * an <b>Internet Radio Menu</b>
-* a <b>Global Search Menu
+* a <b>Global Search Menu</b> that is not yet implemented
 
-…and more…
+For more details, please refer to the <a href="https://github.com/mbruel/ClementineRemote#readme">README</a>
+
+PS: I've contribute to Clementine Player in order to add the new feature for browsing Files, Internet Radio and be able to do certain downloads. My changes have been merged, but the new version of Clementine (v1.4) is not yet out... I've built a version with all the changes, it's here: <a href="https://github.com/mbruel/Clementine/releases/tag/1.4.0rc1ClemRemote">Clementine v1.4.0rc1ClemRemote</a>. You then need to activate the network remote in <i>Tools -- Preferences -- Network Remote</i>.
