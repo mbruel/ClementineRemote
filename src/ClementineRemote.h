@@ -179,6 +179,7 @@ public:
     Q_INVOKABLE QString testDownloadPath();
     Q_INVOKABLE QString downloadPath();
     Q_INVOKABLE QUrl    downloadPathURL();
+    Q_INVOKABLE void updateDownloadPath(const QString &newPath);
 
     void parseMessage(const QByteArray& data);
 

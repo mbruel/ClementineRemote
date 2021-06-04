@@ -263,6 +263,7 @@ Page {
                     background: Rectangle { radius: 8 ; border.width: 0 }
 
                     text: cppRemote.downloadPath();
+                    onTextChanged: cppRemote.updateDownloadPath(text);
                 } // downPathEdit
 //                Button{
 //                    id: downPathButton

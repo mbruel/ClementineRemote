@@ -311,8 +311,6 @@ Page {
         standardButtons: Dialog.Ok | Dialog.Cancel
 
         onAccepted: saveSession(newSessionName.text);
-        Keys.onReturnPressed: accept()
-        Keys.onEnterPressed:  accept()
 
         ColumnLayout {
             spacing: 20
@@ -347,8 +345,6 @@ Page {
         standardButtons: Dialog.Yes | Dialog.No
 
         onAccepted: deleteCurrentSession()
-        Keys.onReturnPressed: accept()
-        Keys.onEnterPressed:  accept()
 
         Label {
             width: parent.width

@@ -2,6 +2,34 @@
           ClementineRemote release notes
    cf https://github.com/mbruel/ClementineRemote
 
+
+TODO: find out why download are not working on certain Android 10
+cf https://forum.qt.io/topic/126870/not-able-to-write-on-android-10-although-the-write_external_storage-is-granted/5
+
+TODO: use another colour in selection mode (can be confusing..)
+
+TODO: remove double click to enter folders on Mobile version?
+
+####################################################
+###       Release: v1.1                          ###
+###       date:    2021/06/04                    ###
+####################################################
+
+- manage sessions to save several set ups (Home, at friends'...)
+
+- hide connection password
+
+- delay the loading/downloading of the Library (setting that will be activated by default)
+
+- some robustness on error queue from sockets
+
+- starting FastLane implementation for FDroid
+
+- fix Android x64 version (issue with protobuf lib)
+cf https://forum.qt.io/topic/108704/building-protobuff-libs-for-android-64-bit-arm64-v8a-qt-5-12-4/24)
+
+
+
 ####################################################
 ###       Release: v1.0                          ###
 ###       date:    2020/11/22                    ###

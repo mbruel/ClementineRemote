@@ -364,6 +364,22 @@ QString ClementineRemote::downloadPath()
 
 QUrl ClementineRemote::downloadPathURL() { return QUrl::fromLocalFile(downloadPath()); }
 
+void ClementineRemote::updateDownloadPath(const QString &newPath)
+{
+    QFileInfo fi(newPath);
+    if (!fi.exists())
+        qCritical() << "New path doesn't exist... " << newPath;
+    else if (!fi.isDir())
+        qCritical() << "New path is not a directory... " << newPath;
+    else if (!fi.isWritable())
+        qCritical() << "New path is not writable... " << newPath;
+    else
+    {
+        _downloadPath = newPath;
+        _settings.setValue(sSettings[Settings::downloadPath], _downloadPath);
+    }
+}
+
 
 
 void ClementineRemote::checkClementineVersion()
@@ -785,7 +801,7 @@ bool ClementineRemote::isCurrentPlaylistSaved() const
 int ClementineRemote::getAtivePlaylistIndex()
 {
     int idx = 0;
-    for (RemotePlaylist *p : _playlistsOpened)
+    for (RemotePlaylist *p : qAsConst(_playlistsOpened))
     {
         if (p->id == _activePlaylistId)
             return idx;
@@ -877,7 +893,7 @@ void ClementineRemote::updateCurrentPlaylist()
     _dispPlaylist       = nullptr;
     _dispPlaylistIndex = 0;
     int idx = 0;
-    for (RemotePlaylist *p : _playlistsOpened)
+    for (RemotePlaylist *p : qAsConst(_playlistsOpened))
     {
         if (p->id == _dispPlaylistId)
         {
@@ -960,7 +976,7 @@ void ClementineRemote::downloadSelectedFiles()
         pb::remote::RequestDownloadSongs *files = _userMsg.mutable_request_download_songs();
         files->set_download_item(pb::remote::DownloadItem::Urls);
         files->set_relative_path(_remoteFilesPath.toStdString());
-        for (const QString &filename : selectedFiles)
+        for (const QString &filename : qAsConst(selectedFiles))
             *files->add_urls() = filename.toStdString();
 
         emit sendSongsToDownload(QFileInfo(_remoteFilesPath).fileName());
@@ -991,7 +1007,7 @@ void ClementineRemote::updateActiveSong(RemoteSong &&activeSong)
     _activeSong = activeSong;
 
     int idx = 0;
-    for (const RemoteSong &s : _songs)
+    for (const RemoteSong &s : qAsConst(_songs))
     {
         if (s.index == _activeSong.index)
         {
