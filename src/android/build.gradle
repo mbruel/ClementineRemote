@@ -21,6 +21,11 @@ dependencies {
 }
 
 android {
+     // https://bugreports.qt.io/browse/QTBUG-81735
+     defaultConfig {
+          resConfigs "en"
+     }
+
     /*******************************************************
      * The following variables:
      * - androidBuildToolsVersion,
