@@ -3,12 +3,20 @@
    cf https://github.com/mbruel/ClementineRemote
 
 
+
++--------------------------------------+
+| TODO: search mode for the Files !!!  |
++--------------------------------------+
+
 TODO: find out why download are not working on certain Android 10
 cf https://forum.qt.io/topic/126870/not-able-to-write-on-android-10-although-the-write_external_storage-is-granted/5
 
 TODO: use another colour in selection mode (can be confusing..)
 
 TODO: remove double click to enter folders on Mobile version?
+
+TODO request: night mode (black)
+
 
 ####################################################
 ###       Release: v1.1                          ###
