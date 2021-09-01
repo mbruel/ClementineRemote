@@ -75,7 +75,7 @@ bool LibraryProxyModel::_matchesTheSearch(int sourceRow, const QModelIndex &sour
 {
     QModelIndex modelIndex = sourceModel()->index(sourceRow, 0, sourceParent);
     QString name = sourceModel()->data(modelIndex, LibraryModel::name).toString();
-    return name.contains(filterRegExp());
+    return name.contains(filterRegularExpression());
 }
 
 #endif // LIBRARYMODEL_H

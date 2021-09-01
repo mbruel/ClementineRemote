@@ -313,7 +313,7 @@ QString ClementineRemote::downloadPath()
     qDebug() << "standard writable app data loc: " << QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     qDebug() << "standard writable app conf loc: "     << QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
 
-    qDebug() << "standard writable data loc: "     << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+//    qDebug() << "standard writable data loc: "     << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     qDebug() << "standard writable apps loc: "     << QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
     qDebug() << "standard writable doc loc: "      << QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     qDebug() << "standard writable music loc: "    << QStandardPaths::writableLocation(QStandardPaths::MusicLocation);
@@ -582,9 +582,8 @@ void ClementineRemote::parseMessage(const QByteArray &data)
 void ClementineRemote::setLibraryFilter(const QString &searchTxt)
 {
     qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
-    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
-    QRegExp regExp(searchTxt, caseSensitivity);
-    _libProxyModel->setFilterRegExp(regExp);
+    _libProxyModel->setFilterRegularExpression(
+                QRegularExpression(searchTxt, QRegularExpression::CaseInsensitiveOption));
 }
 
 void ClementineRemote::appendLibraryItem(const QModelIndex &proxyIndex, const QString &newPlaylistName)
@@ -1026,9 +1025,8 @@ void ClementineRemote::updateActiveSong(RemoteSong &&activeSong)
 void ClementineRemote::setSongsFilter(const QString &searchTxt)
 {
     qDebug() << "[MB_TRACE][ClementineRemote::setSongsFilter] searchTxt: " << searchTxt;
-    Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive;
-    QRegExp regExp(searchTxt, caseSensitivity);
-    _songsProxyModel->setFilterRegExp(regExp);
+    _songsProxyModel->setFilterRegularExpression(
+                QRegularExpression(searchTxt, QRegularExpression::CaseInsensitiveOption));
 }
 
 void ClementineRemote::deleteSelectedSongs()

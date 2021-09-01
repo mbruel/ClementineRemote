@@ -151,9 +151,9 @@ RemoteSongProxyModel::RemoteSongProxyModel(QObject *parent): QSortFilterProxyMod
 
 bool RemoteSongProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
-    QRegExp regexp = filterRegExp();
+    QRegularExpression regexp = filterRegularExpression();
 
-    if (regexp.isEmpty())
+    if (!regexp.isValid() || regexp.pattern().isEmpty())
         return true;
 
     RemoteSongModel *model = static_cast<RemoteSongModel *>(sourceModel());

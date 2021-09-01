@@ -22,6 +22,14 @@
 #include <QAbstractListModel>
 
 class ClementineRemote;
+#ifndef OPAQUE_ClementineRemote
+#define OPAQUE_ClementineRemote
+// To avoid Qt6 error: Type argument of Q_PROPERTY must be fully defined
+// cf https://www.qt.io/blog/whats-new-in-qmetatype-qvariant
+//Q_MOC_INCLUDE("ClementineRemote.h")
+Q_DECLARE_OPAQUE_POINTER(ClementineRemote*)
+#endif // OPAQUE_ClementineRemote
+
 
 class RemoteFileModel : public QAbstractListModel
 {

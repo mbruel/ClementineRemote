@@ -60,7 +60,7 @@ QVariantList LibraryProxyModel::getExpandableIndexes(const QModelIndex &currentI
 
 bool LibraryProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
-    if (filterRegExp().isEmpty())
+    if (!filterRegularExpression().isValid() || filterRegularExpression().pattern().isEmpty())
         return true;
 
     if (_matchesTheSearch(sourceRow, sourceParent))
