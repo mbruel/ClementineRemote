@@ -1,6 +1,6 @@
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/icon.png" alt="ClementineRemote">
 
-# ClemRemote v1.0
+# ClemRemote v1.1
 Remote for [Clementine Music Player](https://www.clementine-player.org/) ([github](https://github.com/clementine-player/Clementine)) developed in C++/QT5/QML to be available on any OS. <br/>
 It is published under **licence GPL v3** <br/>
 You can fully control the music on your Clementine server: create playlists, browse the file system or the library, launch your saved internet radios...<br/>
