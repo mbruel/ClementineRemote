@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
     qmlRegisterInterface<QAbstractItemModel>("PlayList", 1);
 
     qmlRegisterType<RemoteFileModel>( "RemoteFile", 1, 0, "RemoteFileModel");
+    qmlRegisterType<RemoteFileProxyModel>( "RemoteFile", 1, 0, "RemoteFileProxyModel");
     qmlRegisterType<RadioStreamModel>("RadioStream", 1, 0, "RadioStreamModel");
 
     qmlRegisterType<LibraryModel>("Library", 1, 0, "LibraryModel");

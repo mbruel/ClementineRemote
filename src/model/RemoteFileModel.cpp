@@ -156,3 +156,29 @@ void RemoteFileModel::setRemote(ClementineRemote *remote)
 
     endResetModel();
 }
+
+RemoteFileProxyModel::RemoteFileProxyModel(QObject *parent) :
+    QSortFilterProxyModel(parent)
+  , _model(new RemoteFileModel(this))
+{
+  setSourceModel(_model);
+}
+
+void RemoteFileProxyModel::selectAllFiles(bool select_)
+{
+    for (int i = 0; i < rowCount() ; ++i)
+    {
+        if (!data(index(i, 0), RemoteFileModel::isDir).toBool())
+            select(i, select_);
+    }
+}
+
+bool RemoteFileProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
+    if (!filterRegularExpression().isValid() || filterRegularExpression().pattern().isEmpty())
+        return true;
+
+    QModelIndex modelIndex = sourceModel()->index(sourceRow, 0, sourceParent);
+    QString name = sourceModel()->data(modelIndex, RemoteFileModel::filename).toString();
+    return name.contains(filterRegularExpression());
+}

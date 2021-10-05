@@ -20,6 +20,7 @@
 #ifndef REMOTEFILEMODEL_H
 #define REMOTEFILEMODEL_H
 #include <QAbstractListModel>
+#include <QSortFilterProxyModel>
 
 class ClementineRemote;
 #ifndef OPAQUE_ClementineRemote
@@ -73,5 +74,43 @@ private:
 
 QHash<int, QByteArray> RemoteFileModel::roleNames() const { return sRoleNames; }
 
+
+
+class RemoteFileProxyModel : public QSortFilterProxyModel {
+    Q_OBJECT
+    Q_PROPERTY(ClementineRemote *remote READ remote WRITE setRemote)
+
+public:
+    explicit RemoteFileProxyModel(QObject *parent = nullptr);
+
+    ClementineRemote *remote() const {return _model ? _model->remote() : nullptr;}
+    void setRemote(ClementineRemote *remote) {if (_model) _model->setRemote(remote);}
+
+    Q_INVOKABLE void selectAllFiles(bool select_);
+    inline Q_INVOKABLE void select(int row, bool select);
+
+    Q_INVOKABLE void setFilter(const QString &searchTxt) {
+        setFilterRegularExpression(
+                    QRegularExpression(searchTxt,
+                                       QRegularExpression::CaseInsensitiveOption));
+    }
+
+protected:
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+
+private:
+    RemoteFileModel *_model;
+};
+
+
+void RemoteFileProxyModel::select(int row, bool select)
+{
+    QModelIndex proxyIndex = index(row, 0);
+    if (proxyIndex.isValid())
+    {
+        QModelIndex modelIndex = mapToSource(proxyIndex);
+        _model->select(modelIndex.row(), select);
+    }
+}
 
 #endif // REMOTEFILEMODEL_H

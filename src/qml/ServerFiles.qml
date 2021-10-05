@@ -152,7 +152,8 @@ Rectangle {
 
         clip: true
 
-        model: RemoteFileModel { remote: cppRemote }
+//        model: RemoteFileModel { remote: cppRemote }
+        model: RemoteFileProxyModel { remote: cppRemote }
         delegate: remoteFileDelegate
 
         flickableDirection: Flickable.VerticalFlick
@@ -216,6 +217,25 @@ Rectangle {
 //                print("[ServerFiles] selectAll: " + selectionMode);
             }
         } // selectAllButton
+        TextField {
+            id: searchField
+            placeholderText: qsTr("search")
+            horizontalAlignment: TextInput.AlignHCenter
+            height: parent.height - 4
+            width: newPlaylistNameWidth
+            anchors {
+                left: selectAllButton.right
+                leftMargin: headerSpacing
+                verticalCenter: parent.verticalCenter
+            }
+            color: "black"
+            background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
+
+            inputMethodHints: Qt.ImhNoPredictiveText;
+            onTextChanged: filesView.model.setFilter(text);
+        } // searchField
+
+
         ImageButton {
             id:   downSelectedFilesButton
             size: headerButtonSize
