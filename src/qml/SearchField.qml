@@ -27,6 +27,8 @@ TextField {
     placeholderText: qsTr("search")
     inputMethodHints: Qt.ImhNoPredictiveText;
 
+    function clear() {searchField.text = ""}
+
     Button {
         id: clearSearch
         Text {
@@ -43,6 +45,6 @@ TextField {
             rightMargin: 2
             verticalCenter: parent.verticalCenter
         }
-        onClicked: searchField.text = ""
+        onClicked: clear()
     } //clearSearch
 } // searchField

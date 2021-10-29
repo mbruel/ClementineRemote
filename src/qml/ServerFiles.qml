@@ -30,7 +30,8 @@ Rectangle {
     property int   headerButtonSize    : 30
     property int   headerSpacing       : 5
     property int   lineHeigth          : 25
-    property color colorSelected       : "lightblue"
+    property color colorSelected       : 'lightblue'
+    property color colorSelectMode     : 'cornflowerblue'
 
     // private properties
     property bool  selectionMode       : false
@@ -330,13 +331,13 @@ Rectangle {
             color: {
                 if (selectionMode){
                     if (selected)
-                        return colorSelected;
+                        return colorSelectMode;
                 }
                 else {
                     if (ListView.isCurrentItem)
                         return colorSelected;
                 }
-                return "white";
+                return 'transparent';
             }
 
             Image {
@@ -360,19 +361,24 @@ Rectangle {
                 anchors.fill: parent
                 onClicked: {
                     filesView.currentIndex = index
-                    if (selectionMode)
+                    if (isDir)
+                    {
+                        if (selectionMode)
+                            mainApp.error(qsTr("Selection Error"),qsTr("You can only select files..."))
+                        else {
+                            resetSelectionMode();
+                            cppRemote.getServerFiles(relativePath.text, filename);
+                            searchField.clear();
+                        }
+                    }
+                    else if (selectionMode)
                         selected = !selected;
                 }
 
                 onDoubleClicked: {
 //                    print("onDoubleClicked #" + index + ": " + filename )
                     filesView.currentIndex = index
-                    if (isDir)
-                    {
-                        resetSelectionMode();
-                        cppRemote.getServerFiles(relativePath.text, filename);
-                    }
-                    else
+                    if (!isDir)
                     {
                         selected = true;
                         sendSelectedFiles("");
@@ -381,10 +387,14 @@ Rectangle {
                 }
 
                 onPressAndHold: {
-                    filesView.currentIndex = index;
-                    selectionMode = true;
-                    selected = true;
-//                    print("onPressAndHold #" + index + ": " + filename)
+                    if (isDir)
+                        mainApp.error(qsTr("Selection Error"),qsTr("You can only select files..."))
+                    else {
+                        filesView.currentIndex = index;
+                        selectionMode = true;
+                        selected = true;
+//                        print("onPressAndHold #" + index + ": " + filename)
+                    }
                 }
             }
         }
