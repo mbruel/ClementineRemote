@@ -1,16 +1,16 @@
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/icon.png" alt="ClementineRemote">
 
-# ClemRemote v1.1
+# ClemRemote v1.2
 Remote for [Clementine Music Player](https://www.clementine-player.org/) ([github](https://github.com/clementine-player/Clementine)) developed in C++/QT5/QML to be available on any OS. <br/>
 It is published under **licence GPL v3** <br/>
 You can fully control the music on your Clementine server: create playlists, browse the file system or the library, launch your saved internet radios...<br/>
 It's designed like a player, so from any Menu you're seeing the current played track and can pause, change the position, go to the next one... and also change the level of the volume.<br/>
 It's also possible to download the songs, albums or playlist<br/>
 <br/>
-I've built the v1.0 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_x64_setup.exe) (there is also a [portable version for win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_win64_portable.zip)).<br/>
+I've built the v1.2 for [Linux](https://github.com/mbruel/ClementineRemote/releases/download/v1.2/ClemRemote_v1.2-x86_64.AppImage), [MacOS](https://github.com/mbruel/ClementineRemote/releases/download/v1.2/ClemRemote_v1.2.dmg) and [Win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.2/ClemRemote_v1.2_x64_setup.exe) (there is also a [portable version for win64](https://github.com/mbruel/ClementineRemote/releases/download/v1.2/ClemRemote_v1.2_win64_portable.zip)).<br/>
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/android_qr.png" alt="Clementine Remote for Android">
 <br/>
-It is availabe on [Google Play](https://play.google.com/store/apps/details?id=fr.mbruel.ClementineRemote), on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbruel.ClementineRemote) on [izzysoft repo](https://apt.izzysoft.de/fdroid/) or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.0/ClemRemote_v1.0_api29.apk).<br/>
+It is availabe on [Google Play](https://play.google.com/store/apps/details?id=fr.mbruel.ClementineRemote), on [FDroid](https://apt.izzysoft.de/fdroid/index/apk/fr.mbruel.ClementineRemote) on [izzysoft repo](https://apt.izzysoft.de/fdroid/) or [here is the apk](https://github.com/mbruel/ClementineRemote/releases/download/v1.2/ClemRemote_v1.2_api29.apk).<br/>
 <br/>
 <br/>
 <img align="left" width="80" height="80" src="https://raw.githubusercontent.com/mbruel/ClementineRemote/main/src/data/iOS_qr.png" alt="Clementine Remote for iOS">
