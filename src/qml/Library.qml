@@ -88,7 +88,7 @@ Rectangle {
         border.color: headerBorderColor
         border.width: headerBorderWidth
 
-        QQC.TextField {
+        SearchField {
             id: searchField
             width: parent.width - headerButtonSize - 2*headerSpacing
             anchors {
@@ -96,33 +96,8 @@ Rectangle {
                 leftMargin: 5
                 verticalCenter: parent.verticalCenter
             }
-
-//                Layout.fillWidth: true
-            placeholderText: qsTr("search")
-
-            inputMethodHints: Qt.ImhNoPredictiveText;
-
             onTextChanged: cppRemote.setLibraryFilter(text);
-
-            QQC.Button {
-                id: clearSearch
-                Text {
-                    text: "x"
-                    anchors{
-                        horizontalCenter: parent.horizontalCenter
-                        verticalCenter: parent.verticalCenter
-                    }
-                }
-                width: 30
-                height: parent.height - 4
-                anchors {
-                    right: parent.right
-                    rightMargin: 2
-                    verticalCenter: parent.verticalCenter
-                }
-                onClicked: searchField.text = ""
-            } //clearSearch
-        } // searchField
+        }// searchField
 
         ImageButton {
             id:   refreshLibButton

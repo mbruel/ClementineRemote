@@ -16,5 +16,6 @@
         <file>SettingSwitch.qml</file>
         <file>Library.qml</file>
         <file>GlobalSearch.qml</file>
+        <file>SearchField.qml</file>
     </qresource>
 </RCC>

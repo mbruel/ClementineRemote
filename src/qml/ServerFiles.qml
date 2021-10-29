@@ -128,9 +128,15 @@ Rectangle {
                     cppRemote.getServerFiles("./", "");
                 }
             } // homePathButton
+            ImageButton {
+                id:   searchButton
+                size: headerButtonSize
+                source: "icons/search.png";
+                onClicked: searchField.visible = !searchField.visible
+            } // searchButton
             Text {
                 id: relativePath
-                width: parent.width - 4*(headerButtonSize + headerSpacing) - 2*headerSpacing
+                width: parent.width - 3*(headerButtonSize + 2*headerSpacing) - 2*headerSpacing
                 text: cppRemote.remoteFilesPath_QML()
                 anchors.verticalCenter: parent.verticalCenter
 //                font.pointSize: 20;
@@ -139,16 +145,40 @@ Rectangle {
         } // Row
     } // pathRect
 
+    SearchField {
+        id: searchField
+        visible: false
+        width: parent.width - 2*headerSpacing
+        height: headerButtonSize
+        anchors {
+            left: parent.left
+            leftMargin: headerSpacing
+            rightMargin: headerSpacing
+            top: pathRect.bottom
+        }
+        background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
+        clearButton.background: Rectangle { radius: 8 ; color: "lightgrey" }
+
+        onTextChanged: {
+            filesView.model.setFilter(text);
+            if (text === "")
+                searchButton.colorDefault = 'transparent';
+            else
+                searchButton.colorDefault = "darkred";
+            searchButton.color = searchButton.colorDefault;
+        }
+    } // searchField
+
     ListView {
         id: filesView
         focus: true
 
         anchors{
-            top: pathRect.bottom
+            top: searchField.visible ? searchField.bottom : pathRect.bottom
             left: parent.left
         }
         implicitWidth: parent.width
-        implicitHeight: parent.height - pathRect.height - actionRect.height
+        implicitHeight: parent.height - (searchField.visible ? 2 : 1)*pathRect.height - actionRect.height
 
         clip: true
 
@@ -217,24 +247,6 @@ Rectangle {
 //                print("[ServerFiles] selectAll: " + selectionMode);
             }
         } // selectAllButton
-        TextField {
-            id: searchField
-            placeholderText: qsTr("search")
-            horizontalAlignment: TextInput.AlignHCenter
-            height: parent.height - 4
-            width: newPlaylistNameWidth
-            anchors {
-                left: selectAllButton.right
-                leftMargin: headerSpacing
-                verticalCenter: parent.verticalCenter
-            }
-            color: "black"
-            background: Rectangle { radius: 8 ; border.width: 1; border.color: colorSelected }
-
-            inputMethodHints: Qt.ImhNoPredictiveText;
-            onTextChanged: filesView.model.setFilter(text);
-        } // searchField
-
 
         ImageButton {
             id:   downSelectedFilesButton
@@ -287,7 +299,7 @@ Rectangle {
                     return
                 if (newPlaylistNameField.text === "")
                     mainApp.error(qsTr("No playlist name"),
-                                 qsTr("Please enter a name for the new playlist if you wish to create one..."));
+                                  qsTr("Please enter a name for the new playlist if you wish to create one..."));
                 else
                 {
                     sendSelectedFiles(newPlaylistNameField.text);

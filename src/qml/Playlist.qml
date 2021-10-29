@@ -156,35 +156,13 @@ Rectangle {
                 delegate: playlistDelegate
                 textRole: "name"
             } // playlistCombo
-            TextField {
+            SearchField {
                 id: searchField
                 width: playlistsRow.width - playlistCombo.width - moreOptions.width - 3*parent.spacing
-//                Layout.fillWidth: true
-                placeholderText: qsTr("search")
-                inputMethodHints: Qt.ImhNoPredictiveText;
-
                 onTextChanged: {
                     cppRemote.setSongsFilter(text);                    
                     activeSongIdx = cppRemote.getActiveSongIndex();
                 }
-                Button {
-                    id: clearSearch
-                    Text {
-                        text: "x"
-                        anchors{
-                            horizontalCenter: parent.horizontalCenter
-                            verticalCenter: parent.verticalCenter
-                        }
-                    }
-                    width: 30
-                    height: parent.height - 4
-                    anchors {
-                        right: parent.right
-                        rightMargin: 2
-                        verticalCenter: parent.verticalCenter
-                    }
-                    onClicked: searchField.text = ""
-                } //clearSearch
             } // searchField
             ImageButton {
                 id: moreOptions
